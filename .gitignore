@@ -1,4 +1,27 @@
+# Build outputs
 .next/
-node_modules/
-.env*.local
 out/
+dist/
+*.tsbuildinfo
+
+# Dependencies
+node_modules/
+
+# Yarn 4
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+.pnp.*
+
+# Turbo
+.turbo/
+
+# Env
+.env*.local
+.env
+
+# IDE / OS
+.DS_Store
