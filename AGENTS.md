@@ -1,16 +1,44 @@
 ### Project
-This is a landing page with individual basalt products and order forms. 
+Sub0 — веб-сервис учёта подписок: пользователь добавляет свои подписки
+(вручную в MVP, AI-парсинг банковской выписки в v1.1), видит дашборд
+с totals/календарём/ближайшими списаниями и получает напоминания
+(email в MVP; Telegram + Web Push в v1.1).
+
+Web-first: Next.js + PWA-манифест для add-to-home на iOS. Нативное
+мобильное приложение — v2.
+
+### Stack
+- `apps/web` — Next.js 15 (App Router), Tailwind, `next-intl` (ru/en),
+  `next-themes`, PWA manifest.
+- `apps/api` — NestJS 10, Postgres + Prisma. JWT: access 15m +
+  refresh 90d с ротацией (httpOnly + Secure + SameSite=Lax cookie).
+- `packages/shared` — DTO, типы, общие i18n-ключи (одни и те же
+  строки используются и в вебе, и в email/Telegram-нотификациях).
+- Платежи (автосписание): СБП / T-Bank / Сбер для РФ, BePaid для РБ.
+  Храним только токены провайдеров — карт у нас нет.
+- Нотификации: email (MVP), Telegram-бот + Web Push VAPID (v1.1).
+- Курсы валют: суточный pull с ЦБ РФ для конвертации USD/BYN в ₽.
 
 ### Role
-You are a Senior Staff Software Engineer. Your expertise lies in building single-page responsive landing pages 
-and multipage online stores on Next.js/Tailwind CSS and Nest.js.
+Senior staff engineer на стэке Next.js + Tailwind + NestJS + Prisma.
+Проект пишется через Claude — без ручного кода. Это означает: явные
+команды, минимум магии, всё проверяемо и воспроизводимо.
 
 ### Rules
-- Give direct answers and code. Omit conversational filler to save tokens.
-- You can think things through and look up information in English, but please provide your answers in Russian. 
-I’ll also be communicating with you mainly in Russian.
-- Use read tool to access the relevant `ctx-*.md` files from the `ai/` directory.
-- Use yarn instead of npm.
+- Прямые ответы и код. Без вступлений и хвостовых summary.
+- Думать можно по-английски, отвечать — по-русски.
+- Перед изменениями читать релевантные `ai/ctx-*.md`.
+- `yarn` (Berry, workspaces). Не `npm`, не `pnpm`.
+- **Не выдумывать имена эндпоинтов, фич, маршрутов или сервисов**,
+  которых нет в `docs/sub0-roadmap.md` или в `ai/ctx-*.md`. Не уверен —
+  спросить, не доимысливать.
+- Перед расширением scope (новый OAuth-провайдер, новая платёжная
+  интеграция, новый тип файлового аплоада, 2FA, team-аккаунты) —
+  сначала обновить релевантный `ctx-*.md`, потом писать код.
 
-### Context Library (The `ai/` directory)
-- `ai/ctx-fronted-fsd.md` - Feature-Sliced Design with project architecture description.
+### Context Library
+- `ai/ctx-frontend-fsd.md` — FSD-архитектура веба: слайсы, маршруты,
+  i18n, time-zones, валюты, PWA, темы.
+- `ai/ctx-security.md` — auth, платежи, PII, headers, env, логи,
+  валидация, файлы. Threat-model и review-checklist.
+- `docs/sub0-roadmap.md` — план MVP / v1.1 / v2. Живой документ.
