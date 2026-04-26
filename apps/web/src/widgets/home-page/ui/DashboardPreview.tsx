@@ -98,7 +98,7 @@ export function DashboardPreview() {
           <div style={{ background: SUB0.bg, padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
             {/* KPI */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
-              {kpi.map(([l, v, s, danger], i) => (
+              {kpi.map(([l, v, s, danger]) => (
                 <div key={String(l)} style={{
                   background: SUB0.panel, border: `1px solid ${SUB0.line}`,
                   borderRadius: 10, padding: '14px 16px',
