@@ -2,6 +2,7 @@
 
 import { SUB0, mono } from '@/shared/constants/tokens'
 import { useLang } from '@/shared/contexts/lang-context'
+import { useIsMobile } from '@/shared/hooks/use-is-mobile'
 import { Section } from '@/shared/components/ui/Section'
 import { SectionEyebrow } from '@/shared/components/ui/SectionEyebrow'
 import { H2 } from '@/shared/components/ui/H2'
@@ -105,29 +106,30 @@ const ITEMS: Array<{ num: string; ru: string; en: string; subRu: string; subEn: 
   },
   {
     num: '02', ru: 'Напоминания до списания', en: 'Reminders before renewal',
-    subRu: 'За 3 дня до списания — push или email. Успеете отменить или передумать.',
+    subRu: 'Гибко настраивайте уведомления о списании. Успейте отменить подписку или передумать.',
     subEn: '3 days before renewal — push or email. Time to keep or kill it.',
     visual: 'bell',
   },
   {
     num: '03', ru: 'Аналитика расходов', en: 'Spend analytics',
-    subRu: 'Графики по месяцам и категориям. Прогноз на год и самый дорогой сервис.',
+    subRu: 'Графики по месяцам и категориям. Прогноз на год с календарем расходов.',
     subEn: 'Charts by month and category. Yearly forecast plus your priciest service.',
     visual: 'chart',
   },
   {
-    num: '04', ru: 'Проекты подписок', en: 'Projects for subscriptions',
+    num: '04', ru: 'Проекты для подписок', en: 'Projects for subscriptions',
     subRu: 'Несколько бизнесов или общий тариф Team — каждому свой проект.',
-    subEn: 'Several businesses or a shared Team plan — one project each.',
+    subEn: 'Several businesses or a shared Team plan — one project each. Free plan includes one project.',
     visual: 'projects',
   },
 ]
 
 export function Solution() {
   const { t } = useLang()
+  const isMobile = useIsMobile()
 
   return (
-    <Section bg={SUB0.panel} pad="120px 48px">
+    <Section bg={SUB0.panel} pad={isMobile ? '64px 20px' : '120px 48px'}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 48, flexWrap: 'wrap' }}>
         <div>
           <SectionEyebrow num="04">{t('Решение', 'The solution')}</SectionEyebrow>
@@ -143,7 +145,11 @@ export function Solution() {
         </p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginTop: 48 }}>
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: isMobile ? '1fr' : 'repeat(4, 1fr)',
+        gap: 16, marginTop: 48,
+      }}>
         {ITEMS.map(it => (
           <div key={it.num} className="s-card" style={{
             border: `1px solid ${SUB0.line}`, borderRadius: 12,
