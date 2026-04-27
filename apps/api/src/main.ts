@@ -37,6 +37,8 @@ async function bootstrap() {
     methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"]
   });
 
+  app.enableShutdownHooks();
+
   await app.listen(port);
 
   Logger.log(`API listening on http://localhost:${port}/api/v1`, "Bootstrap");
