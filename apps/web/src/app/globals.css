@@ -1,38 +1,96 @@
-*, *::before, *::after { box-sizing: border-box; }
-html, body { margin: 0; padding: 0; background: #fafaf7; color: #0a0a0a; }
-body { padding-bottom: env(safe-area-inset-bottom); }
-html { scroll-behavior: smooth; }
-::selection { background: #1347ff; color: #fff; }
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: #fafaf7;
+  color: #0a0a0a;
+}
+body {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+html {
+  scroll-behavior: smooth;
+}
+::selection {
+  background: #1347ff;
+  color: #fff;
+}
 
 @keyframes s-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.35; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
 }
 @keyframes s-float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
 }
 @keyframes s-spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 @keyframes s-blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
 }
 @keyframes mega-drop-in {
-  from { opacity: 0; transform: translateY(-4px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.s-a:hover { opacity: 0.7; transition: opacity 0.15s; }
-.s-btn { transition: transform 0.15s ease, box-shadow 0.15s ease; }
-.s-btn:hover { transform: translateY(-1px); }
-.s-card { transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease; }
+.s-a:hover {
+  opacity: 0.7;
+  transition: opacity 0.15s;
+}
+.s-btn {
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+.s-btn:hover {
+  transform: translateY(-1px);
+}
+.s-card {
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
 .s-card:hover {
   transform: translateY(-2px);
   border-color: #d6d2c5 !important;
   box-shadow: 0 10px 24px -16px rgba(10, 10, 10, 0.2);
 }
 
-a { -webkit-tap-highlight-color: transparent; }
-button { font-family: inherit; }
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+button {
+  font-family: inherit;
+}

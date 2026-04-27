@@ -1,4 +1,4 @@
 module.exports = {
   root: true,
-  extends: ["@subzero/eslint-config"]
+  extends: ['@subzero/eslint-config'],
 };

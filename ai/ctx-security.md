@@ -1,4 +1,5 @@
 ### Purpose
+
 Security-правила для Sub0 — SaaS учёта подписок. Стэк: Next.js
 (`apps/web`), NestJS (`apps/api`), Postgres + Prisma. Веб-приложение
 с аккаунтами, JWT-сессиями, OAuth, автосписаниями (только токены
@@ -12,6 +13,7 @@ Security-правила для Sub0 — SaaS учёта подписок. Стэ
 ### Threat Model
 
 **Главные противники:**
+
 - ATO (account takeover) — credential stuffing, утечка refresh-token.
 - Phishing OAuth-flow.
 - Подделка webhook’ов платёжных провайдеров.
@@ -20,6 +22,7 @@ Security-правила для Sub0 — SaaS учёта подписок. Стэ
 - Боты на формах регистрации/reset (масс-создание учёток).
 
 **Чувствительные данные:**
+
 - Пароли — `argon2id`, никогда в plaintext, никогда в логах.
 - Refresh tokens — `httpOnly + Secure + SameSite=Lax` cookie, ротация
   на каждый refresh.
@@ -35,14 +38,16 @@ Security-правила для Sub0 — SaaS учёта подписок. Стэ
   никогда в БД, никогда в логи.
 
 **Out of scope в MVP** (расширяй файл при включении):
+
 - 2FA, session management UI, holiday mode, idea portal, team-аккаунты
   / projects, инструменты без регистрации.
 
 ### Core Rules
 
 #### 1. Validation & encoding
+
 - Nest: глобальный `ValidationPipe({ whitelist, forbidNonWhitelisted,
-  forbidUnknownValues, transform })` + DTO с `class-validator`.
+forbidUnknownValues, transform })` + DTO с `class-validator`.
 - Web (server actions / route handlers): `zod` на каждом входе. Никогда
   не доверяем shape `FormData` или JSON.
 - Лимиты в схемах: email ≤ 254, password 12–128, имя ≤ 100, название
@@ -52,6 +57,7 @@ Security-правила для Sub0 — SaaS учёта подписок. Стэ
   одной строки комментария-обоснования.
 
 #### 2. Auth & sessions
+
 - Хеширование паролей: `argon2id` (`@node-rs/argon2`), параметры по
   OWASP cheat sheet (`m=64MB, t=3, p=1`).
 - Email verification обязательна **до первой оплаты** (не до
@@ -71,6 +77,7 @@ Security-правила для Sub0 — SaaS учёта подписок. Стэ
   30-дневный grace period покрывает требование.
 
 #### 3. Anti-spam (формы)
+
 - `@nestjs/throttler` на:
   - `POST /auth/register` — 5 / IP / час.
   - `POST /auth/login` — 10 / `email+IP` / 15 мин (комбинируется
@@ -83,6 +90,7 @@ Security-правила для Sub0 — SaaS учёта подписок. Стэ
   появится: non-empty value → silent 200.
 
 #### 4. HTTP & headers
+
 - Nest: `helmet` + `compression`, CORS — explicit allowlist из env
   (`CORS_ORIGINS`), без `*` в prod.
 - Web (`next.config.ts`): HSTS preload (≥ 6мес),
@@ -96,6 +104,7 @@ Security-правила для Sub0 — SaaS учёта подписок. Стэ
   через HTTPS.
 
 #### 5. Payments (автосписание)
+
 - **PCI minimization:** card number / CVV никогда не проходят
   через наш код. Юзер вводит карту в iframe / SDK провайдера
   (СБП-токенизация / BePaid widget), мы получаем только токен.
@@ -110,6 +119,7 @@ Security-правила для Sub0 — SaaS учёта подписок. Стэ
   после — DLQ для ручного разбора.
 
 #### 6. Files
+
 - **Аватары (MVP):** ≤ 2MB, MIME whitelist `image/jpeg|png|webp`.
   Magic-byte check (не доверять `Content-Type` от клиента). Re-encode
   через `sharp` (защита от SVG-XSS, polyglot, embedded EXIF).
@@ -121,6 +131,7 @@ Security-правила для Sub0 — SaaS учёта подписок. Стэ
   `subscriptions_found`.
 
 #### 7. Notifications
+
 - **Email (MVP):** провайдер с DKIM + SPF + DMARC. Reset-ссылки
   с TTL ≤ 1 час.
 - **Telegram (v1.1):** bot-токен в env, никогда в клиент. Link-flow
@@ -131,6 +142,7 @@ Security-правила для Sub0 — SaaS учёта подписок. Стэ
   per-device, при logout удаляются.
 
 #### 8. Secrets & env
+
 - `.env`, `.env.local` в `.gitignore`. `.env.example` — пустые
   плейсхолдеры.
 - Boot-time валидация: `@nestjs/config` + `zod`-схема в
@@ -141,6 +153,7 @@ Security-правила для Sub0 — SaaS учёта подписок. Стэ
   Никогда — provider keys, Telegram bot token, JWT-ключи.
 
 #### 9. Logging & errors
+
 - Nest: централизованный exception filter, `x-request-id` сквозной.
 - Generic ошибки клиенту (без stack trace, без internal-message).
   Детали — server-side с request-id.
@@ -152,17 +165,20 @@ Security-правила для Sub0 — SaaS учёта подписок. Стэ
 - Логи имеют TTL (90 дней по умолчанию).
 
 #### 10. i18n
+
 - Пользовательский input не интерполируется в перевод как HTML —
   только как строка.
 - Имена подписок (user-controlled) при отображении в email — escape
   как HTML, в Telegram — escape как MarkdownV2.
 
 #### 11. Currencies / exchange rates
+
 - Внешний источник — ЦБ РФ (открытый XML). Pull раз в сутки.
 - При недоступности ЦБ — отдавать последний валидный курс с пометкой
   `stale_at`. Не падать, не блокировать UI.
 
 #### 12. Dependencies
+
 - `yarn` (Berry). Commit `yarn.lock`.
 - Перед merge’ем PR’а с auth / payments / files — `yarn npm audit`.
 - Не тянем пакеты с downloads < 10k/нед или unmaintained > 2 лет
@@ -188,6 +204,7 @@ Security-правила для Sub0 — SaaS учёта подписок. Стэ
     этот файл обновлён первым?
 
 ### When in doubt
+
 - Группировать findings по severity: **Critical** (блок merge) /
   **High** / **Medium** / **Low**. Каждое — file+line, что не так,
   риск, фикс с кодом.

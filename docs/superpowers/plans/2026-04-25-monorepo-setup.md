@@ -84,6 +84,7 @@ Expected: shows current `src/`, `package.json`, `tsconfig.json`, `next.config.ts
 ### Task 0.2: Remove build artifacts and old install
 
 **Files:**
+
 - Delete: `.next/`, `node_modules/`, `yarn.lock`
 
 - [ ] **Step 1: Delete build/install artifacts**
@@ -105,6 +106,7 @@ Do NOT commit yet — bundle with Phase 1 commit.
 ### Task 1.1: Activate Yarn 4 via corepack
 
 **Files:**
+
 - Create: `.yarnrc.yml`
 
 - [ ] **Step 1: Enable corepack and pin Yarn 4 stable**
@@ -120,6 +122,7 @@ Expected: `4.x.y` (e.g. `4.5.0`). If still `1.x`, run `corepack enable` again an
 - [ ] **Step 3: Create `.yarnrc.yml`**
 
 File: `.yarnrc.yml`
+
 ```yaml
 nodeLinker: node-modules
 enableGlobalCache: true
@@ -128,6 +131,7 @@ enableGlobalCache: true
 ### Task 1.2: Replace root `package.json` with workspace root
 
 **Files:**
+
 - Modify: `package.json` (full rewrite)
 
 - [ ] **Step 1: Read current `package.json`**
@@ -138,16 +142,14 @@ Expected: shows the existing Next.js manifest (next, react, react-dom). The `nex
 - [ ] **Step 2: Overwrite `package.json` with workspace root**
 
 File: `package.json`
+
 ```json
 {
   "name": "subzero",
   "version": "0.1.0",
   "private": true,
   "packageManager": "yarn@4.5.0",
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
+  "workspaces": ["apps/*", "packages/*"],
   "scripts": {
     "dev": "yarn workspace @subzero/shared build && turbo run dev",
     "build": "turbo run build",
@@ -168,11 +170,13 @@ Note: Replace `4.5.0` with the exact version printed by `yarn --version` in Task
 ### Task 1.3: Add root `turbo.json`
 
 **Files:**
+
 - Create: `turbo.json`
 
 - [ ] **Step 1: Create `turbo.json`**
 
 File: `turbo.json`
+
 ```json
 {
   "$schema": "https://turbo.build/schema.json",
@@ -207,11 +211,13 @@ File: `turbo.json`
 ### Task 1.4: Add root `tsconfig.json` (IDE-only)
 
 **Files:**
+
 - Modify: `tsconfig.json` (full rewrite)
 
 - [ ] **Step 1: Overwrite `tsconfig.json`**
 
 File: `tsconfig.json`
+
 ```json
 {
   "compilerOptions": {
@@ -240,12 +246,14 @@ File: `tsconfig.json`
 ### Task 1.5: Update root `.gitignore` for monorepo artifacts
 
 **Files:**
+
 - Modify: `.gitignore`
 
 - [ ] **Step 1: Append monorepo entries**
 
 File: `.gitignore` (append; current contents are `.next/`, `node_modules/`, `.env*.local`, `out/`)
 Final content:
+
 ```
 # Build outputs
 .next/
@@ -278,6 +286,7 @@ node_modules/
 ### Task 1.6: Create `apps/` and `packages/` directories
 
 **Files:**
+
 - Create: `apps/.gitkeep`, `packages/.gitkeep` (placeholders, removed once content lands)
 
 - [ ] **Step 1: Make directories**
@@ -290,10 +299,12 @@ Expected: directories created (no output).
 - [ ] **Step 1: Stage and commit root scaffolding**
 
 Run:
+
 ```bash
 git add .yarnrc.yml package.json turbo.json tsconfig.json .gitignore
 git commit -m "chore: bootstrap Yarn 4 workspace and Turborepo root"
 ```
+
 Expected: commit created; `git status` shows clean.
 
 ---
@@ -303,6 +314,7 @@ Expected: commit created; `git status` shows clean.
 ### Task 2.1: Create `@subzero/tsconfig`
 
 **Files:**
+
 - Create: `packages/tsconfig/package.json`, `packages/tsconfig/base.json`, `packages/tsconfig/nextjs.json`, `packages/tsconfig/nestjs.json`
 
 - [ ] **Step 1: `packages/tsconfig/package.json`**
@@ -312,11 +324,7 @@ Expected: commit created; `git status` shows clean.
   "name": "@subzero/tsconfig",
   "version": "0.0.0",
   "private": true,
-  "files": [
-    "base.json",
-    "nextjs.json",
-    "nestjs.json"
-  ]
+  "files": ["base.json", "nextjs.json", "nestjs.json"]
 }
 ```
 
@@ -384,6 +392,7 @@ Expected: commit created; `git status` shows clean.
 ### Task 2.2: Create `@subzero/eslint-config`
 
 **Files:**
+
 - Create: `packages/eslint-config/package.json`, `packages/eslint-config/base.js`, `packages/eslint-config/next.js`, `packages/eslint-config/nest.js`
 
 - [ ] **Step 1: `packages/eslint-config/package.json`**
@@ -394,11 +403,7 @@ Expected: commit created; `git status` shows clean.
   "version": "0.0.0",
   "private": true,
   "main": "base.js",
-  "files": [
-    "base.js",
-    "next.js",
-    "nest.js"
-  ],
+  "files": ["base.js", "next.js", "nest.js"],
   "dependencies": {
     "@typescript-eslint/eslint-plugin": "^8.10.0",
     "@typescript-eslint/parser": "^8.10.0",
@@ -415,27 +420,24 @@ Expected: commit created; `git status` shows clean.
 ```js
 /** @type {import("eslint").Linter.Config} */
 module.exports = {
-  parser: "@typescript-eslint/parser",
+  parser: '@typescript-eslint/parser',
   parserOptions: {
     ecmaVersion: 2022,
-    sourceType: "module"
+    sourceType: 'module',
   },
-  plugins: ["@typescript-eslint"],
-  extends: [
-    "eslint:recommended",
-    "plugin:@typescript-eslint/recommended"
-  ],
+  plugins: ['@typescript-eslint'],
+  extends: ['eslint:recommended', 'plugin:@typescript-eslint/recommended'],
   env: {
     node: true,
-    es2022: true
+    es2022: true,
   },
   rules: {
-    "@typescript-eslint/no-unused-vars": [
-      "error",
-      { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }
-    ]
+    '@typescript-eslint/no-unused-vars': [
+      'error',
+      { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+    ],
   },
-  ignorePatterns: ["dist/", ".next/", "node_modules/", "*.config.js", "*.config.ts"]
+  ignorePatterns: ['dist/', '.next/', 'node_modules/', '*.config.js', '*.config.ts'],
 };
 ```
 
@@ -444,14 +446,11 @@ module.exports = {
 ```js
 /** @type {import("eslint").Linter.Config} */
 module.exports = {
-  extends: [
-    "./base.js",
-    "next/core-web-vitals"
-  ],
+  extends: ['./base.js', 'next/core-web-vitals'],
   env: {
     browser: true,
-    node: true
-  }
+    node: true,
+  },
 };
 ```
 
@@ -460,21 +459,22 @@ module.exports = {
 ```js
 /** @type {import("eslint").Linter.Config} */
 module.exports = {
-  extends: ["./base.js"],
+  extends: ['./base.js'],
   env: {
     node: true,
-    jest: true
+    jest: true,
   },
   rules: {
-    "@typescript-eslint/no-explicit-any": "off",
-    "@typescript-eslint/no-extraneous-class": "off"
-  }
+    '@typescript-eslint/no-explicit-any': 'off',
+    '@typescript-eslint/no-extraneous-class': 'off',
+  },
 };
 ```
 
 ### Task 2.3: Create `@subzero/shared` with the `OrderStatus` smoke-test enum
 
 **Files:**
+
 - Create: `packages/shared/package.json`, `packages/shared/tsconfig.json`, `packages/shared/src/index.ts`, `packages/shared/src/enums/index.ts`, `packages/shared/src/enums/order-status.enum.ts`
 
 - [ ] **Step 1: `packages/shared/package.json`**
@@ -531,33 +531,34 @@ Note: at runtime (Nest after `nest build` → `node dist/main.js`), `@subzero/sh
 
 ```ts
 export enum OrderStatus {
-  NEW = "NEW",
-  PAID = "PAID",
-  SHIPPED = "SHIPPED",
-  DELIVERED = "DELIVERED",
-  CANCELLED = "CANCELLED"
+  NEW = 'NEW',
+  PAID = 'PAID',
+  SHIPPED = 'SHIPPED',
+  DELIVERED = 'DELIVERED',
+  CANCELLED = 'CANCELLED',
 }
 ```
 
 - [ ] **Step 4: `packages/shared/src/enums/index.ts`**
 
 ```ts
-export * from "./order-status.enum";
+export * from './order-status.enum';
 ```
 
 - [ ] **Step 5: `packages/shared/src/index.ts`**
 
 ```ts
-export * from "./enums";
+export * from './enums';
 ```
 
 - [ ] **Step 6: Add `.eslintrc.cjs` for `@subzero/shared`**
 
 File: `packages/shared/.eslintrc.cjs`
+
 ```js
 module.exports = {
   root: true,
-  extends: ["@subzero/eslint-config"]
+  extends: ['@subzero/eslint-config'],
 };
 ```
 
@@ -566,10 +567,12 @@ module.exports = {
 - [ ] **Step 1: Stage and commit**
 
 Run:
+
 ```bash
 git add packages/
 git commit -m "feat(packages): add shared, eslint-config, and tsconfig packages"
 ```
+
 Expected: commit created.
 
 ---
@@ -579,6 +582,7 @@ Expected: commit created.
 ### Task 3.1: Move existing files into `apps/web/` with `git mv`
 
 **Files (moved, history preserved):**
+
 - `src/` → `apps/web/src/`
 - `next.config.ts` → `apps/web/next.config.ts`
 - `next-env.d.ts` → `apps/web/next-env.d.ts`
@@ -592,16 +596,19 @@ Run: `mkdir -p apps/web`
 - [ ] **Step 2: `git mv` the source tree**
 
 Run:
+
 ```bash
 git mv src apps/web/src
 git mv next.config.ts apps/web/next.config.ts
 git mv next-env.d.ts apps/web/next-env.d.ts
 ```
+
 Expected: `git status` shows three renamed paths under `apps/web/`.
 
 ### Task 3.2: Create `apps/web/package.json`
 
 **Files:**
+
 - Create: `apps/web/package.json`
 
 - [ ] **Step 1: Write `apps/web/package.json`**
@@ -641,6 +648,7 @@ Expected: `git status` shows three renamed paths under `apps/web/`.
 ### Task 3.3: Replace `apps/web/tsconfig.json`
 
 **Files:**
+
 - Create: `apps/web/tsconfig.json`
 
 - [ ] **Step 1: Write the file**
@@ -656,12 +664,7 @@ Expected: `git status` shows three renamed paths under `apps/web/`.
       "@subzero/shared/*": ["../../packages/shared/src/*"]
     }
   },
-  "include": [
-    "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
-    ".next/types/**/*.ts"
-  ],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
   "exclude": ["node_modules", ".next", "dist"]
 }
 ```
@@ -669,35 +672,38 @@ Expected: `git status` shows three renamed paths under `apps/web/`.
 ### Task 3.4: Update `apps/web/next.config.ts` to transpile `@subzero/shared`
 
 **Files:**
+
 - Modify: `apps/web/next.config.ts`
 
 - [ ] **Step 1: Read current contents**
 
 Run: `cat apps/web/next.config.ts`
 Expected:
+
 ```ts
-import type { NextConfig } from 'next'
+import type { NextConfig } from 'next';
 
-const nextConfig: NextConfig = {}
+const nextConfig: NextConfig = {};
 
-export default nextConfig
+export default nextConfig;
 ```
 
 - [ ] **Step 2: Replace contents**
 
 ```ts
-import type { NextConfig } from 'next'
+import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  transpilePackages: ['@subzero/shared']
-}
+  transpilePackages: ['@subzero/shared'],
+};
 
-export default nextConfig
+export default nextConfig;
 ```
 
 ### Task 3.5: Add `apps/web/.eslintrc.cjs`
 
 **Files:**
+
 - Create: `apps/web/.eslintrc.cjs`
 
 - [ ] **Step 1: Write the file**
@@ -705,13 +711,14 @@ export default nextConfig
 ```js
 module.exports = {
   root: true,
-  extends: ["@subzero/eslint-config/next"]
+  extends: ['@subzero/eslint-config/next'],
 };
 ```
 
 ### Task 3.6: Add OrderStatus smoke-test usage in `apps/web`
 
 **Files:**
+
 - Create: `apps/web/src/shared/lib/order-status.ts`
 
 - [ ] **Step 1: Verify the target directory exists**
@@ -722,8 +729,9 @@ Expected: directory listing (FSD `shared/lib` should exist per ai/ctx-frontend-f
 - [ ] **Step 2: Write the re-export**
 
 File: `apps/web/src/shared/lib/order-status.ts`
+
 ```ts
-export { OrderStatus } from "@subzero/shared";
+export { OrderStatus } from '@subzero/shared';
 ```
 
 This file exists solely to satisfy the acceptance criterion that cross-package types resolve in `apps/web`. It is harmless and can be expanded into real domain code later.
@@ -733,10 +741,12 @@ This file exists solely to satisfy the acceptance criterion that cross-package t
 - [ ] **Step 1: Stage and commit**
 
 Run:
+
 ```bash
 git add apps/web
 git commit -m "refactor: relocate Next.js app into apps/web and wire shared packages"
 ```
+
 Expected: commit shows renames (preserving history) and the new files.
 
 ---
@@ -748,6 +758,7 @@ This phase scaffolds NestJS files manually (skipping `nest new` to avoid its sel
 ### Task 4.1: Create `apps/api/package.json`
 
 **Files:**
+
 - Create: `apps/api/package.json`
 
 - [ ] **Step 1: Write the file**
@@ -808,6 +819,7 @@ This phase scaffolds NestJS files manually (skipping `nest new` to avoid its sel
 ### Task 4.2: Create `apps/api/tsconfig.json` and `tsconfig.build.json`
 
 **Files:**
+
 - Create: `apps/api/tsconfig.json`, `apps/api/tsconfig.build.json`
 
 - [ ] **Step 1: `apps/api/tsconfig.json`**
@@ -841,6 +853,7 @@ This phase scaffolds NestJS files manually (skipping `nest new` to avoid its sel
 ### Task 4.3: Create `apps/api/nest-cli.json`
 
 **Files:**
+
 - Create: `apps/api/nest-cli.json`
 
 - [ ] **Step 1: Write the file**
@@ -860,6 +873,7 @@ This phase scaffolds NestJS files manually (skipping `nest new` to avoid its sel
 ### Task 4.4: Create `apps/api/.eslintrc.cjs`
 
 **Files:**
+
 - Create: `apps/api/.eslintrc.cjs`
 
 - [ ] **Step 1: Write the file**
@@ -867,42 +881,43 @@ This phase scaffolds NestJS files manually (skipping `nest new` to avoid its sel
 ```js
 module.exports = {
   root: true,
-  extends: ["@subzero/eslint-config/nest"],
+  extends: ['@subzero/eslint-config/nest'],
   parserOptions: {
-    project: "tsconfig.json",
+    project: 'tsconfig.json',
     tsconfigRootDir: __dirname,
-    sourceType: "module"
+    sourceType: 'module',
   },
-  ignorePatterns: ["dist/", "node_modules/", ".eslintrc.cjs"]
+  ignorePatterns: ['dist/', 'node_modules/', '.eslintrc.cjs'],
 };
 ```
 
 ### Task 4.5: Create the Nest source files
 
 **Files:**
+
 - Create: `apps/api/src/main.ts`, `apps/api/src/app.module.ts`, `apps/api/src/health/health.module.ts`, `apps/api/src/health/health.controller.ts`
 
 - [ ] **Step 1: `apps/api/src/main.ts`**
 
 ```ts
-import { NestFactory } from "@nestjs/core";
-import { ValidationPipe } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import { AppModule } from "./app.module";
+import { NestFactory } from '@nestjs/core';
+import { ValidationPipe } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const config = app.get(ConfigService);
 
-  const port = Number(config.get<string>("API_PORT") ?? 3001);
-  const webOrigin = config.get<string>("WEB_ORIGIN") ?? "http://localhost:3000";
+  const port = Number(config.get<string>('API_PORT') ?? 3001);
+  const webOrigin = config.get<string>('WEB_ORIGIN') ?? 'http://localhost:3000';
 
-  app.setGlobalPrefix("api");
+  app.setGlobalPrefix('api');
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
   app.enableCors({ origin: webOrigin, credentials: true });
 
   await app.listen(port);
-   
+
   console.log(`api listening on http://localhost:${port}/api`);
 }
 
@@ -912,15 +927,12 @@ bootstrap();
 - [ ] **Step 2: `apps/api/src/app.module.ts`**
 
 ```ts
-import { Module } from "@nestjs/common";
-import { ConfigModule } from "@nestjs/config";
-import { HealthModule } from "./health/health.module";
+import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+import { HealthModule } from './health/health.module';
 
 @Module({
-  imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
-    HealthModule
-  ]
+  imports: [ConfigModule.forRoot({ isGlobal: true }), HealthModule],
 })
 export class AppModule {}
 ```
@@ -928,11 +940,11 @@ export class AppModule {}
 - [ ] **Step 3: `apps/api/src/health/health.module.ts`**
 
 ```ts
-import { Module } from "@nestjs/common";
-import { HealthController } from "./health.controller";
+import { Module } from '@nestjs/common';
+import { HealthController } from './health.controller';
 
 @Module({
-  controllers: [HealthController]
+  controllers: [HealthController],
 })
 export class HealthModule {}
 ```
@@ -940,17 +952,17 @@ export class HealthModule {}
 - [ ] **Step 4: `apps/api/src/health/health.controller.ts`** (uses `OrderStatus` to satisfy cross-package import smoke test)
 
 ```ts
-import { Controller, Get } from "@nestjs/common";
-import { OrderStatus } from "@subzero/shared";
+import { Controller, Get } from '@nestjs/common';
+import { OrderStatus } from '@subzero/shared';
 
-@Controller("health")
+@Controller('health')
 export class HealthController {
   @Get()
-  getHealth(): { status: "ok"; uptime: number; sampleStatuses: OrderStatus[] } {
+  getHealth(): { status: 'ok'; uptime: number; sampleStatuses: OrderStatus[] } {
     return {
-      status: "ok",
+      status: 'ok',
       uptime: process.uptime(),
-      sampleStatuses: [OrderStatus.NEW, OrderStatus.PAID]
+      sampleStatuses: [OrderStatus.NEW, OrderStatus.PAID],
     };
   }
 }
@@ -961,10 +973,12 @@ export class HealthController {
 - [ ] **Step 1: Stage and commit**
 
 Run:
+
 ```bash
 git add apps/api
 git commit -m "feat(api): scaffold NestJS app with health endpoint and shared types"
 ```
+
 Expected: commit created.
 
 ---
@@ -1038,6 +1052,7 @@ Expected: `@subzero/shared` builds first (Turbo dep order), then `@subzero/web` 
 ### Task 5.6: Update `AGENTS.md` to reflect Yarn 4 + workspaces
 
 **Files:**
+
 - Modify: `AGENTS.md`
 
 - [ ] **Step 1: Read current `AGENTS.md`**
@@ -1047,10 +1062,13 @@ Run: `cat AGENTS.md`
 - [ ] **Step 2: Edit the "Rules" line about yarn**
 
 Replace:
+
 ```
 - Use yarn instead of npm.
 ```
+
 With:
+
 ```
 - Use yarn (Yarn 4 / Berry, configured at the workspace root). All commands run from repo root via `yarn <script>` or `yarn workspace @subzero/<name> <script>`.
 ```
@@ -1058,6 +1076,7 @@ With:
 - [ ] **Step 3: Append a "Monorepo layout" pointer to the Project section**
 
 Add at the end of the `### Project` section (after the existing single-line description):
+
 ```
 The repo is a Yarn 4 monorepo orchestrated by Turborepo:
 - `apps/web` — Next.js 15 frontend (FSD layout in `src/`).
@@ -1076,10 +1095,12 @@ Expected: all three exit 0.
 - [ ] **Step 2: Stage and commit**
 
 Run:
+
 ```bash
 git add yarn.lock .yarn AGENTS.md
 git commit -m "chore: install workspace deps and document monorepo in AGENTS.md"
 ```
+
 Expected: commit created. `git status` clean.
 
 - [ ] **Step 3: Final summary check**
@@ -1094,10 +1115,10 @@ Expected: `working tree clean`.
 
 ## Acceptance criteria mapping
 
-| Criterion | Verified in |
-|---|---|
-| `yarn dev` launches both web (3000) and api (3001) | Task 5.4 |
-| TypeScript paths work between packages (`@subzero/shared` imported in both apps) | Tasks 3.6, 4.5 (sources) + 5.2 (typecheck) |
-| No linter errors | Task 5.3 |
-| Production build also works | Task 5.5 |
-| Existing FSD structure preserved in `apps/web/src` | Task 3.1 (git mv preserves layout and history) |
+| Criterion                                                                        | Verified in                                    |
+| -------------------------------------------------------------------------------- | ---------------------------------------------- |
+| `yarn dev` launches both web (3000) and api (3001)                               | Task 5.4                                       |
+| TypeScript paths work between packages (`@subzero/shared` imported in both apps) | Tasks 3.6, 4.5 (sources) + 5.2 (typecheck)     |
+| No linter errors                                                                 | Task 5.3                                       |
+| Production build also works                                                      | Task 5.5                                       |
+| Existing FSD structure preserved in `apps/web/src`                               | Task 3.1 (git mv preserves layout and history) |

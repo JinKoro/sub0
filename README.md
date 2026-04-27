@@ -6,6 +6,7 @@
 ## Локальный запуск
 
 ### Требования
+
 - Docker + Docker Compose
 - Node.js 20+
 - Yarn Berry (`corepack enable && corepack prepare yarn@stable --activate`)
@@ -28,13 +29,13 @@ yarn dev
 
 ### Сервисы
 
-| Сервис        | URL                                              |
-| ------------- | ------------------------------------------------ |
-| Next.js (web) | http://localhost:3000                            |
-| NestJS (api)  | http://localhost:3001                            |
-| Postgres      | postgresql://sub0:sub0@localhost:5432/sub0       |
-| MailHog SMTP  | localhost:1025                                   |
-| MailHog UI    | http://localhost:8025                            |
+| Сервис        | URL                                        |
+| ------------- | ------------------------------------------ |
+| Next.js (web) | http://localhost:3000                      |
+| NestJS (api)  | http://localhost:3001                      |
+| Postgres      | postgresql://sub0:sub0@localhost:5432/sub0 |
+| MailHog SMTP  | localhost:1025                             |
+| MailHog UI    | http://localhost:8025                      |
 
 Все исходящие письма из dev-окружения отправляются в MailHog —
 смотреть в UI на 8025.

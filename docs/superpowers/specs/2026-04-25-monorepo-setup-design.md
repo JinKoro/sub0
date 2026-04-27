@@ -7,6 +7,7 @@
 ## Goal
 
 Convert the current single-app Next.js project into a monorepo that hosts:
+
 - the existing Next.js frontend (`apps/web`),
 - a new NestJS backend (`apps/api`),
 - shared TypeScript packages consumed by both apps.
@@ -26,12 +27,12 @@ Out of scope for this spec (will be follow-up work):
 
 ## Tooling decisions
 
-| Decision | Choice | Rationale |
-|---|---|---|
-| Package manager | **Yarn 4 (Berry)** with `nodeLinker: node-modules` | Required by `AGENTS.md` (yarn over npm). Berry gives modern workspace tooling; `node-modules` linker keeps Next.js / Nest.js working without PnP friction. |
-| Task runner | **Turborepo** | Required by task. Provides parallel `dev`, dependency-aware `build`, caching for `lint`/`test`/`typecheck`. |
-| Workspaces glob | `apps/*`, `packages/*` | Standard split between deployables and libraries. |
-| TypeScript | Project references with `composite: true` on shared packages | Enables incremental builds and correct cross-package type checking. |
+| Decision        | Choice                                                       | Rationale                                                                                                                                                  |
+| --------------- | ------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Package manager | **Yarn 4 (Berry)** with `nodeLinker: node-modules`           | Required by `AGENTS.md` (yarn over npm). Berry gives modern workspace tooling; `node-modules` linker keeps Next.js / Nest.js working without PnP friction. |
+| Task runner     | **Turborepo**                                                | Required by task. Provides parallel `dev`, dependency-aware `build`, caching for `lint`/`test`/`typecheck`.                                                |
+| Workspaces glob | `apps/*`, `packages/*`                                       | Standard split between deployables and libraries.                                                                                                          |
+| TypeScript      | Project references with `composite: true` on shared packages | Enables incremental builds and correct cross-package type checking.                                                                                        |
 
 ## Directory structure
 
@@ -134,13 +135,13 @@ Resolution strategy is path-based in dev and exports-based in production:
 
 ## `turbo.json` pipelines
 
-| Task | `dependsOn` | `outputs` | `cache` | `persistent` |
-|---|---|---|---|---|
-| `dev` | — | — | false | true |
-| `build` | `^build` | `.next/**`, `!.next/cache/**`, `dist/**` | true | false |
-| `lint` | — | — | true | false |
-| `typecheck` | `^typecheck` | — | true | false |
-| `test` | `^build` | `coverage/**` | true | false |
+| Task        | `dependsOn`  | `outputs`                                | `cache` | `persistent` |
+| ----------- | ------------ | ---------------------------------------- | ------- | ------------ |
+| `dev`       | —            | —                                        | false   | true         |
+| `build`     | `^build`     | `.next/**`, `!.next/cache/**`, `dist/**` | true    | false        |
+| `lint`      | —            | —                                        | true    | false        |
+| `typecheck` | `^typecheck` | —                                        | true    | false        |
+| `test`      | `^build`     | `coverage/**`                            | true    | false        |
 
 ## Root scripts
 
@@ -165,21 +166,21 @@ The implementation plan (next document) will cover the move in this order, but t
 
 ## Acceptance criteria & verification
 
-| Criterion | Verification |
-|---|---|
-| `yarn dev` launches both apps | After `yarn install`, run `yarn dev`. `curl http://localhost:3000` returns the Next.js home page; `curl http://localhost:3001/api/health` returns `{"status":"ok",...}`. |
+| Criterion                              | Verification                                                                                                                                                                     |
+| -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `yarn dev` launches both apps          | After `yarn install`, run `yarn dev`. `curl http://localhost:3000` returns the Next.js home page; `curl http://localhost:3001/api/health` returns `{"status":"ok",...}`.         |
 | TypeScript paths work between packages | `apps/web` has at least one file importing `OrderStatus` from `@subzero/shared`; same in `apps/api/src/health/health.controller.ts`. `yarn typecheck` passes for the whole repo. |
-| No linter errors | `yarn lint` exits 0 across all workspaces. |
+| No linter errors                       | `yarn lint` exits 0 across all workspaces.                                                                                                                                       |
 
 ## Risks and mitigations
 
-| Risk | Mitigation |
-|---|---|
-| Yarn 4 + Next.js 15 corepack quirks | Pin `packageManager: "yarn@4.x"`, use `nodeLinker: node-modules`, avoid PnP. Test `yarn dev` immediately after install. |
-| Nest's CLI assumes its own tsconfig layout | Keep `tsconfig.build.json` in `apps/api`; have `nest-cli.json` point at it. Don't try to make Nest read project references. |
-| Cross-package imports broken at Next build | Use `transpilePackages: ["@subzero/shared"]` in `next.config.ts`; verify with `yarn build` not just `yarn dev`. |
-| Loss of git history when relocating files | Use `git mv` for every relocated file. |
-| `.next/` build artifact committed by accident | Add `.next/`, `dist/`, `.turbo/` to `.gitignore` before first commit. |
+| Risk                                          | Mitigation                                                                                                                  |
+| --------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Yarn 4 + Next.js 15 corepack quirks           | Pin `packageManager: "yarn@4.x"`, use `nodeLinker: node-modules`, avoid PnP. Test `yarn dev` immediately after install.     |
+| Nest's CLI assumes its own tsconfig layout    | Keep `tsconfig.build.json` in `apps/api`; have `nest-cli.json` point at it. Don't try to make Nest read project references. |
+| Cross-package imports broken at Next build    | Use `transpilePackages: ["@subzero/shared"]` in `next.config.ts`; verify with `yarn build` not just `yarn dev`.             |
+| Loss of git history when relocating files     | Use `git mv` for every relocated file.                                                                                      |
+| `.next/` build artifact committed by accident | Add `.next/`, `dist/`, `.turbo/` to `.gitignore` before first commit.                                                       |
 
 ## Open follow-ups (not in this spec)
 

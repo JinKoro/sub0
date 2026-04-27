@@ -1,11 +1,11 @@
-import { ReactNode } from 'react'
-import { SUB0 } from '@/shared/constants/tokens'
+import { ReactNode } from 'react';
+import { SUB0 } from '@/shared/constants/tokens';
 
 interface Props {
-  children: ReactNode
-  pad?: string
-  bg?: string
-  id?: string
+  children: ReactNode;
+  pad?: string;
+  bg?: string;
+  id?: string;
 }
 
 export function Section({ children, pad = '120px 48px', bg, id }: Props) {
@@ -20,5 +20,5 @@ export function Section({ children, pad = '120px 48px', bg, id }: Props) {
     >
       <div style={{ maxWidth: 1280, margin: '0 auto' }}>{children}</div>
     </section>
-  )
+  );
 }
