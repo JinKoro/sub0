@@ -1,0 +1,23 @@
+node_modules/
+.yarn/
+.pnp.*
+
+# Build outputs
+.next/
+out/
+dist/
+*.tsbuildinfo
+
+# Turbo / caches
+.turbo/
+
+# Generated
+**/generated/
+**/*.generated.*
+yarn.lock
+
+# Env / IDE / OS
+.env*
+.idea/
+.vscode/
+.DS_Store

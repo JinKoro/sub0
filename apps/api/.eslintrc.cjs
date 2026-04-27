@@ -1,10 +1,10 @@
 module.exports = {
   root: true,
-  extends: ["@subzero/eslint-config/nest"],
+  extends: ['@subzero/eslint-config/nest'],
   parserOptions: {
-    project: "tsconfig.json",
+    project: 'tsconfig.json',
     tsconfigRootDir: __dirname,
-    sourceType: "module"
+    sourceType: 'module',
   },
-  ignorePatterns: ["dist/", "node_modules/", ".eslintrc.cjs"]
+  ignorePatterns: ['dist/', 'node_modules/', '.eslintrc.cjs'],
 };
