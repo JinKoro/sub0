@@ -96,6 +96,6 @@
 ### What we don't have
 
 - Нет CMS — блог / FAQ / roadmap-страница в v1.1 хранятся в БД
-  через `apps/api`, не в Strapi/Notion/чём-либо ещё.
+  через `apps/api`, не в Notion / no-code / внешней CMS.
 - Нет BFF-слоя — Next дёргает Nest напрямую через `api-client`.
 - Нет SSG для дашборда — только SSR + client hydration с auth-cookie.
