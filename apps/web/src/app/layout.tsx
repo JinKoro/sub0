@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Inter_Tight, JetBrains_Mono, Instrument_Serif } from 'next/font/google'
 import { LangProvider } from '@/shared/contexts/lang-context'
 import './globals.css'
@@ -22,11 +22,33 @@ const instrumentSerif = Instrument_Serif({
   style: ['normal', 'italic'],
   display: 'swap',
   variable: '--font-serif',
+  adjustFontFallback: false,
+  fallback: ['Georgia', 'serif'],
 })
 
 export const metadata: Metadata = {
   title: 'Sub0 — Контроль над подписками',
-  description: 'Sub0 собирает подписки из писем, файлов или ручного ввода — показывает расходы, напоминает о списаниях и не даёт переплачивать за забытое.',
+  description: 'Все подписки в одном месте. Один список, ноль сюрпризов.',
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    title: 'Sub0',
+    statusBarStyle: 'black-translucent',
+  },
+  openGraph: {
+    title: 'Sub0 — Контроль над подписками',
+    description: 'Все подписки в одном месте. Один список, ноль сюрпризов.',
+  },
+  icons: {
+    apple: '/icons/icon-192.png',
+  },
+}
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+  themeColor: '#0a0a0a',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

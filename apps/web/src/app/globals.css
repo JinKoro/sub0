@@ -1,5 +1,6 @@
 *, *::before, *::after { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; background: #fafaf7; color: #0a0a0a; }
+body { padding-bottom: env(safe-area-inset-bottom); }
 html { scroll-behavior: smooth; }
 ::selection { background: #1347ff; color: #fff; }
 
@@ -17,6 +18,10 @@ html { scroll-behavior: smooth; }
 @keyframes s-blink {
   0%, 100% { opacity: 1; }
   50% { opacity: 0; }
+}
+@keyframes mega-drop-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .s-a:hover { opacity: 0.7; transition: opacity 0.15s; }

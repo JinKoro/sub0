@@ -2,12 +2,14 @@
 
 import { SUB0, mono } from '@/shared/constants/tokens'
 import { useLang } from '@/shared/contexts/lang-context'
+import { useIsMobile } from '@/shared/hooks/use-is-mobile'
 import { Section } from '@/shared/components/ui/Section'
 import { SectionEyebrow } from '@/shared/components/ui/SectionEyebrow'
 import { H2 } from '@/shared/components/ui/H2'
 
 export function Pricing() {
   const { t } = useLang()
+  const isMobile = useIsMobile()
 
   const plans = [
     {
@@ -17,39 +19,39 @@ export function Pricing() {
       sub: t('Для личного контроля', 'For personal control'),
       cta: t('Начать бесплатно', 'Start free'),
       feat: [
-        t('До 15 подписок', 'Up to 15 subscriptions'),
-        t('Импорт файл + вручную', 'Import: file + manual'),
+        t('До 5 подписок', 'Up to 15 subscriptions'),
+        t('Ручной импорт', 'Import: file + manual'),
         t('Базовые напоминания', 'Basic reminders'),
-        t('1 почтовый ящик', '1 inbox'),
+        t('1 личный проект', '1 inbox'),
       ],
       accent: false,
     },
     {
       name: 'Pro',
-      price: '299 ₽',
+      price: '290 ₽',
       cadence: t('/ в месяц', '/ month'),
-      sub: t('Полный набор для одного', 'All features, just for you'),
+      sub: t('Полный набор', 'All features, just for you'),
       cta: t('Попробовать Pro', 'Try Pro'),
       feat: [
         t('Безлимит подписок', 'Unlimited subscriptions'),
-        t('Импорт из всех почт', 'All inbox providers'),
+        t('AI импорт с почты или банковских выписок', 'All inbox providers'),
         t('Аналитика и отчёты', 'Analytics & reports'),
-        t('Отмена в 1 клик', 'One-click cancels'),
-        t('Прогноз на год', 'Yearly forecast'),
+        t('2 проекта', 'One-click cancels'),
+        t('Уведомления в Telegram или MAX', 'Yearly forecast'),
       ],
       accent: true,
     },
     {
       name: 'Team',
-      price: '599 ₽',
-      cadence: t('/ за пользователя', '/ per seat'),
-      sub: t('Для команд и бизнеса', 'For teams and business'),
+      price: t('Скоро', 'Soon'),
+      cadence: t('', '/ per seat'),
+      sub: t('Для команды или компании', 'For teams and businesses'),
       cta: t('Связаться', 'Talk to us'),
       feat: [
-        t('Всё из Pro', 'Everything in Pro'),
-        t('Несколько проектов', 'Multiple projects'),
-        t('Приглашение сотрудников', 'Invite teammates'),
-        t('Экспорт в бухгалтерию', 'Finance-ready export'),
+        t('Все из Pro тарифа', 'Everything in Pro'),
+        t('Совместный доступ', 'Shared access'),
+        t('Настройка ролей', 'Role management'),
+        t('Безлимит проектов', 'Unlimited projects'),
         t('Приоритетная поддержка', 'Priority support'),
       ],
       accent: false,
@@ -57,12 +59,13 @@ export function Pricing() {
   ]
 
   return (
-    <Section bg={SUB0.bg} pad="120px 48px" id="pricing">
+    <Section bg={SUB0.bg} pad={isMobile ? '64px 20px' : '120px 48px'} id="pricing">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 48, flexWrap: 'wrap' }}>
         <div>
           <SectionEyebrow num="09">{t('Тарифы', 'Pricing')}</SectionEyebrow>
-          <H2 accent={t('без подвоха.', 'no gimmicks.')}>
-            {t('Честные цены —', 'Fair pricing —')}
+          <H2>
+            {t('Честные цены — ', 'Fair pricing — ')}
+            <span style={{ color: SUB0.blue }}>{t('выбери подходящий тариф.', 'pick the right plan.')}</span>
           </H2>
         </div>
         <a href="#" className="s-btn" style={{
@@ -70,11 +73,15 @@ export function Pricing() {
           background: SUB0.panel, border: `1px solid ${SUB0.line}`, borderRadius: 10,
           fontSize: 14, fontWeight: 600, color: SUB0.ink, textDecoration: 'none',
         }}>
-          {t('Смотреть все тарифы', 'See all plans')} →
+          {t('Подробнее', 'See all plans')} →
         </a>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginTop: 48 }}>
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
+        gap: 16, marginTop: 48,
+      }}>
         {plans.map(p => (
           <div key={p.name} style={{
             background: p.accent ? SUB0.ink : SUB0.panel,
