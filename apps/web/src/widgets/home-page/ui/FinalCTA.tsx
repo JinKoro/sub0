@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { SUB0, mono } from '@/shared/constants/tokens';
 import { useLang } from '@/shared/contexts/lang-context';
 import { useIsMobile } from '@/shared/hooks/use-is-mobile';
@@ -92,8 +93,8 @@ export function FinalCTA() {
         </p>
 
         <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-          <a
-            href="#"
+          <Link
+            href="/login"
             className="s-btn"
             style={{
               display: 'inline-flex',
@@ -111,7 +112,7 @@ export function FinalCTA() {
             }}
           >
             {t('Начать бесплатно', 'Start free')} →
-          </a>
+          </Link>
           <a
             href="#"
             className="s-btn"

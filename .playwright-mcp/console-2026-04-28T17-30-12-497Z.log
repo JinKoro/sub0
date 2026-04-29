@@ -1,0 +1,5 @@
+[     593ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ webpack-internal:///(app-pages-browser)/../../node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:25022
+[     676ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/favicon.ico:0
+[     927ms] [LOG] [Fast Refresh] done in 1777397413423ms @ webpack-internal:///(app-pages-browser)/../../node_modules/next/dist/client/components/react-dev-overlay/utils/report-hmr-latency.js:13
+[    1189ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/icons/icon-192.png:0
+[    1192ms] [WARNING] Error while trying to use the following icon from the Manifest: http://localhost:3000/icons/icon-192.png (Download error or resource isn't a valid image) @ http://localhost:3000/pricing:0

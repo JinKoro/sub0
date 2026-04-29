@@ -1,0 +1,450 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - link "▚ Sub0" [ref=e3] [cursor=pointer]:
+      - /url: "#top"
+      - generic [ref=e4]: ▚
+      - generic [ref=e5]: Sub0
+    - navigation [ref=e6]:
+      - button "Продукт" [ref=e8] [cursor=pointer]:
+        - text: Продукт
+        - img [ref=e9]
+      - button "Инструменты" [ref=e12] [cursor=pointer]:
+        - text: Инструменты
+        - img [ref=e13]
+      - button "Ресурсы" [ref=e16] [cursor=pointer]:
+        - text: Ресурсы
+        - img [ref=e17]
+      - link "Тарифы" [ref=e19] [cursor=pointer]:
+        - /url: /pricing
+    - generic [ref=e20]:
+      - button "language" [ref=e21] [cursor=pointer]:
+        - generic [ref=e22]: RU
+        - generic [ref=e23]: /
+        - generic [ref=e24]: EN
+      - link "Войти" [ref=e25] [cursor=pointer]:
+        - /url: /login
+      - link "Регистрация →" [ref=e26] [cursor=pointer]:
+        - /url: /registration
+  - generic [ref=e28]:
+    - navigation [ref=e29]:
+      - link "Главная" [ref=e30] [cursor=pointer]:
+        - /url: /
+      - generic [ref=e31]: /
+      - generic [ref=e32]: Тарифы
+    - generic [ref=e33]:
+      - heading "Тарифы" [level=1] [ref=e34]
+      - paragraph [ref=e35]: Выберите подходящий тариф для управления своими подписками.
+  - generic [ref=e37]:
+    - generic [ref=e39]:
+      - button "Месяц" [ref=e40] [cursor=pointer]
+      - button "Год −30%" [ref=e41] [cursor=pointer]:
+        - text: Год
+        - generic [ref=e42]: −30%
+    - generic [ref=e43]:
+      - generic [ref=e44]:
+        - generic [ref=e45]:
+          - generic [ref=e46]: Free
+          - generic [ref=e47]: Для личного контроля
+        - generic [ref=e49]:
+          - generic [ref=e50]: "0"
+          - generic [ref=e51]: ₽
+          - generic [ref=e52]: навсегда
+        - list [ref=e54]:
+          - listitem [ref=e55]:
+            - generic [ref=e56]: ✓
+            - generic [ref=e58]: До 5 подписок
+          - listitem [ref=e59]:
+            - generic [ref=e60]: ✓
+            - generic [ref=e62]: Календарь списаний
+          - listitem [ref=e63]:
+            - generic [ref=e64]: ✓
+            - generic [ref=e66]: Базовые уведомления
+          - listitem [ref=e67]:
+            - generic [ref=e68]: ✓
+            - generic [ref=e70]: Базовая аналитика
+          - listitem [ref=e71]:
+            - generic [ref=e72]: ✓
+            - generic [ref=e74]: Ручной импорт подписок
+        - link "Начать бесплатно →" [ref=e75] [cursor=pointer]:
+          - /url: /login
+      - generic [ref=e76]:
+        - generic [ref=e77]: Популярный
+        - generic [ref=e78]:
+          - generic [ref=e79]: Pro
+          - generic [ref=e80]: Для активных пользователей
+        - generic [ref=e82]:
+          - generic [ref=e83]: "290"
+          - generic [ref=e84]: ₽
+          - generic [ref=e85]: / месяц
+        - list [ref=e87]:
+          - listitem [ref=e88]:
+            - generic [ref=e89]: ✓
+            - generic [ref=e91]: Безлимит подписок
+          - listitem [ref=e92]:
+            - generic [ref=e93]: ✓
+            - generic [ref=e95]: "Все каналы: Email, Telegram, MAX, push"
+          - listitem [ref=e96]:
+            - generic [ref=e97]: ✓
+            - generic [ref=e99]: AI-импорт подписок из писем и банковских выписок
+          - listitem [ref=e100]:
+            - generic [ref=e101]: ✓
+            - generic [ref=e103]: Полная аналитика и отчёты
+          - listitem [ref=e104]:
+            - generic [ref=e105]: ✓
+            - generic [ref=e107]: До 2 проектов
+          - listitem [ref=e108]:
+            - generic [ref=e109]: ✓
+            - generic [ref=e111]: Экспорт в CSV
+        - link "Попробовать Pro →" [ref=e112] [cursor=pointer]:
+          - /url: /login
+      - generic [ref=e113]:
+        - generic [ref=e114]:
+          - generic [ref=e115]: Team
+          - generic [ref=e116]: Для команд и компаний
+        - generic [ref=e119]: Скоро
+        - list [ref=e121]:
+          - listitem [ref=e122]:
+            - generic [ref=e123]: ✓
+            - generic [ref=e125]: Всё из Pro
+          - listitem [ref=e126]:
+            - generic [ref=e127]: ✓
+            - generic [ref=e129]: Совместный доступ для команды
+          - listitem [ref=e130]:
+            - generic [ref=e131]: ✓
+            - generic [ref=e133]: Неограниченное число проектов
+          - listitem [ref=e134]:
+            - generic [ref=e135]: ✓
+            - generic [ref=e137]: Безлимитный AI-импорт
+          - listitem [ref=e138]:
+            - generic [ref=e139]: ✓
+            - generic [ref=e141]: Приоритетная поддержка
+          - listitem [ref=e142]:
+            - generic [ref=e143]: ✓
+            - generic [ref=e145]: Закрывающие документы для бухгалтерии
+        - link "Уведомить о запуске →" [ref=e146] [cursor=pointer]:
+          - /url: "#notify"
+    - generic [ref=e147]:
+      - generic [ref=e148]: ✓ Без привязки карты
+      - generic [ref=e149]: ✓ Отмена в два клика
+      - generic [ref=e150]: ✓ Оплата картой или СБП
+  - generic [ref=e152]:
+    - generic [ref=e154]:
+      - generic [ref=e155]:
+        - generic [ref=e156]: "01"
+        - generic [ref=e158]: Сравнение
+      - heading "Что входит в каждый тариф." [level=2] [ref=e159]
+    - generic [ref=e160]:
+      - generic [ref=e161]: Возможности
+      - generic [ref=e162]:
+        - generic [ref=e163]: Free
+        - generic [ref=e164]: 0 ₽
+      - generic [ref=e165]:
+        - generic [ref=e166]:
+          - text: Pro
+          - generic [ref=e167]: Популярный
+        - generic [ref=e168]: 290 ₽ / мес
+      - generic [ref=e170]:
+        - text: Team
+        - generic [ref=e171]: Скоро
+    - generic [ref=e172]:
+      - generic [ref=e174]: 01 · Подписки и проекты
+      - generic [ref=e178]:
+        - generic [ref=e179]: Количество подписок
+        - generic [ref=e181]: "5"
+        - generic [ref=e183]: Безлимит
+        - generic [ref=e185]: Безлимит
+      - generic [ref=e186]:
+        - generic [ref=e187]: Совместный доступ к подпискам
+        - generic "no" [ref=e189]: —
+        - generic "no" [ref=e191]: —
+        - generic "yes" [ref=e193]: ✓
+      - generic [ref=e194]:
+        - generic [ref=e195]: Количество проектов
+        - generic [ref=e197]: "1"
+        - generic [ref=e199]: "2"
+        - generic [ref=e201]: Безлимит
+      - generic [ref=e202]:
+        - generic [ref=e203]: Архив отменённых подписок
+        - generic "yes" [ref=e205]: ✓
+        - generic "yes" [ref=e207]: ✓
+        - generic "yes" [ref=e209]: ✓
+      - generic [ref=e210]:
+        - generic [ref=e211]: Кастомные категории и теги
+        - generic "no" [ref=e213]: —
+        - generic "yes" [ref=e215]: ✓
+        - generic "yes" [ref=e217]: ✓
+    - generic [ref=e218]:
+      - generic [ref=e220]: 02 · Импорт и AI
+      - generic [ref=e224]:
+        - generic [ref=e225]: Ручной ввод
+        - generic "yes" [ref=e227]: ✓
+        - generic "yes" [ref=e229]: ✓
+        - generic "yes" [ref=e231]: ✓
+      - generic [ref=e232]:
+        - generic [ref=e233]: AI-импорт писем и выписок
+        - generic "no" [ref=e235]: —
+        - generic [ref=e237]: 5 раз / мес
+        - generic [ref=e239]: 15 раз / мес
+      - generic [ref=e240]:
+        - generic [ref=e241]: Распознавание чеков
+        - generic "no" [ref=e243]: —
+        - generic [ref=e245]: 5 раз / мес
+        - generic [ref=e247]: 15 раз / мес
+    - generic [ref=e248]:
+      - generic [ref=e250]: 03 · Уведомления
+      - generic [ref=e254]:
+        - generic [ref=e255]: Email
+        - generic "yes" [ref=e257]: ✓
+        - generic "yes" [ref=e259]: ✓
+        - generic "yes" [ref=e261]: ✓
+      - generic [ref=e262]:
+        - generic [ref=e263]: Telegram
+        - generic "no" [ref=e265]: —
+        - generic "yes" [ref=e267]: ✓
+        - generic "yes" [ref=e269]: ✓
+      - generic [ref=e270]:
+        - generic [ref=e271]: MAX
+        - generic "no" [ref=e273]: —
+        - generic "yes" [ref=e275]: ✓
+        - generic "yes" [ref=e277]: ✓
+      - generic [ref=e278]:
+        - generic [ref=e279]: Push в браузере и приложении
+        - generic "no" [ref=e281]: —
+        - generic "yes" [ref=e283]: ✓
+        - generic "yes" [ref=e285]: ✓
+      - generic [ref=e286]:
+        - generic [ref=e287]: Вебхуки
+        - generic "no" [ref=e289]: —
+        - generic "no" [ref=e291]: —
+        - generic "yes" [ref=e293]: ✓
+      - generic [ref=e294]:
+        - generic [ref=e295]: Гибкие правила за N дней
+        - generic "no" [ref=e297]: —
+        - generic "yes" [ref=e299]: ✓
+        - generic "yes" [ref=e301]: ✓
+    - generic [ref=e302]:
+      - generic [ref=e304]: 04 · Аналитика и отчёты
+      - generic [ref=e308]:
+        - generic [ref=e309]: График трат
+        - generic [ref=e311]: Базовый набор
+        - generic [ref=e313]: Полный набор
+        - generic [ref=e315]: Полный набор
+      - generic [ref=e316]:
+        - generic [ref=e317]: Прогноз на год
+        - generic "no" [ref=e319]: —
+        - generic "yes" [ref=e321]: ✓
+        - generic "yes" [ref=e323]: ✓
+      - generic [ref=e324]:
+        - generic [ref=e325]: Разбивка по категориям и проектам
+        - generic "no" [ref=e327]: —
+        - generic "yes" [ref=e329]: ✓
+        - generic "yes" [ref=e331]: ✓
+      - generic [ref=e332]:
+        - generic [ref=e333]: Сравнение периодов
+        - generic "no" [ref=e335]: —
+        - generic "yes" [ref=e337]: ✓
+        - generic "yes" [ref=e339]: ✓
+      - generic [ref=e340]:
+        - generic [ref=e341]: Экспорт в CSV
+        - generic "no" [ref=e343]: —
+        - generic "yes" [ref=e345]: ✓
+        - generic "yes" [ref=e347]: ✓
+      - generic [ref=e348]:
+        - generic [ref=e349]: Документы для бухгалтерии
+        - generic "no" [ref=e351]: —
+        - generic "no" [ref=e353]: —
+        - generic "yes" [ref=e355]: ✓
+    - generic [ref=e356]:
+      - generic [ref=e358]: 05 · Команда и доступ
+      - generic [ref=e362]:
+        - generic [ref=e363]: Количество участников
+        - generic [ref=e365]: "1"
+        - generic [ref=e367]: "1"
+        - generic [ref=e369]: Безлимит
+      - generic [ref=e370]:
+        - generic [ref=e371]: Роли и права
+        - generic "no" [ref=e373]: —
+        - generic "no" [ref=e375]: —
+        - generic "yes" [ref=e377]: ✓
+      - generic [ref=e378]:
+        - generic [ref=e379]: Журнал действий
+        - generic "no" [ref=e381]: —
+        - generic "no" [ref=e383]: —
+        - generic "yes" [ref=e385]: ✓
+      - generic [ref=e386]:
+        - generic [ref=e387]: SSO для компаний
+        - generic "no" [ref=e389]: —
+        - generic "no" [ref=e391]: —
+        - generic [ref=e393]: По запросу
+    - generic [ref=e394]:
+      - generic [ref=e396]: 06 · Поддержка и оплата
+      - generic [ref=e400]:
+        - generic [ref=e401]: Помощь по почте
+        - generic "yes" [ref=e403]: ✓
+        - generic "yes" [ref=e405]: ✓
+        - generic "yes" [ref=e407]: ✓
+      - generic [ref=e408]:
+        - generic [ref=e409]: Приоритетная поддержка
+        - generic "no" [ref=e411]: —
+        - generic "no" [ref=e413]: —
+        - generic "yes" [ref=e415]: ✓
+      - generic [ref=e416]:
+        - generic [ref=e417]: Оплата СБП и картой
+        - generic "yes" [ref=e419]: ✓
+        - generic "yes" [ref=e421]: ✓
+        - generic "yes" [ref=e423]: ✓
+      - generic [ref=e424]:
+        - generic [ref=e425]: Годовая оплата со скидкой 30%
+        - generic "no" [ref=e427]: —
+        - generic "yes" [ref=e429]: ✓
+        - generic "yes" [ref=e431]: ✓
+      - generic [ref=e432]:
+        - generic [ref=e433]: Договор для юрлиц
+        - generic "no" [ref=e435]: —
+        - generic "no" [ref=e437]: —
+        - generic "yes" [ref=e439]: ✓
+  - generic [ref=e442]:
+    - generic [ref=e443]:
+      - generic [ref=e444]:
+        - generic [ref=e445]: "02"
+        - generic [ref=e447]: FAQ
+      - heading "Частые вопросы про оплату." [level=2] [ref=e448]:
+        - text: Частые вопросы
+        - generic [ref=e449]: про оплату.
+      - paragraph [ref=e450]:
+        - text: Не нашли свой вопрос — напишите на
+        - link "support@sub0.app" [ref=e451] [cursor=pointer]:
+          - /url: mailto:support@sub0.app
+        - text: ", отвечаем в рабочий день."
+    - generic [ref=e452]:
+      - generic [ref=e453]:
+        - button "01 Какие тарифы есть у Sub0? –" [ref=e454] [cursor=pointer]:
+          - generic [ref=e455]: "01"
+          - generic [ref=e456]: Какие тарифы есть у Sub0?
+          - generic [ref=e457]: –
+        - generic [ref=e458]: "У нас три тарифа: Free, Pro и Team. Free — бесплатный навсегда, подходит для знакомства с сервисом. Pro — для активных пользователей. Team — для команд, агентств и компаний с совместным доступом и документами для бухгалтерии."
+      - button "02 Что входит в бесплатный тариф? +" [ref=e460] [cursor=pointer]:
+        - generic [ref=e461]: "02"
+        - generic [ref=e462]: Что входит в бесплатный тариф?
+        - generic [ref=e463]: +
+      - button "03 Чем Pro отличается от Free? +" [ref=e465] [cursor=pointer]:
+        - generic [ref=e466]: "03"
+        - generic [ref=e467]: Чем Pro отличается от Free?
+        - generic [ref=e468]: +
+      - button "04 Для кого тариф Team? +" [ref=e470] [cursor=pointer]:
+        - generic [ref=e471]: "04"
+        - generic [ref=e472]: Для кого тариф Team?
+        - generic [ref=e473]: +
+      - button "05 Какие способы оплаты поддерживаются? +" [ref=e475] [cursor=pointer]:
+        - generic [ref=e476]: "05"
+        - generic [ref=e477]: Какие способы оплаты поддерживаются?
+        - generic [ref=e478]: +
+      - button "06 Можно ли изменить тариф в любой момент? +" [ref=e480] [cursor=pointer]:
+        - generic [ref=e481]: "06"
+        - generic [ref=e482]: Можно ли изменить тариф в любой момент?
+        - generic [ref=e483]: +
+      - button "07 Что произойдёт с моими подписками, если я не продлю Pro? +" [ref=e485] [cursor=pointer]:
+        - generic [ref=e486]: "07"
+        - generic [ref=e487]: Что произойдёт с моими подписками, если я не продлю Pro?
+        - generic [ref=e488]: +
+      - button "08 Есть ли пробный период у Pro и Team? +" [ref=e490] [cursor=pointer]:
+        - generic [ref=e491]: "08"
+        - generic [ref=e492]: Есть ли пробный период у Pro и Team?
+        - generic [ref=e493]: +
+      - button "09 Безопасны ли мои данные о подписках и платежах? +" [ref=e495] [cursor=pointer]:
+        - generic [ref=e496]: "09"
+        - generic [ref=e497]: Безопасны ли мои данные о подписках и платежах?
+        - generic [ref=e498]: +
+  - generic [ref=e500]:
+    - generic [ref=e501]: Начните за 2 минуты
+    - heading "Начни контролировать подписки уже сегодня." [level=2] [ref=e503]:
+      - text: Начни контролировать подписки
+      - text: уже сегодня.
+    - paragraph [ref=e504]: Бесплатно, без карты, с живым парсером писем. Отменить подписку на Sub0 можно в два клика.
+    - generic [ref=e505]:
+      - link "Начать бесплатно →" [ref=e506] [cursor=pointer]:
+        - /url: "#"
+      - link "Связаться с нами" [ref=e507] [cursor=pointer]:
+        - /url: "#"
+    - generic [ref=e508]:
+      - generic [ref=e509]: ✓ Бесплатно навсегда
+      - generic [ref=e510]: ✓ Без карты
+      - generic [ref=e511]: ✓ Удаление данных по запросу
+  - contentinfo [ref=e512]:
+    - generic [ref=e513]:
+      - generic [ref=e514]:
+        - generic [ref=e515]:
+          - generic [ref=e516]:
+            - generic [ref=e517]: ▚
+            - generic [ref=e518]: Sub0
+          - paragraph [ref=e519]: Контроль над подписками — личными и рабочими. Один список, ноль сюрпризов.
+        - generic [ref=e520]:
+          - generic [ref=e521]: Продукт
+          - list [ref=e522]:
+            - listitem [ref=e523]:
+              - link "Дашборд" [ref=e524] [cursor=pointer]:
+                - /url: "#dashboard"
+            - listitem [ref=e525]:
+              - link "Аналитика" [ref=e526] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e527]:
+              - link "Уведомления" [ref=e528] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e529]:
+              - link "Мобильное приложение СКОРО" [ref=e530] [cursor=pointer]:
+                - /url: "#"
+                - text: Мобильное приложение
+                - generic [ref=e531]: СКОРО
+        - generic [ref=e532]:
+          - generic [ref=e533]: Инструменты
+          - list [ref=e534]:
+            - listitem [ref=e535]:
+              - link "Калькулятор подписок СКОРО" [ref=e536] [cursor=pointer]:
+                - /url: "#"
+                - text: Калькулятор подписок
+                - generic [ref=e537]: СКОРО
+            - listitem [ref=e538]:
+              - link "Конвертер валют СКОРО" [ref=e539] [cursor=pointer]:
+                - /url: "#"
+                - text: Конвертер валют
+                - generic [ref=e540]: СКОРО
+        - generic [ref=e541]:
+          - generic [ref=e542]: Ресурсы
+          - list [ref=e543]:
+            - listitem [ref=e544]:
+              - link "Блог СКОРО" [ref=e545] [cursor=pointer]:
+                - /url: "#"
+                - text: Блог
+                - generic [ref=e546]: СКОРО
+            - listitem [ref=e547]:
+              - link "FAQ" [ref=e548] [cursor=pointer]:
+                - /url: "#faq"
+            - listitem [ref=e549]:
+              - link "Roadmap СКОРО" [ref=e550] [cursor=pointer]:
+                - /url: "#"
+                - text: Roadmap
+                - generic [ref=e551]: СКОРО
+            - listitem [ref=e552]:
+              - link "Отзывы" [ref=e553] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e554]:
+              - link "Карта сайта СКОРО" [ref=e555] [cursor=pointer]:
+                - /url: "#"
+                - text: Карта сайта
+                - generic [ref=e556]: СКОРО
+        - generic [ref=e557]:
+          - generic [ref=e558]: Компания
+          - list [ref=e559]:
+            - listitem [ref=e560]:
+              - link "О проекте" [ref=e561] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e562]:
+              - link "Контакты" [ref=e563] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e564]:
+              - link "Правовые документы" [ref=e565] [cursor=pointer]:
+                - /url: "#"
+      - generic [ref=e566]:
+        - generic [ref=e567]: © 2026 Sub0 · все подписки под контролем
+        - link "Почта · support@sub0.app" [ref=e569] [cursor=pointer]:
+          - /url: mailto:support@sub0.app

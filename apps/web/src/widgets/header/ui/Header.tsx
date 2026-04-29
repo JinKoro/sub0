@@ -261,7 +261,7 @@ export function Header() {
         },
       ],
     },
-    { label: t('Тарифы', 'Pricing'), href: '#pricing' },
+    { label: t('Тарифы', 'Pricing'), href: '/pricing' },
   ];
 
   const handleEnter = (key: number) => {
@@ -399,13 +399,13 @@ export function Header() {
                   }}
                 >
                   {n.href ? (
-                    <a
+                    <Link
                       href={n.href}
                       onClick={() => setMobileOpen(false)}
                       style={{ color: 'inherit', textDecoration: 'none' }}
                     >
                       {n.label} →
-                    </a>
+                    </Link>
                   ) : (
                     n.label
                   )}
@@ -536,9 +536,9 @@ export function Header() {
               </button>
             </div>
           ) : (
-            <a
+            <Link
               key={ni}
-              href={n.href}
+              href={n.href ?? '#'}
               className="s-a"
               style={{
                 color: SUB0.ink,
@@ -549,7 +549,7 @@ export function Header() {
               }}
             >
               {n.label}
-            </a>
+            </Link>
           ),
         )}
       </nav>

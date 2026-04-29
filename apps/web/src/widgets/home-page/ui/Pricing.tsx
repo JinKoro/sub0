@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { SUB0, mono } from '@/shared/constants/tokens';
 import { useLang } from '@/shared/contexts/lang-context';
 import { useIsMobile } from '@/shared/hooks/use-is-mobile';
@@ -18,6 +19,7 @@ export function Pricing() {
       cadence: t('/ навсегда', '/ forever'),
       sub: t('Для личного контроля', 'For personal control'),
       cta: t('Начать бесплатно', 'Start free'),
+      ctaHref: '/login',
       feat: [
         t('До 5 подписок', 'Up to 15 subscriptions'),
         t('Ручной импорт', 'Import: file + manual'),
@@ -32,6 +34,7 @@ export function Pricing() {
       cadence: t('/ в месяц', '/ month'),
       sub: t('Полный набор', 'All features, just for you'),
       cta: t('Попробовать Pro', 'Try Pro'),
+      ctaHref: '/login',
       feat: [
         t('Безлимит подписок', 'Unlimited subscriptions'),
         t('AI импорт с почты или банковских выписок', 'All inbox providers'),
@@ -47,6 +50,7 @@ export function Pricing() {
       cadence: t('', '/ per seat'),
       sub: t('Для команды или компании', 'For teams and businesses'),
       cta: t('Связаться', 'Talk to us'),
+      ctaHref: '#',
       feat: [
         t('Все из Pro тарифа', 'Everything in Pro'),
         t('Совместный доступ', 'Shared access'),
@@ -78,8 +82,8 @@ export function Pricing() {
             </span>
           </H2>
         </div>
-        <a
-          href="#"
+        <Link
+          href="/pricing"
           className="s-btn"
           style={{
             display: 'inline-flex',
@@ -96,7 +100,7 @@ export function Pricing() {
           }}
         >
           {t('Подробнее', 'See all plans')} →
-        </a>
+        </Link>
       </div>
 
       <div
@@ -188,24 +192,45 @@ export function Pricing() {
               ))}
             </ul>
 
-            <a
-              href="#"
-              className="s-btn"
-              style={{
-                marginTop: 'auto',
-                padding: '14px 18px',
-                borderRadius: 10,
-                background: p.accent ? SUB0.blue : SUB0.ink,
-                color: '#fff',
-                fontSize: 15,
-                fontWeight: 600,
-                textAlign: 'center',
-                textDecoration: 'none',
-                display: 'block',
-              }}
-            >
-              {p.cta} →
-            </a>
+            {p.ctaHref.startsWith('/') ? (
+              <Link
+                href={p.ctaHref}
+                className="s-btn"
+                style={{
+                  marginTop: 'auto',
+                  padding: '14px 18px',
+                  borderRadius: 10,
+                  background: p.accent ? SUB0.blue : SUB0.ink,
+                  color: '#fff',
+                  fontSize: 15,
+                  fontWeight: 600,
+                  textAlign: 'center',
+                  textDecoration: 'none',
+                  display: 'block',
+                }}
+              >
+                {p.cta} →
+              </Link>
+            ) : (
+              <a
+                href={p.ctaHref}
+                className="s-btn"
+                style={{
+                  marginTop: 'auto',
+                  padding: '14px 18px',
+                  borderRadius: 10,
+                  background: p.accent ? SUB0.blue : SUB0.ink,
+                  color: '#fff',
+                  fontSize: 15,
+                  fontWeight: 600,
+                  textAlign: 'center',
+                  textDecoration: 'none',
+                  display: 'block',
+                }}
+              >
+                {p.cta} →
+              </a>
+            )}
           </div>
         ))}
       </div>

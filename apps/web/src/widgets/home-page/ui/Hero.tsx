@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { SUB0, mono } from '@/shared/constants/tokens';
 import { useLang } from '@/shared/contexts/lang-context';
 import { useIsMobile } from '@/shared/hooks/use-is-mobile';
@@ -181,8 +182,8 @@ export function Hero() {
               flexWrap: isMobile ? 'wrap' : 'nowrap',
             }}
           >
-            <a
-              href="#"
+            <Link
+              href="/login"
               className="s-btn"
               style={{
                 display: 'inline-flex',
@@ -200,7 +201,7 @@ export function Hero() {
               }}
             >
               {t('Начать бесплатно', 'Start free')} →
-            </a>
+            </Link>
             <a
               href="#dashboard"
               className="s-btn"
