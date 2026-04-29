@@ -233,7 +233,7 @@ export function Header() {
         {
           label: 'FAQ',
           desc: t('Ответы на частые вопросы', 'Answers to common questions'),
-          href: '#faq',
+          href: '/faq',
           icon: ICONS.faq,
         },
         {
@@ -289,8 +289,8 @@ export function Header() {
           WebkitBackdropFilter: 'blur(12px)',
         }}
       >
-        <a
-          href="#top"
+        <Link
+          href="/"
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -316,7 +316,7 @@ export function Header() {
             ▚
           </span>
           <span style={{ fontWeight: 800, fontSize: 18, letterSpacing: '-0.03em' }}>Sub0</span>
-        </a>
+        </Link>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <LangToggle />
@@ -412,7 +412,7 @@ export function Header() {
                 </div>
                 {n.items &&
                   n.items.map((item, ii) => (
-                    <a
+                    <Link
                       key={ii}
                       href={item.href || '#'}
                       onClick={() => setMobileOpen(false)}
@@ -430,7 +430,7 @@ export function Header() {
                     >
                       {item.label}
                       {item.soon && <SoonBadge />}
-                    </a>
+                    </Link>
                   ))}
               </div>
             ))}
@@ -457,8 +457,8 @@ export function Header() {
         gap: 32,
       }}
     >
-      <a
-        href="#top"
+      <Link
+        href="/"
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -484,7 +484,7 @@ export function Header() {
           ▚
         </span>
         <span style={{ fontWeight: 800, fontSize: 20, letterSpacing: '-0.03em' }}>Sub0</span>
-      </a>
+      </Link>
 
       <nav style={{ display: 'flex', gap: 28, flex: 1, justifyContent: 'center' }}>
         {nav.map((n, ni) =>
@@ -652,7 +652,7 @@ export function Header() {
               }}
             >
               {nav[openMenu].items!.map((item, idx) => (
-                <a
+                <Link
                   key={idx}
                   href={item.href}
                   className="s-a"
@@ -682,7 +682,7 @@ export function Header() {
                       {item.desc}
                     </div>
                   </div>
-                </a>
+                </Link>
               ))}
             </div>
           </div>

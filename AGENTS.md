@@ -78,6 +78,9 @@ roadmap, а не «на будущее». Готовность ≠ прежде�
 
 - `ai/ctx-frontend-fsd.md` — FSD-архитектура веба: слайсы, маршруты,
   i18n, time-zones, валюты, PWA, темы.
+- `ai/ctx-design-system.md` — дизайн-система: токены, шрифты,
+  типографическая шкала, сетка, отступы, shared-компоненты,
+  правила переиспользования. Перед UI-изменениями читать обязательно.
 - `ai/ctx-security.md` — auth, платежи, PII, headers, env, логи,
   валидация, файлы. Threat-model и review-checklist.
 - `docs/sub0-roadmap.md` — план MVP / v1.1 / v2. Живой документ.

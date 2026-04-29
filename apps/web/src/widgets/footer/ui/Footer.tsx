@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { SUB0, mono } from '@/shared/constants/tokens';
 import { useLang } from '@/shared/contexts/lang-context';
 import { useIsMobile } from '@/shared/hooks/use-is-mobile';
@@ -57,7 +58,7 @@ export function Footer() {
       title: t('Ресурсы', 'Resources'),
       items: [
         [t('Блог', 'Blog'), '#'],
-        ['FAQ', '#faq'],
+        ['FAQ', '/faq'],
         ['Roadmap', '#'],
         [t('Отзывы', 'Reviews'), '#'],
         [t('Карта сайта', 'Sitemap'), '#'],
@@ -148,7 +149,7 @@ export function Footer() {
                   const soon = c.soon || (c.soonItems && c.soonItems.includes(idx));
                   return (
                     <li key={label}>
-                      <a
+                      <Link
                         href={href}
                         className="s-a"
                         style={{
@@ -163,7 +164,7 @@ export function Footer() {
                       >
                         {label}
                         {soon && <SoonBadge />}
-                      </a>
+                      </Link>
                     </li>
                   );
                 })}
