@@ -70,7 +70,7 @@ export function Footer() {
       items: [
         [t('О проекте', 'About'), '#'],
         [t('Контакты', 'Contact'), '/contacts'],
-        [t('Правовые документы', 'Legal'), '#'],
+        [t('Правовые документы', 'Legal'), '/legal'],
       ],
     },
   ];
