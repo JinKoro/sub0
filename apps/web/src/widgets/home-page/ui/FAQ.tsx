@@ -1,19 +1,18 @@
 'use client';
 
-import { useState } from 'react';
-import { SUB0, mono } from '@/shared/constants/tokens';
+import { SUB0 } from '@/shared/constants/tokens';
 import { useLang } from '@/shared/contexts/lang-context';
 import { useIsMobile } from '@/shared/hooks/use-is-mobile';
 import { Section } from '@/shared/components/ui/Section';
 import { SectionEyebrow } from '@/shared/components/ui/SectionEyebrow';
 import { H2 } from '@/shared/components/ui/H2';
+import { FAQAccordion, FAQItem } from '@/shared/components/ui/FAQAccordion';
 
 export function FAQ() {
   const { t } = useLang();
   const isMobile = useIsMobile();
-  const [open, setOpen] = useState(0);
 
-  const qs = [
+  const items: FAQItem[] = [
     {
       q: t('Что такое Sub0 и зачем он нужен?', 'What is Sub0 and why do you need it?'),
       a: t(
@@ -100,85 +99,7 @@ export function FAQ() {
           </p>
         </div>
 
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 0,
-            borderTop: `1px solid ${SUB0.line}`,
-          }}
-        >
-          {qs.map((item, i) => {
-            const isOpen = open === i;
-            return (
-              <div key={i} style={{ borderBottom: `1px solid ${SUB0.line}` }}>
-                <button
-                  onClick={() => setOpen(isOpen ? -1 : i)}
-                  style={{
-                    width: '100%',
-                    background: 'transparent',
-                    border: 'none',
-                    padding: '22px 0',
-                    textAlign: 'left',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 16,
-                    fontSize: isMobile ? 15 : 18,
-                    fontWeight: 600,
-                    letterSpacing: '-0.01em',
-                    color: SUB0.ink,
-                    fontFamily: 'inherit',
-                  }}
-                >
-                  <span
-                    style={{
-                      fontFamily: mono,
-                      fontSize: 12,
-                      color: SUB0.muted,
-                      width: 32,
-                      flexShrink: 0,
-                    }}
-                  >
-                    {String(i + 1).padStart(2, '0')}
-                  </span>
-                  <span style={{ flex: 1 }}>{item.q}</span>
-                  <span
-                    style={{
-                      width: 28,
-                      height: 28,
-                      borderRadius: 999,
-                      background: isOpen ? SUB0.blue : SUB0.bg,
-                      color: isOpen ? '#fff' : SUB0.ink,
-                      border: `1px solid ${SUB0.line}`,
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: 16,
-                      transition: 'all .15s',
-                      flexShrink: 0,
-                    }}
-                  >
-                    {isOpen ? '–' : '+'}
-                  </span>
-                </button>
-                {isOpen && (
-                  <div
-                    style={{
-                      padding: '0 0 24px 48px',
-                      fontSize: 15,
-                      lineHeight: 1.6,
-                      color: '#444',
-                      maxWidth: 680,
-                    }}
-                  >
-                    {item.a}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
+        <FAQAccordion items={items} defaultOpenIndex={0} />
       </div>
     </Section>
   );
