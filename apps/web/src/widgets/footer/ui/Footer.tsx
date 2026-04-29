@@ -69,7 +69,7 @@ export function Footer() {
       title: t('Компания', 'Company'),
       items: [
         [t('О проекте', 'About'), '#'],
-        [t('Контакты', 'Contact'), '#'],
+        [t('Контакты', 'Contact'), '/contacts'],
         [t('Правовые документы', 'Legal'), '#'],
       ],
     },
