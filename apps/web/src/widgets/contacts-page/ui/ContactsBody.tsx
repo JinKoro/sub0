@@ -1,6 +1,7 @@
 'use client';
 
 import { ReactNode } from 'react';
+import Link from 'next/link';
 import { SUB0, mono } from '@/shared/constants/tokens';
 import { useLang } from '@/shared/contexts/lang-context';
 import { useIsMobile } from '@/shared/hooks/use-is-mobile';
@@ -195,8 +196,8 @@ export function ContactsBody() {
               borderTop: `1px solid ${SUB0.line}`,
             }}
           >
-            <a
-              href="#"
+            <Link
+              href="/legal"
               className="s-a"
               style={{
                 display: 'inline-flex',
@@ -225,7 +226,7 @@ export function ContactsBody() {
               </span>
               <span>{t('Правовые документы', 'Legal documents')}</span>
               <span style={{ color: SUB0.muted, fontFamily: mono, fontSize: 13 }}>→</span>
-            </a>
+            </Link>
           </div>
         </div>
 

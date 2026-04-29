@@ -14,9 +14,17 @@ interface Props {
   breadcrumbs: Crumb[];
   title: ReactNode;
   description?: ReactNode;
+  titleMaxWidth?: number;
+  descriptionMaxWidth?: number;
 }
 
-export function PageHero({ breadcrumbs, title, description }: Props) {
+export function PageHero({
+  breadcrumbs,
+  title,
+  description,
+  titleMaxWidth = 820,
+  descriptionMaxWidth = 600,
+}: Props) {
   const isMobile = useIsMobile();
 
   return (
@@ -92,7 +100,7 @@ export function PageHero({ breadcrumbs, title, description }: Props) {
               letterSpacing: '-0.035em',
               margin: '0 0 20px',
               color: SUB0.ink,
-              maxWidth: 820,
+              maxWidth: titleMaxWidth,
             }}
           >
             {title}
@@ -103,7 +111,7 @@ export function PageHero({ breadcrumbs, title, description }: Props) {
                 fontSize: isMobile ? 16 : 19,
                 lineHeight: 1.55,
                 color: '#444',
-                maxWidth: 600,
+                maxWidth: descriptionMaxWidth,
                 margin: 0,
               }}
             >
