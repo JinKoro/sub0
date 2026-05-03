@@ -9,7 +9,7 @@
 
 - Docker + Docker Compose
 - Node.js 20+
-- Yarn Berry (`corepack enable && corepack prepare yarn@stable --activate`)
+- Yarn 1.x classic (`npm i -g yarn` если ещё не установлен)
 
 ### Шаги
 
@@ -23,7 +23,10 @@ yarn install
 # 3. Скопировать env-файл API
 cp apps/api/.env.example apps/api/.env
 
-# 4. Запустить web и api в watch-режиме
+# 4. Применить миграции БД
+yarn workspace @subzero/api drizzle:migrate
+
+# 5. Запустить web и api в watch-режиме
 yarn dev
 ```
 
@@ -53,8 +56,8 @@ docker compose down -v     # остановить и удалить том Postg
 ## Структура
 
 - `apps/web` — Next.js 15 (App Router), Tailwind, `next-intl`.
-- `apps/api` — NestJS 10 + Prisma (Prisma подключается отдельной
-  таской; путь — `apps/api/prisma/`).
+- `apps/api` — NestJS 10 + Drizzle ORM (схема в
+  `apps/api/src/db/schema/`, миграции в `apps/api/drizzle/`).
 - `packages/shared` — DTO, типы, общие i18n-ключи.
 
 ## Архитектурные принципы и правила работы

@@ -22,8 +22,8 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "@subzero/eslint-config": "workspace:*",
-    "@subzero/tsconfig": "workspace:*",
+    "@subzero/eslint-config": "*",
+    "@subzero/tsconfig": "*",
     "eslint": "^8.57.0",
     "typescript": "^5.6.0"
   }

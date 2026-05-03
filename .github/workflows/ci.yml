@@ -24,16 +24,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Enable Corepack
-        run: corepack enable
-
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: yarn
 
       - name: Install dependencies
-        run: yarn install --immutable
+        run: yarn install --frozen-lockfile
 
       - name: Restore turbo cache
         uses: actions/cache@v4
@@ -42,12 +39,6 @@ jobs:
           key: turbo-${{ runner.os }}-${{ matrix.task }}-${{ github.sha }}
           restore-keys: |
             turbo-${{ runner.os }}-${{ matrix.task }}-
-
-      - name: Generate Prisma client
-        if: matrix.task != 'lint'
-        env:
-          DATABASE_URL: postgresql://ci:ci@localhost:5432/ci?schema=public
-        run: yarn workspace @subzero/api prisma generate
 
       - name: Run ${{ matrix.task }}
         run: yarn ${{ matrix.task }}

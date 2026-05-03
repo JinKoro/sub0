@@ -1,8 +1,10 @@
 # Monorepo Setup — Design Spec
 
 **Date:** 2026-04-25
-**Status:** Approved
+**Status:** Archived (superseded 2026-05-03)
 **Topic:** Reorganize subzero project as a Yarn 4 + Turborepo monorepo with shared packages between Next.js web and NestJS api.
+
+> **ARCHIVED (2026-05-03).** Спека описывает _изначальный_ выбор стэка: Yarn 4 (Berry) и open question по ORM (Prisma vs TypeORM vs Drizzle). После реализации проект мигрировал на **Yarn 1.x classic** и **Drizzle ORM**. Актуальное состояние стэка — `AGENTS.md`, `README.md`. Документ оставлен для исторической трассировки решений.
 
 ## Goal
 
