@@ -1,7 +1,7 @@
 ### Purpose
 
 Security-правила для Sub0 — SaaS учёта подписок. Стэк: Next.js
-(`apps/web`), NestJS (`apps/api`), Postgres + Prisma. Веб-приложение
+(`apps/web`), NestJS (`apps/api`), Postgres + Drizzle ORM. Веб-приложение
 с аккаунтами, JWT-сессиями, OAuth, автосписаниями (только токены
 провайдеров), email/Telegram/Web-Push нотификациями.
 
@@ -179,7 +179,7 @@ forbidUnknownValues, transform })` + DTO с `class-validator`.
 
 #### 12. Dependencies
 
-- `yarn` (Berry). Commit `yarn.lock`.
+- `yarn` (1.x classic). Commit `yarn.lock`.
 - Перед merge’ем PR’а с auth / payments / files — `yarn npm audit`.
 - Не тянем пакеты с downloads < 10k/нед или unmaintained > 2 лет
   на критическом пути (auth, payments, file processing, crypto).

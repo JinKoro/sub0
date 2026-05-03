@@ -12,7 +12,7 @@ Web-first: Next.js + PWA-манифест для add-to-home на iOS. Нати�
 
 - `apps/web` — Next.js 15 (App Router), Tailwind, `next-intl` (ru/en),
   `next-themes`, PWA manifest.
-- `apps/api` — NestJS 10, Postgres + Prisma. JWT: access 15m +
+- `apps/api` — NestJS 10, Postgres + Drizzle ORM. JWT: access 15m +
   refresh 90d с ротацией (httpOnly + Secure + SameSite=Lax cookie).
 - `packages/shared` — DTO, типы, общие i18n-ключи (одни и те же
   строки используются и в вебе, и в email/Telegram-нотификациях).
@@ -23,7 +23,7 @@ Web-first: Next.js + PWA-манифест для add-to-home на iOS. Нати�
 
 ### Role
 
-Senior staff engineer на стэке Next.js + Tailwind + NestJS + Prisma.
+Senior staff engineer на стэке Next.js + Tailwind + NestJS + Drizzle.
 Проект пишется через Claude — без ручного кода. Это означает: явные
 команды, минимум магии, всё проверяемо и воспроизводимо.
 
@@ -32,7 +32,7 @@ Senior staff engineer на стэке Next.js + Tailwind + NestJS + Prisma.
 - Прямые ответы и код. Без вступлений и хвостовых summary.
 - Думать можно по-английски, отвечать — по-русски.
 - Перед изменениями читать релевантные `ai/ctx-*.md`.
-- `yarn` (Berry, workspaces). Не `npm`, не `pnpm`.
+- `yarn` (1.x classic, workspaces). Не `npm`, не `pnpm`.
 - **Не выдумывать имена эндпоинтов, фич, маршрутов или сервисов**,
   которых нет в `docs/sub0-roadmap.md` или в `ai/ctx-*.md`. Не уверен —
   спросить, не доимысливать.
@@ -60,7 +60,7 @@ MVP-нагрузка скромная, но строим **scale-ready, не sca
   парсинг выписки в v1.1) — не синхронно в request-handler,
   а через outbox / таблицу задач. Когда придёт BullMQ — меняется
   адаптер, не доменный код.
-- **Миграции Prisma backward-compatible**: expand → migrate code →
+- **Миграции backward-compatible**: expand → migrate code →
   contract. Без даунтайма, без блокировки релизов.
 - **БД-доступ под индексом**, никаких `SELECT *` в hot-path,
   N+1 ловится в PR.

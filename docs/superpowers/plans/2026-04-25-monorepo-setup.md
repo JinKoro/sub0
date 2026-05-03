@@ -1,5 +1,7 @@
 # Monorepo Setup Implementation Plan
 
+> **ARCHIVED (2026-05-03).** Этот план был выполнен 25 апреля 2026 и описывает _изначальный_ setup монорепо на Yarn 4 (Berry) + Prisma. Проект с тех пор мигрировал на **Yarn 1.x classic** и **Drizzle ORM** — актуальное состояние стэка см. в `AGENTS.md` и `README.md`. Документ оставлен для исторической трассировки решений; не использовать как руководство.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Convert subzero from a single Next.js app into a Yarn 4 + Turborepo monorepo with `apps/web` (relocated Next.js), `apps/api` (new NestJS), and shared `packages/{shared,eslint-config,tsconfig}`. Cross-package types must work in both apps. `yarn dev` must launch both. `yarn lint` and `yarn typecheck` must pass.
