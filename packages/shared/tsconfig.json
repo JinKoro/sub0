@@ -6,7 +6,8 @@
     "moduleResolution": "node",
     "outDir": "./dist",
     "rootDir": "./src",
-    "noEmit": false
+    "noEmit": false,
+    "tsBuildInfoFile": "./dist/.tsbuildinfo"
   },
   "include": ["src/**/*"]
 }
