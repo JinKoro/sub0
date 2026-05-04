@@ -51,7 +51,7 @@ forbidUnknownValues, transform })` + DTO с `class-validator`.
 - Web (server actions / route handlers): `zod` на каждом входе. Никогда
   не доверяем shape `FormData` или JSON.
 - Лимиты в схемах: email ≤ 254, password 12–128, имя ≤ 100, название
-  подписки ≤ 200, currency — enum `["USD", "RUB", "BYN"]`,
+  подписки ≤ 200, currency — enum `["RUB", "USD", "EUR", "BYN"]`,
   периодичность — enum.
 - Никаких `dangerouslySetInnerHTML` без `isomorphic-dompurify` и
   одной строки комментария-обоснования.
@@ -75,6 +75,17 @@ forbidUnknownValues, transform })` + DTO с `class-validator`.
 - Удаление аккаунта (MVP): soft-delete сразу, hard-delete через
   30 дней. После hard-delete — никаких остатков в логах. 152-ФЗ:
   30-дневный grace period покрывает требование.
+- **Project scoping (MVP):** все ресурсы (`subscription`,
+  `category_custom`, `billing_history`, `notification_settings` если
+  per-project) scoped по `project_id`. На любом запросе с
+  `project_id` в path/query — guard проверяет, что
+  `project.customer_id = req.user.id` (`req.user.id` — это claim из
+  JWT и значение `customer.id`, а не отдельная сущность). На
+  каждом WHERE по дочерним таблицам — обязательный
+  `project_id = ?` (а не «верим, что фронт прислал свой»).
+  IDOR-проверка покрыта unit-тестом для каждого CRUD. «Все
+  проекты» — отдельная опция в API (`?allProjects=true`), которая
+  фильтрует только по `customer_id`.
 
 #### 3. Anti-spam (формы)
 
@@ -158,8 +169,8 @@ forbidUnknownValues, transform })` + DTO с `class-validator`.
 - Generic ошибки клиенту (без stack trace, без internal-message).
   Детали — server-side с request-id.
 - PII redaction: **allow-list** полей (а не deny-list). По умолчанию
-  никакие user-данные не логируем; явно перечисляем что можно
-  (например, `user_id`, `email_hash`).
+  никакие customer-данные не логируем; явно перечисляем что можно
+  (например, `customer_id`, `email_hash`).
 - Никогда не логируем: пароли, любые JWT, refresh-cookie,
   payment-токены, тело банковской выписки, OAuth-токены.
 - Логи имеют TTL (90 дней по умолчанию).

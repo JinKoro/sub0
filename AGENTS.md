@@ -76,6 +76,14 @@ roadmap, а не «на будущее». Готовность ≠ прежде�
 
 ### Context Library
 
+- `ai/ctx-architecture.md` — доменная терминология (`customer`,
+  `project`, …), конвенции таблиц (`sku`, `version`, soft-delete),
+  правила миграций (1 таблица — 1 миграция), каскады. Перед
+  изменениями БД-схемы или миграций — читать обязательно.
+- `ai/ctx-business-logic.md` — инварианты домена: enum-значения,
+  правила subscription (категория XOR, name/icon override, promo /
+  trial), генерация и backfill `billing_history`, soft-delete,
+  optimistic locking, sku.
 - `ai/ctx-frontend-fsd.md` — FSD-архитектура веба: слайсы, маршруты,
   i18n, time-zones, валюты, PWA, темы.
 - `ai/ctx-design-system.md` — дизайн-система: токены, шрифты,
