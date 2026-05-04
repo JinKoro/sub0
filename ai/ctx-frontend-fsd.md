@@ -7,12 +7,13 @@
   по refresh-cookie).
 - `_pages/` — page-level компоновки. Подчёркивание потому что
   имя `pages` зарезервировано Next’ом.
-  - MVP: `main`, `pricing`, `login`, `register`, `dashboard`, `settings`.
+  - MVP: `main`, `pricing`, `login`, `register`, `dashboard`,
+    `settings`, `project` (multi-dashboard).
   - v1.1: `blog`, `faq`.
-  - v2: `project` (multi-dashboard), `tools` (без регистрации).
+  - v2: `tools` (без регистрации).
 - `widgets/` — крупные UI-блоки.
-  - `header` (логотип, навигация, language-switcher, theme-switcher,
-    user-menu), `footer`.
+  - `header` (логотип, `project-switcher` с опцией «Все проекты»,
+    навигация, language-switcher, theme-switcher, user-menu), `footer`.
   - `dashboard-shell`, `subscriptions-list`, `subscriptions-calendar`,
     `analytics-cards` (totals по валютам), `upcoming-charges`
     (ближайшие 30 дней), `add-subscription-modal`.
@@ -27,8 +28,8 @@
     транзитом в LLM, у нас не хранится).
 - `entities/` — доменные модели и их UI.
   - `subscription`, `service-catalog` (топ-50 сервисов в MVP,
-    500+ в v1.1), `user`, `tariff`, `payment`, `notification-rule`.
-  - v2: `project`.
+    500+ в v1.1), `customer`, `tariff`, `payment`, `notification-rule`,
+    `project`.
 - `shared/`:
   - `api/` — `api-client` с refresh-token interceptor (на 401 пробуем
     рефреш через `/auth/refresh`; на повторный 401 — редирект на
@@ -37,21 +38,21 @@
     `hooks/` (`useSession`, `useCurrency`, `useTimezone`,
     `useExchangeRates`).
   - `layouts/`, `lib/` (`env`, `dates-tz`, `money`), `modals/`,
-    `types/`, `constants/` (`USD`/`RUB`/`BYN`, периодичности).
+    `types/`, `constants/` (`USD`/`RUB`/`EUR`/`BYN`, периодичности).
 
 Импорты через `@/…` с корнем в `apps/web/src`.
 
 ### Time zones (критично)
 
 - Все даты списания храним в Postgres как `timestamptz` (UTC).
-- В UI отображаем в `user.timezone` (хранится в профиле; дефолт —
+- В UI отображаем в `customer.timezone` (хранится в профиле; дефолт —
   IANA-имя из браузера при регистрации).
 - Никаких `new Date().toISOString().slice(0, 10)` без явной TZ —
   это причина уведомлений в 3 ночи.
 - Утилиты: `shared/lib/dates-tz.ts` — `toUserTz(date, tz)`,
   `fromUserTz(date, tz)`. Использовать их и только их.
 - Backend (Nest) при планировании email/Telegram-нотификации
-  читает `user.timezone` и высчитывает «за N дней» в локальном
+  читает `customer.timezone` и высчитывает «за N дней» в локальном
   времени юзера, потом конвертирует в UTC для cron.
 
 ### i18n
@@ -65,7 +66,7 @@
 
 ### Currencies & exchange rates
 
-- Подписки хранятся в собственной валюте: `USD`, `RUB`, `BYN`.
+- Подписки хранятся в собственной валюте: `RUB`, `USD`, `EUR`, `BYN`.
 - Totals в дашборде показываются **по валютам отдельно** + опциональная
   конвертация в основную валюту пользователя.
 - Курс — суточный pull с ЦБ РФ (фоновая задача в `apps/api`,

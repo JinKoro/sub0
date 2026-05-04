@@ -5,8 +5,64 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1777813557060,
-      "tag": "0000_init_users",
+      "when": 1777899865318,
+      "tag": "0000_create_customer",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1777899996909,
+      "tag": "0001_create_oauth_account",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1777900063090,
+      "tag": "0002_create_refresh_token",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1777900076489,
+      "tag": "0003_create_project",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1777900096401,
+      "tag": "0004_create_category",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1777900114551,
+      "tag": "0005_create_category_custom",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1777900129087,
+      "tag": "0006_create_service",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1777900198289,
+      "tag": "0007_create_subscription",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1777900215055,
+      "tag": "0008_create_billing_history",
       "breakpoints": true
     }
   ]
