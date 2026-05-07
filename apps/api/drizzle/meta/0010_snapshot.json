@@ -1,0 +1,1431 @@
+{
+  "id": "ebd859a3-d380-425c-bb44-aa8cabcb7e59",
+  "prevId": "9da36401-67ac-4223-9851-099853e0d371",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.customer": {
+      "name": "customer",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "email": {
+          "name": "email",
+          "type": "varchar(320)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "password_hash": {
+          "name": "password_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "avatar_url": {
+          "name": "avatar_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "timezone": {
+          "name": "timezone",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "locale_id": {
+          "name": "locale_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "currency_id": {
+          "name": "currency_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "plan_id": {
+          "name": "plan_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "plan_expires_at": {
+          "name": "plan_expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "state_id": {
+          "name": "state_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        }
+      },
+      "indexes": {
+        "customer_email_key": {
+          "name": "customer_email_key",
+          "columns": [
+            {
+              "expression": "email",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "where": "\"customer\".\"deleted_at\" IS NULL",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.oauth_account": {
+      "name": "oauth_account",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "customer_id": {
+          "name": "customer_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "provider_id": {
+          "name": "provider_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "provider_user_id": {
+          "name": "provider_user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "oauth_account_provider_key": {
+          "name": "oauth_account_provider_key",
+          "columns": [
+            {
+              "expression": "provider_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "provider_user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "oauth_account_customer_provider_key": {
+          "name": "oauth_account_customer_provider_key",
+          "columns": [
+            {
+              "expression": "customer_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "provider_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "idx_oauth_account_customer": {
+          "name": "idx_oauth_account_customer",
+          "columns": [
+            {
+              "expression": "customer_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "oauth_account_customer_id_customer_id_fk": {
+          "name": "oauth_account_customer_id_customer_id_fk",
+          "tableFrom": "oauth_account",
+          "columnsFrom": [
+            "customer_id"
+          ],
+          "tableTo": "customer",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.refresh_token": {
+      "name": "refresh_token",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "customer_id": {
+          "name": "customer_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "token_hash": {
+          "name": "token_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "revoked_at": {
+          "name": "revoked_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "user_agent": {
+          "name": "user_agent",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ip": {
+          "name": "ip",
+          "type": "varchar(45)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "refresh_token_hash_key": {
+          "name": "refresh_token_hash_key",
+          "columns": [
+            {
+              "expression": "token_hash",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "idx_refresh_token_customer": {
+          "name": "idx_refresh_token_customer",
+          "columns": [
+            {
+              "expression": "customer_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "where": "\"refresh_token\".\"revoked_at\" IS NULL",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "refresh_token_customer_id_customer_id_fk": {
+          "name": "refresh_token_customer_id_customer_id_fk",
+          "tableFrom": "refresh_token",
+          "columnsFrom": [
+            "customer_id"
+          ],
+          "tableTo": "customer",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.project": {
+      "name": "project",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "sku": {
+          "name": "sku",
+          "type": "varchar(12)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "customer_id": {
+          "name": "customer_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "color": {
+          "name": "color",
+          "type": "varchar(7)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "state_id": {
+          "name": "state_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        }
+      },
+      "indexes": {
+        "project_sku_key": {
+          "name": "project_sku_key",
+          "columns": [
+            {
+              "expression": "sku",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "idx_project_customer": {
+          "name": "idx_project_customer",
+          "columns": [
+            {
+              "expression": "customer_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "where": "\"project\".\"deleted_at\" IS NULL",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "project_customer_id_customer_id_fk": {
+          "name": "project_customer_id_customer_id_fk",
+          "tableFrom": "project",
+          "columnsFrom": [
+            "customer_id"
+          ],
+          "tableTo": "customer",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.category": {
+      "name": "category",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "sku": {
+          "name": "sku",
+          "type": "varchar(12)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name_ru": {
+          "name": "name_ru",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name_en": {
+          "name": "name_en",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "color": {
+          "name": "color",
+          "type": "varchar(7)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "category_sku_key": {
+          "name": "category_sku_key",
+          "columns": [
+            {
+              "expression": "sku",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "category_name_ru_key": {
+          "name": "category_name_ru_key",
+          "columns": [
+            {
+              "expression": "name_ru",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "category_name_en_key": {
+          "name": "category_name_en_key",
+          "columns": [
+            {
+              "expression": "name_en",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.category_custom": {
+      "name": "category_custom",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "sku": {
+          "name": "sku",
+          "type": "varchar(12)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "customer_id": {
+          "name": "customer_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "project_id": {
+          "name": "project_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "color": {
+          "name": "color",
+          "type": "varchar(7)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        }
+      },
+      "indexes": {
+        "category_custom_sku_key": {
+          "name": "category_custom_sku_key",
+          "columns": [
+            {
+              "expression": "sku",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "category_custom_customer_project_name_key": {
+          "name": "category_custom_customer_project_name_key",
+          "columns": [
+            {
+              "expression": "customer_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "project_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "name",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "idx_category_custom_customer_project": {
+          "name": "idx_category_custom_customer_project",
+          "columns": [
+            {
+              "expression": "customer_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "project_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "category_custom_customer_id_customer_id_fk": {
+          "name": "category_custom_customer_id_customer_id_fk",
+          "tableFrom": "category_custom",
+          "columnsFrom": [
+            "customer_id"
+          ],
+          "tableTo": "customer",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "category_custom_project_id_project_id_fk": {
+          "name": "category_custom_project_id_project_id_fk",
+          "tableFrom": "category_custom",
+          "columnsFrom": [
+            "project_id"
+          ],
+          "tableTo": "project",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.service": {
+      "name": "service",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "sku": {
+          "name": "sku",
+          "type": "varchar(12)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "icon": {
+          "name": "icon",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "category_id": {
+          "name": "category_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cancel_url": {
+          "name": "cancel_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "pricing_url": {
+          "name": "pricing_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "is_active": {
+          "name": "is_active",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "service_sku_key": {
+          "name": "service_sku_key",
+          "columns": [
+            {
+              "expression": "sku",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "idx_service_category": {
+          "name": "idx_service_category",
+          "columns": [
+            {
+              "expression": "category_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "where": "\"service\".\"is_active\" = true",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "service_category_id_category_id_fk": {
+          "name": "service_category_id_category_id_fk",
+          "tableFrom": "service",
+          "columnsFrom": [
+            "category_id"
+          ],
+          "tableTo": "category",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.subscription": {
+      "name": "subscription",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "sku": {
+          "name": "sku",
+          "type": "varchar(12)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "customer_id": {
+          "name": "customer_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "project_id": {
+          "name": "project_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "service_id": {
+          "name": "service_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "category_id": {
+          "name": "category_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "category_custom_id": {
+          "name": "category_custom_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "name_custom": {
+          "name": "name_custom",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "icon_custom": {
+          "name": "icon_custom",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "amount": {
+          "name": "amount",
+          "type": "numeric(12, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "currency_id": {
+          "name": "currency_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "billing_period_id": {
+          "name": "billing_period_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "first_billing_date": {
+          "name": "first_billing_date",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "next_billing_date": {
+          "name": "next_billing_date",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_trial": {
+          "name": "is_trial",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "promo_amount": {
+          "name": "promo_amount",
+          "type": "numeric(12, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "promo_ends_at": {
+          "name": "promo_ends_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "comment": {
+          "name": "comment",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "state_id": {
+          "name": "state_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        }
+      },
+      "indexes": {
+        "subscription_sku_key": {
+          "name": "subscription_sku_key",
+          "columns": [
+            {
+              "expression": "sku",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "idx_subscription_customer_project_state": {
+          "name": "idx_subscription_customer_project_state",
+          "columns": [
+            {
+              "expression": "customer_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "project_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "state_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "where": "\"subscription\".\"deleted_at\" IS NULL",
+          "concurrently": false
+        },
+        "idx_subscription_next_billing": {
+          "name": "idx_subscription_next_billing",
+          "columns": [
+            {
+              "expression": "customer_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "next_billing_date",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "where": "\"subscription\".\"deleted_at\" IS NULL AND \"subscription\".\"state_id\" = 1",
+          "concurrently": false
+        },
+        "idx_subscription_promo_ends": {
+          "name": "idx_subscription_promo_ends",
+          "columns": [
+            {
+              "expression": "customer_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "promo_ends_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "where": "\"subscription\".\"promo_ends_at\" IS NOT NULL AND \"subscription\".\"deleted_at\" IS NULL",
+          "concurrently": false
+        },
+        "idx_subscription_service": {
+          "name": "idx_subscription_service",
+          "columns": [
+            {
+              "expression": "service_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "where": "\"subscription\".\"service_id\" IS NOT NULL AND \"subscription\".\"deleted_at\" IS NULL",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "subscription_customer_id_customer_id_fk": {
+          "name": "subscription_customer_id_customer_id_fk",
+          "tableFrom": "subscription",
+          "columnsFrom": [
+            "customer_id"
+          ],
+          "tableTo": "customer",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "subscription_project_id_project_id_fk": {
+          "name": "subscription_project_id_project_id_fk",
+          "tableFrom": "subscription",
+          "columnsFrom": [
+            "project_id"
+          ],
+          "tableTo": "project",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "subscription_service_id_service_id_fk": {
+          "name": "subscription_service_id_service_id_fk",
+          "tableFrom": "subscription",
+          "columnsFrom": [
+            "service_id"
+          ],
+          "tableTo": "service",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "subscription_category_id_category_id_fk": {
+          "name": "subscription_category_id_category_id_fk",
+          "tableFrom": "subscription",
+          "columnsFrom": [
+            "category_id"
+          ],
+          "tableTo": "category",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "subscription_category_custom_id_category_custom_id_fk": {
+          "name": "subscription_category_custom_id_category_custom_id_fk",
+          "tableFrom": "subscription",
+          "columnsFrom": [
+            "category_custom_id"
+          ],
+          "tableTo": "category_custom",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.billing_history": {
+      "name": "billing_history",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "sku": {
+          "name": "sku",
+          "type": "varchar(12)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "subscription_id": {
+          "name": "subscription_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "customer_id": {
+          "name": "customer_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "project_id": {
+          "name": "project_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "amount": {
+          "name": "amount",
+          "type": "numeric(12, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "currency_id": {
+          "name": "currency_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "period_start": {
+          "name": "period_start",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "period_end": {
+          "name": "period_end",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "billed_at": {
+          "name": "billed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_promo": {
+          "name": "is_promo",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        }
+      },
+      "indexes": {
+        "billing_history_sku_key": {
+          "name": "billing_history_sku_key",
+          "columns": [
+            {
+              "expression": "sku",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "idx_billing_history_subscription_billed": {
+          "name": "idx_billing_history_subscription_billed",
+          "columns": [
+            {
+              "expression": "subscription_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "billed_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "where": "\"billing_history\".\"deleted_at\" IS NULL",
+          "concurrently": false
+        },
+        "idx_billing_history_customer_billed": {
+          "name": "idx_billing_history_customer_billed",
+          "columns": [
+            {
+              "expression": "customer_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "billed_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "where": "\"billing_history\".\"deleted_at\" IS NULL",
+          "concurrently": false
+        },
+        "idx_billing_history_project_billed": {
+          "name": "idx_billing_history_project_billed",
+          "columns": [
+            {
+              "expression": "project_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "billed_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "where": "\"billing_history\".\"deleted_at\" IS NULL",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "billing_history_subscription_id_subscription_id_fk": {
+          "name": "billing_history_subscription_id_subscription_id_fk",
+          "tableFrom": "billing_history",
+          "columnsFrom": [
+            "subscription_id"
+          ],
+          "tableTo": "subscription",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "billing_history_customer_id_customer_id_fk": {
+          "name": "billing_history_customer_id_customer_id_fk",
+          "tableFrom": "billing_history",
+          "columnsFrom": [
+            "customer_id"
+          ],
+          "tableTo": "customer",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "billing_history_project_id_project_id_fk": {
+          "name": "billing_history_project_id_project_id_fk",
+          "tableFrom": "billing_history",
+          "columnsFrom": [
+            "project_id"
+          ],
+          "tableTo": "project",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "views": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

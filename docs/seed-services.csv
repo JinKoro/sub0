@@ -1,0 +1,198 @@
+sku,name,category_sku,icon,cancel_url,pricing_url
+KN84JXN6,Netflix,N9095NFS,/icons/netflix.svg,https://www.netflix.com/cancelplan,https://www.netflix.com/signup/planform
+N50MK3M6,Disney+,N9095NFS,/icons/disneyplus.svg,https://www.disneyplus.com/,https://www.disneyplus.com/welcome
+RFCE7JKF,Max,N9095NFS,/icons/max.svg,https://auth.max.com/,https://auth.max.com/signup
+G6EHWBFM,Hulu,N9095NFS,/icons/hulu.svg,https://www.hulu.com/,https://www.hulu.com/welcome
+JPCFEHE8,Apple TV+,N9095NFS,/icons/appletv.svg,https://apps.apple.com/account/subscriptions,https://www.apple.com/apple-tv-plus/
+7K8NFBGX,Amazon Prime Video,N9095NFS,/icons/primevideo.svg,https://www.amazon.com/,https://www.amazon.com/amazonprime
+4Y8W5P5Z,Paramount+,N9095NFS,/icons/paramountplus.svg,https://www.paramountplus.com/,https://www.paramountplus.com/account/signup/
+AM89EC21,Peacock,N9095NFS,/icons/peacock.svg,https://www.peacocktv.com/,https://www.peacocktv.com/plans
+45XH81XZ,Crunchyroll,N9095NFS,/icons/crunchyroll.svg,https://www.crunchyroll.com/,https://www.crunchyroll.com/welcome
+CNER5P3E,Mubi,N9095NFS,/icons/mubi.svg,https://mubi.com/,https://mubi.com/
+BRYRDACV,Plex Pass,N9095NFS,/icons/plex.svg,https://www.plex.tv/,https://www.plex.tv/plex-pass/
+1JS75TTJ,Discovery+,N9095NFS,/icons/discoveryplus.svg,https://www.discoveryplus.com/,https://www.discoveryplus.com/
+VT00AZ2W,ESPN+,N9095NFS,/icons/espnplus.svg,https://plus.espn.com/,https://plus.espn.com/
+GCXA6VFA,Кинопоиск,N9095NFS,/icons/kinopoisk.svg,https://plus.yandex.ru/myplus,https://hd.kinopoisk.ru/
+24Q0WY4T,Okko,N9095NFS,/icons/okko.svg,https://okko.tv/,https://okko.tv/
+MDQYABYK,Иви,N9095NFS,/icons/ivi.svg,https://www.ivi.ru/,https://www.ivi.ru/
+JY7QKHYN,Wink,N9095NFS,/icons/wink.svg,https://wink.ru/,https://wink.ru/
+W29G07JH,START,N9095NFS,/icons/startru.svg,https://start.ru/,https://start.ru/
+8MS9MDGY,Premier,N9095NFS,/icons/premier.svg,https://premier.one/,https://premier.one/
+A9N07SH3,MORE.TV,N9095NFS,/icons/moretv.svg,https://more.tv/,https://more.tv/
+WH6HQH3S,Билайн ТВ,N9095NFS,/icons/beelinetv.svg,https://moretv.tv/,https://moretv.tv/
+4V4415QF,Megafon TV,N9095NFS,/icons/megafontv.svg,https://megafontv.ru/,https://megafontv.ru/
+K692Y4MN,Spotify,BPBXYE18,/icons/spotify.svg,https://www.spotify.com/account/subscription/cancel/,https://www.spotify.com/premium/
+TQV1SF4W,Apple Music,BPBXYE18,/icons/applemusic.svg,https://apps.apple.com/account/subscriptions,https://www.apple.com/apple-music/
+DRTHGR2T,YouTube Music,BPBXYE18,/icons/youtubemusic.svg,https://myaccount.google.com/subscriptions,https://music.youtube.com/
+HJN5RA13,Tidal,BPBXYE18,/icons/tidal.svg,https://tidal.com/,https://tidal.com/pricing
+PG0MTW1S,Deezer,BPBXYE18,/icons/deezer.svg,https://www.deezer.com/,https://www.deezer.com/offers
+H3WSVJAY,SoundCloud Go+,BPBXYE18,/icons/soundcloud.svg,https://soundcloud.com/,https://soundcloud.com/
+JAVBFYKG,Amazon Music Unlimited,BPBXYE18,/icons/amazonmusic.svg,https://www.amazon.com/,https://www.amazon.com/music/unlimited
+E602VGHE,Pandora Premium,BPBXYE18,/icons/pandora.svg,https://www.pandora.com/,https://www.pandora.com/upgrade
+DAER3EAE,iHeartRadio Plus,BPBXYE18,/icons/iheartradio.svg,https://www.iheart.com/,https://www.iheart.com/
+0FB4E347,Anghami Plus,BPBXYE18,/icons/anghami.svg,https://www.anghami.com/,https://www.anghami.com/plus
+0W7NNRZ6,JioSaavn Pro,BPBXYE18,/icons/jiosaavn.svg,https://www.jiosaavn.com/,https://www.jiosaavn.com/pro
+BZQYNMJQ,ВК Музыка,BPBXYE18,/icons/vkmusic.svg,https://vk.com/,https://vk.com/music
+JS7JDECH,МТС Music,BPBXYE18,/icons/mtsmusic.svg,https://music.mts.ru/,https://music.mts.ru/
+9VQZZ5QR,Napster,BPBXYE18,/icons/napster.svg,https://www.napster.com/,https://www.napster.com/
+SW6SZJN1,Audiomack Premium,BPBXYE18,/icons/audiomack.svg,https://audiomack.com/,https://audiomack.com/premium
+15N1A5EZ,Coursera Plus,F10MPC5T,/icons/coursera.svg,https://www.coursera.org/,https://www.coursera.org/courseraplus
+SHFJ6KCZ,edX Verified,F10MPC5T,/icons/edx.svg,https://www.edx.org/,https://www.edx.org/
+RFCR46MG,Udemy Personal Plan,F10MPC5T,/icons/udemy.svg,https://www.udemy.com/,https://www.udemy.com/personal-plan/
+71XVTTS3,Skillshare,F10MPC5T,/icons/skillshare.svg,https://www.skillshare.com/,https://www.skillshare.com/en/membership
+0A44HH2X,MasterClass,F10MPC5T,/icons/masterclass.svg,https://www.masterclass.com/,https://www.masterclass.com/pricing
+KZ6B6CQE,Pluralsight,F10MPC5T,/icons/pluralsight.svg,https://www.pluralsight.com/,https://www.pluralsight.com/pricing
+D105ZAHD,LinkedIn Learning,F10MPC5T,/icons/linkedin.svg,https://www.linkedin.com/,https://www.linkedin.com/learning/subscription/products
+HGBABBVH,Brilliant Premium,F10MPC5T,/icons/brilliant.svg,https://brilliant.org/,https://brilliant.org/premium/
+CW5RYY62,DataCamp,F10MPC5T,/icons/datacamp.svg,https://www.datacamp.com/,https://www.datacamp.com/pricing
+7BP56XXJ,Codecademy Pro,F10MPC5T,/icons/codecademy.svg,https://www.codecademy.com/,https://www.codecademy.com/pricing
+6T20V383,Treehouse,F10MPC5T,/icons/treehouse.svg,https://teamtreehouse.com/,https://teamtreehouse.com/
+W6C3XGCX,Udacity,F10MPC5T,/icons/udacity.svg,https://www.udacity.com/,https://www.udacity.com/pricing
+8E930NA4,egghead.io,F10MPC5T,/icons/egghead.svg,https://egghead.io/,https://egghead.io/pricing
+BDFHQ3ZD,Babbel,F10MPC5T,/icons/babbel.svg,https://www.babbel.com/,https://www.babbel.com/prices
+TEDT39MN,Busuu Premium,F10MPC5T,/icons/busuu.svg,https://www.busuu.com/,https://www.busuu.com/products/en
+NZCZMAYR,Rosetta Stone,F10MPC5T,/icons/rosettastone.svg,https://www.rosettastone.com/,https://www.rosettastone.com/
+NJ762F9G,Pimsleur,F10MPC5T,/icons/pimsleur.svg,https://www.pimsleur.com/,https://www.pimsleur.com/
+SXZPQ6DG,Skillbox,F10MPC5T,/icons/skillbox.svg,https://skillbox.ru/,https://skillbox.ru/
+DATTC8CJ,GeekBrains,F10MPC5T,/icons/geekbrains.svg,https://gb.ru/,https://gb.ru/
+8CXD49FK,Нетология,F10MPC5T,/icons/netology.svg,https://netology.ru/,https://netology.ru/
+A4GFKBB0,Яндекс Практикум,F10MPC5T,/icons/yandex.svg,https://practicum.yandex.ru/,https://practicum.yandex.ru/
+TFNTGPA6,Stepik Premium,F10MPC5T,/icons/stepik.svg,https://stepik.org/,https://stepik.org/
+CN8WBD52,Foxford,F10MPC5T,/icons/foxford.svg,https://foxford.ru/,https://foxford.ru/
+X8H8QBF5,Duolingo Plus,F10MPC5T,/icons/duolingo.svg,https://www.duolingo.com/,https://www.duolingo.com/super
+4QJGFZNC,Skyeng,F10MPC5T,/icons/skyeng.svg,https://skyeng.ru/,https://skyeng.ru/
+A31F5JZZ,Альпина Digital,F10MPC5T,/icons/alpinadigital.svg,https://alpinadigital.ru/,https://alpinadigital.ru/
+NT5HEXVB,Smart Reading,F10MPC5T,/icons/smartreading.svg,https://smartreading.ru/,https://smartreading.ru/
+Q8R1NNQC,Постнаука Plus,F10MPC5T,/icons/postnauka.svg,https://postnauka.org/,https://postnauka.org/
+88GJ3ESY,Arzamas Plus,F10MPC5T,/icons/arzamas.svg,https://arzamas.academy/,https://arzamas.academy/
+A0GCX76F,Магистерия,F10MPC5T,/icons/magisteria.svg,https://magisteria.ru/,https://magisteria.ru/
+C6GGRWQT,Strava Subscription,E7ED6796,/icons/strava.svg,https://www.strava.com/,https://www.strava.com/subscribe
+14PQ26R9,Calm,E7ED6796,/icons/calm.svg,https://www.calm.com/,https://www.calm.com/subscribe
+0FDDR4F0,Headspace,E7ED6796,/icons/headspace.svg,https://www.headspace.com/,https://www.headspace.com/subscriptions
+4YEGZ5BT,Apple Fitness+,E7ED6796,/icons/apple.svg,https://apps.apple.com/account/subscriptions,https://www.apple.com/apple-fitness-plus/
+S170QYXE,Peloton App,E7ED6796,/icons/peloton.svg,https://www.onepeloton.com/,https://www.onepeloton.com/app
+C7ZWGTZP,Whoop,E7ED6796,/icons/whoop.svg,https://www.whoop.com/,https://www.whoop.com/membership/
+09QMT0GR,Garmin Connect+,E7ED6796,/icons/garmin.svg,https://www.garmin.com/,https://www.garmin.com/en-US/
+MC9VRKJC,Fitbit Premium,E7ED6796,/icons/fitbit.svg,https://www.fitbit.com/,https://www.fitbit.com/global/us/products/services/premium
+P0R0A92B,Oura,E7ED6796,/icons/oura.svg,https://ouraring.com/,https://ouraring.com/membership
+HQ3X7PDV,Future,E7ED6796,/icons/futureapp.svg,https://future.co/,https://future.co/
+FXPV7DWR,Sleep Cycle Premium,E7ED6796,/icons/sleepcycle.svg,https://www.sleepcycle.com/,https://www.sleepcycle.com/
+V8WA04HN,СберЗдоровье,E7ED6796,/icons/sberbank.svg,https://sberhealth.ru/,https://sberhealth.ru/
+41HFGN63,Adobe Creative Cloud,F6V8SZ0S,/icons/adobecreativecloud.svg,https://www.adobe.com/,https://www.adobe.com/creativecloud/plans.html
+WN5TZH74,Microsoft 365,F6V8SZ0S,/icons/microsoft365.svg,https://account.microsoft.com/services,https://www.microsoft.com/microsoft-365
+78YTHTGT,Apple One,F6V8SZ0S,/icons/apple.svg,https://apps.apple.com/account/subscriptions,https://www.apple.com/apple-one/
+XJBXPDRM,JetBrains All Products Pack,F6V8SZ0S,/icons/jetbrains.svg,https://www.jetbrains.com/,https://www.jetbrains.com/store/
+W0DMD0YY,Figma Professional,F6V8SZ0S,/icons/figma.svg,https://www.figma.com/,https://www.figma.com/pricing/
+MFJ9JZT2,Sketch,F6V8SZ0S,/icons/sketch.svg,https://www.sketch.com/,https://www.sketch.com/pricing/
+440JPKBD,Webflow Workspace,F6V8SZ0S,/icons/webflow.svg,https://webflow.com/,https://webflow.com/pricing
+0XJ03VXP,Framer Pro,F6V8SZ0S,/icons/framer.svg,https://www.framer.com/,https://www.framer.com/pricing/
+E8F93P8F,Squarespace,F6V8SZ0S,/icons/squarespace.svg,https://www.squarespace.com/,https://www.squarespace.com/pricing
+82YN1JHH,Wix Premium,F6V8SZ0S,/icons/wix.svg,https://www.wix.com/,https://www.wix.com/upgrade/website
+G8D603SG,Cloudflare Pro,F6V8SZ0S,/icons/cloudflare.svg,https://www.cloudflare.com/,https://www.cloudflare.com/plans/
+YA5XPPTZ,Vercel Pro,F6V8SZ0S,/icons/vercel.svg,https://vercel.com/,https://vercel.com/pricing
+QAN30GD2,Netlify Pro,F6V8SZ0S,/icons/netlify.svg,https://www.netlify.com/,https://www.netlify.com/pricing/
+PTMQG1MV,Heroku Eco,F6V8SZ0S,/icons/heroku.svg,https://www.heroku.com/,https://www.heroku.com/pricing
+YV81W831,Railway Pro,F6V8SZ0S,/icons/railway.svg,https://railway.com/,https://railway.com/pricing
+44E3DKS4,Render Pro,F6V8SZ0S,/icons/render.svg,https://render.com/,https://render.com/pricing
+636KKX80,DigitalOcean,F6V8SZ0S,/icons/digitalocean.svg,https://www.digitalocean.com/,https://www.digitalocean.com/pricing
+HD7HB3WX,GitHub,F6V8SZ0S,/icons/github.svg,https://github.com/,https://github.com/pricing
+B1D01G2S,GitLab Premium,F6V8SZ0S,/icons/gitlab.svg,https://about.gitlab.com/,https://about.gitlab.com/pricing/
+XXY4JAA7,Tower,F6V8SZ0S,/icons/towergit.svg,https://www.git-tower.com/,https://www.git-tower.com/buy
+KTNQC9ZP,Setapp,F6V8SZ0S,/icons/setapp.svg,https://setapp.com/,https://setapp.com/pricing
+E4FV6KG6,CleanMyMac X,F6V8SZ0S,/icons/cleanmymac.svg,https://macpaw.com/,https://macpaw.com/cleanmymac
+WJXNCW0Z,Cinema 4D Subscription,F6V8SZ0S,/icons/cinema4d.svg,https://www.maxon.net/,https://www.maxon.net/en/cinema-4d
+W4KTSKEG,Notion,W6Y66ZRF,/icons/notion.svg,https://www.notion.so/,https://www.notion.so/pricing
+K0Z65X1M,Linear Standard,W6Y66ZRF,/icons/linear.svg,https://linear.app/,https://linear.app/pricing
+Z60G2YJ9,Asana Premium,W6Y66ZRF,/icons/asana.svg,https://asana.com/,https://asana.com/pricing
+7QX7NBCG,Trello Standard,W6Y66ZRF,/icons/trello.svg,https://trello.com/,https://trello.com/pricing
+262KVWDP,ClickUp Unlimited,W6Y66ZRF,/icons/clickup.svg,https://clickup.com/,https://clickup.com/pricing
+ZPEFA16A,Monday Basic,W6Y66ZRF,/icons/mondaycom.svg,https://monday.com/,https://monday.com/pricing
+NRSJT95Q,Todoist Pro,W6Y66ZRF,/icons/todoist.svg,https://todoist.com/,https://todoist.com/pricing
+Z9N4YD4X,TickTick Premium,W6Y66ZRF,/icons/ticktick.svg,https://ticktick.com/,https://ticktick.com/
+2P21FE9M,Obsidian Sync,W6Y66ZRF,/icons/obsidian.svg,https://obsidian.md/,https://obsidian.md/sync
+V8JRXCH1,Roam Research,W6Y66ZRF,/icons/roamresearch.svg,https://roamresearch.com/,https://roamresearch.com/#/pricing
+P32HQAQN,Craft Standard,W6Y66ZRF,/icons/craftapp.svg,https://www.craft.do/,https://www.craft.do/pricing
+EK1KC2FE,Evernote,W6Y66ZRF,/icons/evernote.svg,https://evernote.com/,https://evernote.com/pricing
+YXT8M9N7,Slack Pro,W6Y66ZRF,/icons/slack.svg,https://slack.com/,https://slack.com/pricing
+56M6CTRW,Zoom Pro,W6Y66ZRF,/icons/zoom.svg,https://zoom.us/,https://zoom.us/pricing
+NABZ43N8,Loom Business,W6Y66ZRF,/icons/loom.svg,https://www.loom.com/,https://www.loom.com/pricing
+SNTFB75N,Calendly Standard,W6Y66ZRF,/icons/calendly.svg,https://calendly.com/,https://calendly.com/pricing
+RA44GB24,Akiflow Pro,W6Y66ZRF,/icons/akiflow.svg,https://akiflow.com/,https://akiflow.com/pricing/
+WK6CZMP1,Motion,W6Y66ZRF,/icons/motionapp.svg,https://www.usemotion.com/,https://www.usemotion.com/pricing
+BJVRJZXQ,Superhuman,W6Y66ZRF,/icons/superhuman.svg,https://superhuman.com/,https://superhuman.com/pricing
+FPC41VCF,Hey,W6Y66ZRF,/icons/heyemail.svg,https://www.hey.com/,https://www.hey.com/pricing/
+FPXHPG4K,Bitrix24,W6Y66ZRF,/icons/bitrix24.svg,https://www.bitrix24.com/,https://www.bitrix24.com/prices/
+HS4MKYJ4,Yandex 360,W6Y66ZRF,/icons/yandex.svg,https://360.yandex.ru/,https://360.yandex.ru/
+CP8JH105,Kaiten,W6Y66ZRF,/icons/kaiten.svg,https://kaiten.ru/,https://kaiten.ru/
+5HSHSJAT,Reclaim.ai,W6Y66ZRF,/icons/reclaimai.svg,https://reclaim.ai/,https://reclaim.ai/pricing
+VW0PDZAY,Xbox Game Pass,Y4PB344K,/icons/xbox.svg,https://www.xbox.com/,https://www.xbox.com/xbox-game-pass
+G748HFXM,PlayStation Plus,Y4PB344K,/icons/playstation.svg,https://www.playstation.com/,https://www.playstation.com/ps-plus/
+QFZ9GETM,Nintendo Switch Online,Y4PB344K,/icons/nintendoswitch.svg,https://www.nintendo.com/,https://www.nintendo.com/switch/online-service/
+FFCSX3NE,EA Play,Y4PB344K,/icons/ea.svg,https://www.ea.com/,https://www.ea.com/ea-play
+9X78SB6F,Ubisoft+,Y4PB344K,/icons/ubisoft.svg,https://www.ubisoft.com/,https://www.ubisoft.com/
+SZ6WFNH4,Apple Arcade,Y4PB344K,/icons/apple.svg,https://apps.apple.com/account/subscriptions,https://www.apple.com/apple-arcade/
+HXTY4FHX,GeForce NOW,Y4PB344K,/icons/nvidia.svg,https://www.nvidia.com/,https://www.nvidia.com/en-us/geforce-now/
+Z6G2EZQG,Discord Nitro,Y4PB344K,/icons/discord.svg,https://discord.com/,https://discord.com/nitro
+KJAGJ6X1,Roblox Premium,Y4PB344K,/icons/roblox.svg,https://www.roblox.com/,https://www.roblox.com/
+CRXJH72N,World of Warcraft,Y4PB344K,/icons/worldofwarcraft.svg,https://worldofwarcraft.blizzard.com/,https://worldofwarcraft.blizzard.com/en-us/start
+292H0BD9,Faceit Premium,Y4PB344K,/icons/faceit.svg,https://www.faceit.com/,https://www.faceit.com/en/premium
+33NNQVGA,ESEA Premium,Y4PB344K,/icons/esea.svg,https://play.esea.net/,https://play.esea.net/
+9P0H12CN,ChatGPT,5S0R9DSF,/icons/openai.svg,https://openai.com/,https://openai.com/chatgpt/pricing
+ZHH1B4Y9,Claude,5S0R9DSF,/icons/anthropic.svg,https://www.anthropic.com/,https://www.anthropic.com/pricing
+V315M6N2,Gemini Advanced,5S0R9DSF,/icons/gemini.svg,https://one.google.com/,https://one.google.com/about/google-ai-plans
+G690NKK3,Perplexity Pro,5S0R9DSF,/icons/perplexity.svg,https://www.perplexity.ai/,https://www.perplexity.ai/pro
+DRAXB38Y,Midjourney,5S0R9DSF,/icons/midjourney.svg,https://www.midjourney.com/,https://www.midjourney.com/explore
+985WFQ01,ElevenLabs Starter,5S0R9DSF,/icons/elevenlabs.svg,https://elevenlabs.io/,https://elevenlabs.io/pricing
+K6NMFRKA,GitHub Copilot,5S0R9DSF,/icons/githubcopilot.svg,https://github.com/,https://github.com/features/copilot/plans
+V8P9FC3P,Cursor Pro,5S0R9DSF,/icons/cursor.svg,https://www.cursor.com/,https://www.cursor.com/pricing
+5S5SJKMK,Replit Core,5S0R9DSF,/icons/replit.svg,https://replit.com/,https://replit.com/pricing
+7S7X9NE0,Suno Pro,5S0R9DSF,/icons/suno.svg,https://suno.com/,https://suno.com/pricing
+SSGKPFJW,Notion AI,5S0R9DSF,/icons/notion.svg,https://www.notion.so/,https://www.notion.so/product/ai
+S9DNEZ39,JetBrains AI Assistant,5S0R9DSF,/icons/jetbrains.svg,https://www.jetbrains.com/,https://www.jetbrains.com/ai/
+G4W9SQM4,Sourcegraph Cody Pro,5S0R9DSF,/icons/sourcegraph.svg,https://sourcegraph.com/,https://sourcegraph.com/pricing
+H820ZE6R,iCloud+,5XVMJ5G6,/icons/icloud.svg,https://apps.apple.com/account/subscriptions,https://www.apple.com/icloud/
+MBXK48J0,Google One,5XVMJ5G6,/icons/googleone.svg,https://myaccount.google.com/subscriptions,https://one.google.com/about
+JHYGWKG7,Dropbox,5XVMJ5G6,/icons/dropbox.svg,https://www.dropbox.com/,https://www.dropbox.com/plans
+TJCVHRE9,Microsoft OneDrive,5XVMJ5G6,/icons/onedrive.svg,https://account.microsoft.com/services,https://www.microsoft.com/microsoft-365/onedrive/online-cloud-storage
+JCAH85SS,Backblaze,5XVMJ5G6,/icons/backblaze.svg,https://www.backblaze.com/,https://www.backblaze.com/cloud-backup/personal
+DQXV93A5,Sync.com Pro,5XVMJ5G6,/icons/synccom.svg,https://www.sync.com/,https://www.sync.com/pricing/
+D8CN7BEK,Tresorit,5XVMJ5G6,/icons/tresorit.svg,https://tresorit.com/,https://tresorit.com/pricing
+XJ9Y0H2G,Proton Drive Plus,5XVMJ5G6,/icons/protondrive.svg,https://proton.me/,https://proton.me/drive/pricing
+ND6NHXAE,Mega Pro,5XVMJ5G6,/icons/mega.svg,https://mega.io/,https://mega.io/pricing
+GPR5P35T,Box Personal Pro,5XVMJ5G6,/icons/box.svg,https://www.box.com/,https://www.box.com/pricing/personal
+T5YA6CJZ,СберДиск,5XVMJ5G6,/icons/sberbank.svg,https://disk.sber.ru/,https://disk.sber.ru/
+1F10N8HJ,Telegram Premium,SSRFX6JE,/icons/telegram.svg,https://telegram.org/,https://telegram.org/premium
+0JYWXAJ9,X Premium,SSRFX6JE,/icons/x.svg,https://help.x.com/,https://help.x.com/en/using-x/x-premium
+ZYEW6F3Z,YouTube Premium,SSRFX6JE,/icons/youtube.svg,https://myaccount.google.com/subscriptions,https://www.youtube.com/premium
+SEHN09F5,Reddit Premium,SSRFX6JE,/icons/reddit.svg,https://www.reddit.com/,https://www.reddit.com/premium
+02VQ2ARA,Substack,SSRFX6JE,/icons/substack.svg,https://substack.com/,https://substack.com/
+47NCCMTF,Twitch Subscription Tier 1,SSRFX6JE,/icons/twitch.svg,https://www.twitch.tv/,https://www.twitch.tv/subs/all
+ZARN4KFS,NordVPN,SSRFX6JE,/icons/nordvpn.svg,https://nordvpn.com/,https://nordvpn.com/order/
+KVZY443T,ExpressVPN,SSRFX6JE,/icons/expressvpn.svg,https://www.expressvpn.com/,https://www.expressvpn.com/order
+QCJWHKJV,Surfshark,SSRFX6JE,/icons/surfshark.svg,https://surfshark.com/,https://surfshark.com/pricing
+MQ6GV67A,ProtonVPN Plus,SSRFX6JE,/icons/protonvpn.svg,https://protonvpn.com/,https://protonvpn.com/pricing
+P2ZXBDC4,Mullvad VPN,SSRFX6JE,/icons/mullvad.svg,https://mullvad.net/,https://mullvad.net/en/account/create
+H244YSAG,CyberGhost,SSRFX6JE,/icons/cyberghost.svg,https://www.cyberghostvpn.com/,https://www.cyberghostvpn.com/
+EAG3SV4H,Private Internet Access,SSRFX6JE,/icons/privateinternetaccess.svg,https://www.privateinternetaccess.com/,https://www.privateinternetaccess.com/buy-vpn-online
+674Z3GDZ,1Password,SSRFX6JE,/icons/1password.svg,https://1password.com/,https://1password.com/sign-up
+NCYD7PMY,Bitwarden Premium,SSRFX6JE,/icons/bitwarden.svg,https://bitwarden.com/,https://bitwarden.com/pricing/
+DEA4S4PD,Dashlane Premium,SSRFX6JE,/icons/dashlane.svg,https://www.dashlane.com/,https://www.dashlane.com/pricing
+XKE57Q82,LastPass Premium,SSRFX6JE,/icons/lastpass.svg,https://www.lastpass.com/,https://www.lastpass.com/pricing
+1ET9N4YN,Audible Premium Plus,SSRFX6JE,/icons/audible.svg,https://www.audible.com/,https://www.audible.com/ep/membership
+TY6GBJY3,Букмейт,SSRFX6JE,/icons/bookmate.svg,https://bookmate.com/,https://bookmate.com/about
+D1HK24RQ,Яндекс Плюс,SSRFX6JE,/icons/yandex.svg,https://plus.yandex.ru/myplus,https://plus.yandex.ru/
+361K6J02,СберПрайм,SSRFX6JE,/icons/sberbank.svg,https://prime.sber.ru/,https://prime.sber.ru/
+SBN21QQ6,Тинькофф Pro,SSRFX6JE,/icons/tinkoff.svg,https://www.tinkoff.ru/,https://www.tinkoff.ru/pro/
+YXAE40HF,МТС Premium,SSRFX6JE,/icons/mts.svg,https://premium.mts.ru/,https://premium.mts.ru/
+79CJHCB4,Grammarly Premium,SSRFX6JE,/icons/grammarly.svg,https://www.grammarly.com/,https://www.grammarly.com/premium
+GKW939NY,Aura Identity Theft Protection,SSRFX6JE,/icons/aura.svg,https://www.aura.com/,https://www.aura.com/
+FFNG4Z34,AdGuard Premium,SSRFX6JE,/icons/adguard.svg,https://adguard.com/,https://adguard.com/license.html
+BYFMS6NG,Ozon Premium,SSRFX6JE,/icons/ozon.svg,https://www.ozon.ru/,https://www.ozon.ru/premium/
+KW4WRD4Z,Lamoda Plus,SSRFX6JE,/icons/lamoda.svg,https://www.lamoda.ru/,https://www.lamoda.ru/
+7HYXPXDA,Avito Pro,SSRFX6JE,/icons/avito.svg,https://www.avito.ru/,https://www.avito.ru/pro
+J5SW0DFN,VK Combo,SSRFX6JE,/icons/vk.svg,https://combo.vk.ru/,https://combo.vk.ru/
+M193NFYZ,Альфа Premium,SSRFX6JE,/icons/alfabank.svg,https://alfabank.ru/,https://alfabank.ru/
+66W447XZ,ВТБ Привилегия,SSRFX6JE,/icons/vtb.svg,https://www.vtb.ru/,https://www.vtb.ru/
+HPHWEC1X,Tele2 Mix,SSRFX6JE,/icons/tele2.svg,https://tele2.ru/,https://tele2.ru/tariffs
+ZT61ZRBZ,Boosty,SSRFX6JE,/icons/boosty.svg,https://boosty.to/,https://boosty.to/
+EEF050M0,Patreon,SSRFX6JE,/icons/patreon.svg,https://www.patreon.com/,https://www.patreon.com/

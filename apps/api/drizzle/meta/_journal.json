@@ -64,6 +64,20 @@
       "when": 1777900215055,
       "tag": "0008_create_billing_history",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1777903224638,
+      "tag": "0009_seed_categories",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1778171716100,
+      "tag": "0010_seed_services",
+      "breakpoints": true
     }
   ]
 }
