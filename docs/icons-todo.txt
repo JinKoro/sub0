@@ -1,0 +1,91 @@
+# Icons TODO — services still without a local SVG
+#
+# Status: 197 / 250 services have a local SVG icon (79%).
+# All 250 rows in seed-services.csv now point either to /icons/<slug>.svg or are empty.
+# 188 unique SVG files in apps/web/public/icons/ (some shared across sub-services:
+# yandex.svg → 3, sberbank.svg → 3, mts.svg → 2, apple.svg → 3, jetbrains.svg → 2, notion.svg → 2).
+#
+# Format for new icons (matches simpleicons style):
+#   <svg fill="#XXXXXX" role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+#     <title>Brand</title><path d="..."/>
+#   </svg>
+# Save as: apps/web/public/icons/<slug>.svg ; CSV column: /icons/<slug>.svg
+
+## Empty icon column — need SVG (53)
+## These brands lack publicly-accessible SVG logos: most serve only PNG/raster in their
+## marketing pages, or the SVG is behind auth/press-kit access. Best path forward is to
+## request the brand press kit (most brands have a media@ contact) or hand-trace from
+## the official PNG/AI source.
+
+### Streaming TV (8)
+3MBRQRCC  AMC+
+8F85WAQT  BritBox
+TK707NXS  Acorn TV
+P1ZV2BDB  Shudder
+H843HW4R  KION
+X60CK97Y  Amediateka
+P6RDM2RG  Kartina.TV
+DJMEX617  Дом.ru Кино
+
+### Music (5)
+Q71P0W2H  Qobuz
+ASDP94NV  SiriusXM
+28Z8MPWG  Stingray Music
+4PWR0B54  Boomplay
+X05S4GN2  Звук
+
+### Education (5)
+M1NE4MSH  Frontend Masters
+X8XS1VTE  Wondrium
+8C40QD6H  Lingualeo
+GFWQ4957  Учи.ру Premium
+D8TV89EF  PuzzleEnglish Premium
+5YH12AQ8  Englex
+
+### Fitness / Health (8)
+E3WAB1VP  MyFitnessPal Premium
+T1D6YCFM  FitBod
+7AGV3XEW  Centr
+57P1JZYC  Down Dog
+6Q5AHRDZ  Aaptiv
+TRQ3QV0W  WaterMinder Pro
+ZJY9ANRQ  Yoga with Adriene FWFG
+0CWJSN6D  SmartMed
+
+### Software (7)
+X5V23Y0M  Final Cut Pro for iPad   # Apple — no public SVG
+E5KHVYB0  Logic Pro for iPad       # Apple — no public SVG
+9MX8RDD2  Capture One Pro
+KSRJF878  Parallels Desktop
+F7AR5JNS  CrossOver
+4QG0V4YV  Spline Super
+DY3WSPGF  Maxon One
+
+### Productivity (4)
+R7VSXVN4  Bear Pro
+87PT46MM  Otter.ai Pro
+SEXFX3RD  Fantastical Premium
+5VXBHX0M  Sunsama
+
+### Cloud (2)
+S4Y7V856  pCloud Premium
+0516DH1X  Mail.ru Облако
+
+### Gaming (5)
+4ZVQ768P  Final Fantasy XIV
+WSCWMFMT  Cybershoke
+M3CEZ88A  Мир танков Премиум
+BAEPAND3  Мир кораблей Премиум
+BTJQDFXT  ChessKing
+
+### AI (2)
+YR7E98VC  Runway
+A2T4K8X4  Udio Pro
+
+### Books / Other RU (7)
+HYW4QTJ1  NordPass Premium
+6GYCY24K  Storytel
+QW683QS1  Литрес
+RYJ7MXJS  MyBook
+7PAPGW8Y  Строки
+W0PWH3X8  ЦИАН Подписка
