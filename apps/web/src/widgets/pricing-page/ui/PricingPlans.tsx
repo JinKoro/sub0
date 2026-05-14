@@ -195,7 +195,7 @@ export function PricingPlans({ billing, setBilling }: Props) {
     <section
       style={{
         background: SUB0.bg,
-        padding: isMobile ? '24px 20px 24px' : '32px 48px 32px',
+        padding: isMobile ? '0 20px 24px' : '0 48px 32px',
       }}
     >
       <div style={{ maxWidth: 1280, margin: '0 auto' }}>
