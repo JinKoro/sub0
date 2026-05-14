@@ -17,6 +17,7 @@ export function PricingHero() {
         'Выберите подходящий тариф для управления своими подписками.',
         'Choose the right plan to manage your subscriptions.',
       )}
+      compactBottom
     />
   );
 }

@@ -224,12 +224,6 @@ export function Solution() {
             {t('Один сервис —', 'One service —')}
           </H2>
         </div>
-        <p style={{ fontSize: 16, color: SUB0.muted, maxWidth: 380, lineHeight: 1.6, margin: 0 }}>
-          {t(
-            'Четыре базовых возможности, которые превращают хаос в понятный список с суммой в конце.',
-            'Four core capabilities that turn chaos into a clean list with a number at the bottom.',
-          )}
-        </p>
       </div>
 
       <div

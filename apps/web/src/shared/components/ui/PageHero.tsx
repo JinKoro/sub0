@@ -16,6 +16,8 @@ interface Props {
   description?: ReactNode;
   titleMaxWidth?: number;
   descriptionMaxWidth?: number;
+  /** Reduce bottom padding when the next section is an interactive control (e.g. pricing toggle). */
+  compactBottom?: boolean;
 }
 
 export function PageHero({
@@ -24,8 +26,10 @@ export function PageHero({
   description,
   titleMaxWidth = 820,
   descriptionMaxWidth = 600,
+  compactBottom = false,
 }: Props) {
   const isMobile = useIsMobile();
+  const bottomPad = compactBottom ? (isMobile ? 16 : 24) : isMobile ? 24 : 56;
 
   return (
     <section
@@ -91,7 +95,7 @@ export function PageHero({
           })}
         </nav>
 
-        <div style={{ paddingBottom: isMobile ? 40 : 56 }}>
+        <div style={{ paddingBottom: bottomPad }}>
           <h1
             style={{
               fontSize: isMobile ? 40 : 64,
