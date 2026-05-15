@@ -4,6 +4,9 @@ import { useRef, useState } from 'react';
 import { SUB0, mono } from '@/shared/constants/tokens';
 import { useLang } from '@/shared/contexts/lang-context';
 import { LogoPill } from '@/shared/components/ui/LogoPill';
+import { serviceIcon } from '@/entities/service-catalog/lib/icon-map';
+import { SubscriptionForm } from '@/features/subscription-form/ui/SubscriptionForm';
+import type { CabinetCurrency } from '@/entities/subscription/model/cabinet-types';
 
 interface DetectedItem {
   id: number;
@@ -11,18 +14,19 @@ interface DetectedItem {
   color: string;
   name: string;
   price: number;
-  cur: string;
+  cur: CabinetCurrency;
   cycle: 'monthly' | 'yearly';
+  cat: string;
   picked: boolean;
 }
 
 const MOCK_DETECTED: DetectedItem[] = [
-  { id: 1, char: 'N', color: '#c94a1c', name: 'Netflix', price: 799, cur: 'RUB', cycle: 'monthly', picked: true },
-  { id: 2, char: 'S', color: '#0a7a3f', name: 'Spotify', price: 299, cur: 'RUB', cycle: 'monthly', picked: true },
-  { id: 3, char: 'C', color: '#0a7a3f', name: 'ChatGPT Plus', price: 20, cur: 'USD', cycle: 'monthly', picked: true },
-  { id: 4, char: 'i', color: '#6b6b66', name: 'iCloud+', price: 149, cur: 'RUB', cycle: 'monthly', picked: true },
-  { id: 5, char: 'D', color: '#1347ff', name: 'Dropbox', price: 119, cur: 'USD', cycle: 'yearly', picked: false },
-  { id: 6, char: '?', color: '#6b6b66', name: 'Cloudflare ($5)', price: 5, cur: 'USD', cycle: 'monthly', picked: false },
+  { id: 1, char: 'N', color: '#c94a1c', name: 'Netflix', price: 799, cur: 'RUB', cycle: 'monthly', cat: 'video', picked: true },
+  { id: 2, char: 'S', color: '#0a7a3f', name: 'Spotify', price: 299, cur: 'RUB', cycle: 'monthly', cat: 'music', picked: true },
+  { id: 3, char: 'C', color: '#0a7a3f', name: 'ChatGPT Plus', price: 20, cur: 'USD', cycle: 'monthly', cat: 'productivity', picked: true },
+  { id: 4, char: 'i', color: '#6b6b66', name: 'iCloud+', price: 149, cur: 'RUB', cycle: 'monthly', cat: 'storage', picked: true },
+  { id: 5, char: 'D', color: '#1347ff', name: 'Dropbox', price: 119, cur: 'USD', cycle: 'yearly', cat: 'storage', picked: false },
+  { id: 6, char: '?', color: '#6b6b66', name: 'Cloudflare ($5)', price: 5, cur: 'USD', cycle: 'monthly', cat: 'hosting', picked: false },
 ];
 
 interface HintProps {
@@ -62,10 +66,15 @@ export function FileUploadView() {
   const toggle = (id: number) =>
     setItems((arr) => arr.map((x) => (x.id === id ? { ...x, picked: !x.picked } : x)));
 
+  const [expandedId, setExpandedId] = useState<number | null>(null);
+  const toggleExpand = (id: number) =>
+    setExpandedId((cur) => (cur === id ? null : id));
+
   const reset = () => {
     setFile(null);
     setStage('upload');
     setItems(MOCK_DETECTED);
+    setExpandedId(null);
   };
 
   const pickedCount = items.filter((x) => x.picked).length;
@@ -149,43 +158,120 @@ export function FileUploadView() {
         </div>
 
         <div>
-          {items.map((it) => (
-            <label
-              key={it.id}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 14,
-                padding: '14px 24px',
-                cursor: 'pointer',
-                borderBottom: `1px solid ${SUB0.line2}`,
-              }}
-            >
-              <input
-                type="checkbox"
-                checked={it.picked}
-                onChange={() => toggle(it.id)}
-                style={{ width: 16, height: 16, cursor: 'pointer', flexShrink: 0 }}
-              />
-              <LogoPill char={it.char} color={it.color} size={32} />
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 14, fontWeight: 600 }}>{it.name}</div>
-                <div style={{ fontSize: 11, color: SUB0.muted, fontFamily: mono }}>
-                  {it.cycle === 'monthly' ? t('ежемесячно', 'monthly') : t('ежегодно', 'yearly')}
+          {items.map((it) => {
+            const isOpen = expandedId === it.id;
+            return (
+              <div key={it.id} style={{ borderBottom: `1px solid ${SUB0.line2}` }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 14,
+                    padding: '14px 24px',
+                  }}
+                >
+                  <label
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 14,
+                      flex: 1,
+                      minWidth: 0,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={it.picked}
+                      onChange={() => toggle(it.id)}
+                      style={{ width: 16, height: 16, cursor: 'pointer', flexShrink: 0 }}
+                    />
+                    <LogoPill
+                      char={it.char}
+                      color={it.color}
+                      icon={serviceIcon(it.name)}
+                      size={32}
+                    />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 14, fontWeight: 600 }}>{it.name}</div>
+                      <div style={{ fontSize: 11, color: SUB0.muted, fontFamily: mono }}>
+                        {it.cycle === 'monthly'
+                          ? t('ежемесячно', 'monthly')
+                          : t('ежегодно', 'yearly')}
+                      </div>
+                    </div>
+                    <div
+                      style={{
+                        fontWeight: 700,
+                        fontFamily: mono,
+                        fontFeatureSettings: '"tnum"',
+                        textAlign: 'right',
+                      }}
+                    >
+                      {it.price} {it.cur}
+                    </div>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => toggleExpand(it.id)}
+                    title={t('Изменить поля', 'Edit fields')}
+                    style={{
+                      width: 28,
+                      height: 28,
+                      borderRadius: 6,
+                      border: `1px solid ${SUB0.line}`,
+                      background: SUB0.panel,
+                      color: SUB0.muted,
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      transform: isOpen ? 'rotate(180deg)' : 'none',
+                      transition: 'transform .15s',
+                      flexShrink: 0,
+                    }}
+                  >
+                    <svg width="10" height="6" viewBox="0 0 10 6" fill="none">
+                      <path
+                        d="M1 1l4 4 4-4"
+                        stroke="currentColor"
+                        strokeWidth="1.6"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </button>
                 </div>
+                {isOpen && (
+                  <div
+                    style={{
+                      background: SUB0.bg,
+                      borderTop: `1px dashed ${SUB0.line}`,
+                    }}
+                  >
+                    <SubscriptionForm
+                      compact
+                      onClose={() => setExpandedId(null)}
+                      initial={{
+                        id: it.id,
+                        name: it.name,
+                        char: it.char,
+                        color: it.color,
+                        cat: it.cat,
+                        project: 'personal',
+                        cycle: it.cycle,
+                        price: it.price,
+                        cur: it.cur,
+                        status: 'active',
+                        note: '',
+                        trial: false,
+                      }}
+                    />
+                  </div>
+                )}
               </div>
-              <div
-                style={{
-                  fontWeight: 700,
-                  fontFamily: mono,
-                  fontFeatureSettings: '"tnum"',
-                  textAlign: 'right',
-                }}
-              >
-                {it.price} {it.cur}
-              </div>
-            </label>
-          ))}
+            );
+          })}
         </div>
 
         <div

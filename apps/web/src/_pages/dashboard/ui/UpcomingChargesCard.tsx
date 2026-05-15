@@ -94,7 +94,7 @@ export function UpcomingChargesCard({ subs }: Props) {
                   minWidth: 0,
                 }}
               >
-                <LogoPill char={r.char} color={r.color ?? SUB0.muted} size={28} />
+                <LogoPill char={r.char} color={r.color ?? SUB0.muted} icon={r.icon} size={28} />
                 <div style={{ minWidth: 0 }}>
                   <div
                     style={{

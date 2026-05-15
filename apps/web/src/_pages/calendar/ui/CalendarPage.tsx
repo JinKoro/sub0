@@ -678,7 +678,7 @@ export function CalendarPage() {
                       borderRadius: 8,
                     }}
                   >
-                    <LogoPill char={s.char} color={s.color ?? SUB0.muted} size={32} />
+                    <LogoPill char={s.char} color={s.color ?? SUB0.muted} icon={s.icon} size={32} />
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div
                         style={{

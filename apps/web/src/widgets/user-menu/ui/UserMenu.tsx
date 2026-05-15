@@ -165,6 +165,7 @@ export function UserMenu() {
               <Link
                 key={it.href}
                 href={it.href}
+                scroll={false}
                 onClick={() => setOpen(false)}
                 style={{
                   display: 'flex',

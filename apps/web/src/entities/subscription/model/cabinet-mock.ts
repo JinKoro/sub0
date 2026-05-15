@@ -1,13 +1,15 @@
 import type { CabinetSubscription, SubCategory } from './cabinet-types';
+import { serviceIcon } from '@/entities/service-catalog/lib/icon-map';
 
 export interface PresetService {
   name: string;
   char: string;
   color: string;
   cat: string;
+  icon?: string | null;
 }
 
-export const PRESET_SERVICES: PresetService[] = [
+const PRESET_RAW: PresetService[] = [
   { name: 'Netflix', char: 'N', color: '#c94a1c', cat: 'video' },
   { name: 'Spotify', char: 'S', color: '#0a7a3f', cat: 'music' },
   { name: 'Apple Music', char: 'A', color: '#0a0a0a', cat: 'music' },
@@ -22,6 +24,11 @@ export const PRESET_SERVICES: PresetService[] = [
   { name: '1Password', char: '1', color: '#1347ff', cat: 'productivity' },
 ];
 
+export const PRESET_SERVICES: PresetService[] = PRESET_RAW.map((s) => ({
+  ...s,
+  icon: serviceIcon(s.name),
+}));
+
 export const CATEGORIES: SubCategory[] = [
   { id: 'video', name: 'Видео', nameEn: 'Video', color: '#1347ff' },
   { id: 'music', name: 'Музыка', nameEn: 'Music', color: '#0a7a3f' },
@@ -35,7 +42,7 @@ export const CATEGORIES: SubCategory[] = [
   { id: 'other', name: 'Другое', nameEn: 'Other', color: '#6b6b66' },
 ];
 
-export const CAB_SUBS: CabinetSubscription[] = [
+const CAB_SUBS_RAW: CabinetSubscription[] = [
   { id: 1, name: 'Яндекс Плюс', char: 'Я', project: 'personal', cat: 'video', cycle: 'monthly', trial: false, nextDay: 2, nextMonth: 4, price: 399, cur: 'RUB', status: 'active', color: '#ffcc00', note: 'Семейная подписка' },
   { id: 2, name: 'Netflix', char: 'N', project: 'family', cat: 'video', cycle: 'monthly', trial: false, promo: true, promoEndsDay: 5, promoEndsMonth: 5, nextDay: 5, nextMonth: 5, price: 799, cur: 'RUB', status: 'active', color: '#c94a1c', note: '' },
   { id: 3, name: 'Spotify', char: 'S', project: 'personal', cat: 'music', cycle: 'monthly', trial: false, promo: true, promoEndsDay: 11, promoEndsMonth: 4, nextDay: 11, nextMonth: 5, price: 299, cur: 'RUB', status: 'active', color: '#0a7a3f', note: '' },
@@ -63,3 +70,8 @@ export const CAB_SUBS: CabinetSubscription[] = [
   { id: 25, name: 'ИВИ', char: 'И', project: 'family', cat: 'video', cycle: 'monthly', trial: false, nextDay: 27, nextMonth: 5, price: 599, cur: 'RUB', status: 'active', color: null, note: '' },
   { id: 26, name: 'MyFitness', char: 'M', project: 'personal', cat: 'fitness', cycle: 'monthly', trial: false, nextDay: 28, nextMonth: 5, price: 1490, cur: 'RUB', status: 'active', color: null, note: '' },
 ];
+
+export const CAB_SUBS: CabinetSubscription[] = CAB_SUBS_RAW.map((s) => ({
+  ...s,
+  icon: serviceIcon(s.name),
+}));

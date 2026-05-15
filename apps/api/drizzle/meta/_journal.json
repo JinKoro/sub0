@@ -78,6 +78,13 @@
       "when": 1778171716100,
       "tag": "0010_seed_services",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1779000000000,
+      "tag": "0011_drop_oauth_account",
+      "breakpoints": true
     }
   ]
 }

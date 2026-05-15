@@ -182,7 +182,7 @@ export function ServicePickerInline({ onPick }: Props) {
                   onMouseEnter={(e) => (e.currentTarget.style.background = SUB0.bg)}
                   onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                 >
-                  <LogoPill char={p.char} color={p.color} size={28} />
+                  <LogoPill char={p.char} color={p.color} icon={p.icon} size={28} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 14, fontWeight: 600, color: SUB0.ink }}>{p.name}</div>
                     <div

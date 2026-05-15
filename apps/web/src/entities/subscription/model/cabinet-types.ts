@@ -20,6 +20,7 @@ export interface CabinetSubscription {
   status: CabinetSubStatus;
   color: string | null;
   note: string;
+  icon?: string | null;
 }
 
 export interface SubCategory {

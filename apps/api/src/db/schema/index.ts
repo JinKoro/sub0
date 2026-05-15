@@ -1,5 +1,4 @@
 export * from './customer';
-export * from './oauth-account';
 export * from './refresh-token';
 export * from './project';
 export * from './category';

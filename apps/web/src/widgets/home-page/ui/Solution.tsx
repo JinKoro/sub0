@@ -40,7 +40,7 @@ function MiniVisual({ kind, t }: { kind: VisualKind; t: (ru: string, en: string)
               borderRadius: 4,
             }}
           >
-            <LogoPill char={r.char} color={r.color} size={16} />
+            <LogoPill char={r.char} color={r.color} icon={r.icon} size={16} />
             <span style={{ fontWeight: 600, flex: 1 }}>{r.name}</span>
             <span style={{ fontFamily: mono, color: SUB0.muted }}>{fmtRub(r.price)}</span>
           </div>

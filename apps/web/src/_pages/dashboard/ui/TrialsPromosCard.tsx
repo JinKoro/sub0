@@ -72,7 +72,7 @@ export function TrialsPromosCard({ subs }: Props) {
                 borderRadius: 10,
               }}
             >
-              <LogoPill char={it.char} color={it.color ?? SUB0.muted} size={32} />
+              <LogoPill char={it.char} color={it.color ?? SUB0.muted} icon={it.icon} size={32} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <span style={{ fontWeight: 700, fontSize: 14 }}>{it.name}</span>
