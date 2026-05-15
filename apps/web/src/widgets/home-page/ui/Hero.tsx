@@ -227,24 +227,10 @@ export function Hero() {
           <div
             style={{
               display: 'flex',
-              gap: 16,
-              fontSize: 13,
-              color: SUB0.muted,
-              fontFamily: mono,
-              marginBottom: 36,
-              flexWrap: 'wrap',
-            }}
-          >
-            <span>✓ {t('Без привязки карты', 'No card required')}</span>
-            <span>✓ {t('Работает с любыми сервисами', 'Works with any service')}</span>
-          </div>
-
-          <div
-            style={{
-              display: 'flex',
               flexDirection: isMobile ? 'column' : 'row',
               gap: 10,
               flexWrap: 'wrap',
+              marginTop: 36,
             }}
           >
             {importChips.map(([k, title, sub, soon]) => (
@@ -460,7 +446,7 @@ export function Hero() {
                           fontWeight: 600,
                         }}
                       >
-                        <LogoPill char={r.char} color={r.color} />
+                        <LogoPill char={r.char} color={r.color} icon={r.icon} />
                         {r.name}
                       </div>
                       <div style={{ flex: 1.3, color: '#555' }}>{t(r.cat, r.catEn)}</div>
@@ -576,7 +562,7 @@ export function Hero() {
                 {t('Найдено в письме', 'Detected in email')}
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <LogoPill char="Я" color="#ffcc00" />
+                <LogoPill char="Я" color="#ffcc00" icon="/icons/yandex.svg" />
                 <div>
                   <div style={{ fontWeight: 600 }}>Яндекс Плюс</div>
                   <div style={{ color: SUB0.muted, fontSize: 12 }}>
@@ -628,7 +614,7 @@ export function Hero() {
                       transition: 'opacity .35s ease, transform .35s ease',
                     }}
                   >
-                    <LogoPill char={r.char} color={r.color} size={20} />
+                    <LogoPill char={r.char} color={r.color} icon={r.icon} size={20} />
                     <span style={{ flex: 1, fontWeight: 600 }}>{r.name}</span>
                     <span style={{ fontFamily: mono, fontWeight: 600 }}>
                       {fmtRub(r.price, { short: true })}

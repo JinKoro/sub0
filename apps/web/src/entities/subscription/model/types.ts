@@ -12,4 +12,5 @@ export interface Subscription {
   nextEn: string;
   status: SubscriptionStatus;
   color: string;
+  icon?: string | null;
 }

@@ -3,12 +3,13 @@ import { SUB0 } from '@/shared/constants/tokens';
 
 interface Props {
   hideText?: boolean;
+  href?: string;
 }
 
-export function HeaderLogo({ hideText = false }: Props) {
+export function HeaderLogo({ hideText = false, href = '/' }: Props) {
   return (
     <Link
-      href="/"
+      href={href}
       style={{
         display: 'flex',
         alignItems: 'center',

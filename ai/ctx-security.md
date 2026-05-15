@@ -2,10 +2,10 @@
 
 Security-правила для Sub0 — SaaS учёта подписок. Стэк: Next.js
 (`apps/web`), NestJS (`apps/api`), Postgres + Drizzle ORM. Веб-приложение
-с аккаунтами, JWT-сессиями, OAuth, автосписаниями (только токены
-провайдеров), email/Telegram/Web-Push нотификациями.
+с аккаунтами, JWT-сессиями, автосписаниями (только токены провайдеров),
+email/Telegram/Web-Push нотификациями. OAuth-провайдеры — v2.
 
-Этот файл — нормативный. Если PR расширяет scope (новый OAuth-провайдер,
+Этот файл — нормативный. Если PR расширяет scope (OAuth-провайдеры,
 новая платёжная интеграция, новый тип файлового аплоада, 2FA, team-
 аккаунты, idea portal) — **сначала** обновляем этот файл, потом пишем
 код.
@@ -15,7 +15,6 @@ Security-правила для Sub0 — SaaS учёта подписок. Стэ
 **Главные противники:**
 
 - ATO (account takeover) — credential stuffing, утечка refresh-token.
-- Phishing OAuth-flow.
 - Подделка webhook’ов платёжных провайдеров.
 - Утечка финансовой истории — список подписок и списаний это PII по
   факту: профилирование расходов.
@@ -26,8 +25,6 @@ Security-правила для Sub0 — SaaS учёта подписок. Стэ
 - Пароли — `argon2id`, никогда в plaintext, никогда в логах.
 - Refresh tokens — `httpOnly + Secure + SameSite=Lax` cookie, ротация
   на каждый refresh.
-- OAuth tokens (Google в MVP, Yandex в v1.1) — храним только если
-  нужны для офлайн-доступа; иначе обмениваем на нашу сессию и забываем.
 - PII профиля: email, имя, аватар, timezone, telegram_user_id (v1.1).
 - Финансовая PII: подписки (название, сумма, валюта, периодичность),
   история списаний — особо чувствительно. В MVP: TLS + access-control
@@ -39,8 +36,9 @@ Security-правила для Sub0 — SaaS учёта подписок. Стэ
 
 **Out of scope в MVP** (расширяй файл при включении):
 
-- 2FA, session management UI, holiday mode, idea portal, team-аккаунты
-  / projects, инструменты без регистрации.
+- OAuth-провайдеры (Google, Yandex), 2FA, session management UI,
+  holiday mode, idea portal, team-аккаунты / projects, инструменты
+  без регистрации.
 
 ### Core Rules
 
@@ -68,8 +66,6 @@ forbidUnknownValues, transform })` + DTO с `class-validator`.
   пароля → удаление **всех** refresh’ей юзера.
 - Cookie refresh-токена: `httpOnly`, `Secure`, `SameSite=Lax`,
   `Path=/auth`.
-- OAuth Google: PKCE + state + nonce. Не доверять `email_verified=true`
-  без отдельного шага верификации, если домен не в allow-list.
 - Lockout: 10 неудачных login за 15 минут (ключ — `email + IP`) → блок
   на 15 минут.
 - Удаление аккаунта (MVP): soft-delete сразу, hard-delete через
@@ -199,8 +195,7 @@ forbidUnknownValues, transform })` + DTO с `class-validator`.
 
 1. Все входы валидированы (`zod` / `class-validator`) с лимитами
    размеров?
-2. Auth: `argon2id`, JWT TTL, ротация refresh, lockout,
-   OAuth с PKCE+state+nonce?
+2. Auth: `argon2id`, JWT TTL, ротация refresh, lockout?
 3. Cookie refresh — `httpOnly + Secure + SameSite=Lax`?
 4. Платежи: только токены провайдера, webhook signature-verified,
    idempotency по `provider_event_id`?
@@ -211,7 +206,7 @@ forbidUnknownValues, transform })` + DTO с `class-validator`.
 8. Logging: PII в allow-list; никаких токенов / паролей / тел выписок
    в логах?
 9. Env-переменные валидируются при старте? Секреты только server-side?
-10. PR расширяет scope (2FA, team, новый OAuth, новый файловый flow) —
+10. PR расширяет scope (2FA, team, OAuth, новый файловый flow) —
     этот файл обновлён первым?
 
 ### When in doubt

@@ -1,6 +1,7 @@
 import type { Subscription } from './types';
+import { serviceIcon } from '@/entities/service-catalog/lib/icon-map';
 
-export const SUBS: Subscription[] = [
+const RAW: Subscription[] = [
   {
     name: 'Яндекс Плюс',
     char: 'Я',
@@ -119,3 +120,5 @@ export const SUBS: Subscription[] = [
     color: '#b0851a',
   },
 ];
+
+export const SUBS: Subscription[] = RAW.map((s) => ({ ...s, icon: serviceIcon(s.name) }));

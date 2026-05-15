@@ -28,9 +28,9 @@ scale-ready / cron / outbox / expand-migrate-contract). Этот файл —
 #### 1. Имена в единственном числе
 
 `customer`, `project`, `subscription`, `service`, `category`,
-`category_custom`, `billing_history`, `oauth_account`,
-`refresh_token`. Не `customers`, не `subscriptions`. Drizzle-файлы
-схемы — соответственно `customer.ts`, `project.ts` и т.д.
+`category_custom`, `billing_history`, `refresh_token`. Не `customers`,
+не `subscriptions`. Drizzle-файлы схемы — соответственно `customer.ts`,
+`project.ts` и т.д.
 
 Исключение — табличные переменные в TS могут быть во множественном
 для читаемости (`db.select().from(customers)`), но имя таблицы в
@@ -49,8 +49,7 @@ Postgres — единственное число.
 - На UNIQUE-конфликт делаем повтор; вероятность коллизии при 8
   символах base32 ничтожна, но обработка нужна.
 
-`oauth_account`, `refresh_token` — без `sku` (внутренние таблицы,
-наружу не уходят).
+`refresh_token` — без `sku` (внутренняя таблица, наружу не уходит).
 
 #### 3. Soft-delete через `deleted_at timestamptz`
 
@@ -63,9 +62,9 @@ Hard-delete — только спецзадачей (например, hard-dele
   тех запросов, где soft-deleted записи не нужны.
 - Все WHERE в hot-path обязаны содержать `deleted_at IS NULL`,
   иначе они смотрят и в архив. Это проверяется в PR-review.
-- `service`, `category` (системные), `oauth_account`,
-  `refresh_token` — soft-delete не нужен, удаляются физически
-  (либо через каскад, либо через специальный flow).
+- `service`, `category` (системные), `refresh_token` — soft-delete
+  не нужен, удаляются физически (либо через каскад, либо через
+  специальный flow).
 
 #### 4. Optimistic locking через `version int`
 
@@ -76,8 +75,7 @@ Hard-delete — только спецзадачей (например, hard-dele
 - Это защищает от lost update в API: фронт прислал старый объект,
   сохранил, перезаписал чужие изменения.
 
-`oauth_account`, `refresh_token`, `service`, `category` (системные)
-— без `version`.
+`refresh_token`, `service`, `category` (системные) — без `version`.
 
 #### 5. `state_id int NOT NULL` вместо `is_active boolean`
 
@@ -89,7 +87,7 @@ Hard-delete — только спецзадачей (например, hard-dele
 #### 6. Каскады и FK
 
 - `customer.id` каскадится на всё дочернее (project, subscription,
-  category_custom, billing_history, oauth_account, refresh_token).
+  category_custom, billing_history, refresh_token).
 - `project.id` каскадится на subscription и category_custom.
   Для `billing_history.project_id` — без каскада (история
   переживает удаление проекта; project_id остаётся как
@@ -144,8 +142,7 @@ upsert по `sku`. Запуск дважды не должен дублиров�
 ### Доменная схема (high-level карта)
 
 ```
-customer ─┬─ oauth_account
-          ├─ refresh_token
+customer ─┬─ refresh_token
           ├─ project ─┬─ subscription ─┬─ billing_history
           │           │                 └─ (FK на category или category_custom)
           │           └─ category_custom

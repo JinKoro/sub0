@@ -3,8 +3,7 @@
 import { CSSProperties, useState } from 'react';
 import Link from 'next/link';
 import { useLang } from '@/shared/contexts/lang-context';
-import { SUB0, mono } from '@/shared/constants/tokens';
-import { GoogleButton } from '@/features/auth/oauth-google/ui/GoogleButton';
+import { SUB0 } from '@/shared/constants/tokens';
 
 // ── Provider icons ─────────────────────────────────────────────────────────────
 
@@ -590,16 +589,6 @@ export function RegisterForm() {
           </label>
         ))}
       </div>
-
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '24px 0' }}>
-        <div style={{ flex: 1, height: 1, background: SUB0.line }} />
-        <span style={{ fontFamily: mono, fontSize: 11, color: '#aaa', letterSpacing: '0.06em' }}>
-          {t('ИЛИ', 'OR')}
-        </span>
-        <div style={{ flex: 1, height: 1, background: SUB0.line }} />
-      </div>
-
-      <GoogleButton />
 
       <p style={{ textAlign: 'center', marginTop: 24, fontSize: 13, color: SUB0.muted }}>
         {t('Уже есть аккаунт? ', 'Already have an account? ')}

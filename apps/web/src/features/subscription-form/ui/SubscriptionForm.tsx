@@ -8,6 +8,7 @@ import { LogoPill } from '@/shared/components/ui/LogoPill';
 import { Select, type SelectOption } from '@/shared/components/ui/Select';
 import { DatePicker } from '@/shared/components/ui/DatePicker';
 import { CATEGORIES } from '@/entities/subscription/model/cabinet-mock';
+import { serviceIcon } from '@/entities/service-catalog/lib/icon-map';
 import { PROJECTS } from '@/entities/project/model/data';
 import { CURRENCY_OPTIONS } from '@/shared/constants/cabinet';
 import type {
@@ -22,9 +23,13 @@ interface Props {
   initial?: SubscriptionFormInitial;
   onClose: () => void;
   onBack?: () => void;
+  /** Strip header (LogoPill + name preview), service picker, and footer
+   *  buttons. Used when the form is embedded as an expandable row in
+   *  the AI file-review list. */
+  compact?: boolean;
 }
 
-export function SubscriptionForm({ initial, onClose, onBack }: Props) {
+export function SubscriptionForm({ initial, onClose, onBack, compact = false }: Props) {
   const { t } = useLang();
   const isMobile = useIsMobile();
 
@@ -175,27 +180,29 @@ export function SubscriptionForm({ initial, onClose, onBack }: Props) {
 
   return (
     <div>
-      <div
-        style={{
-          padding: isMobile ? '16px 16px 8px' : '20px 24px 8px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 12,
-        }}
-      >
-        <LogoPill char={char} color={color} size={44} />
-        <div>
-          <div style={{ fontSize: 18, fontWeight: 700 }}>
-            {name || t('Без названия', 'Untitled')}
-          </div>
-          <div style={{ fontSize: 12, color: SUB0.muted, fontFamily: mono }}>
-            {catMeta ? t(catMeta.name, catMeta.nameEn) : ''}
-            {projMeta ? ` · ${t(projMeta.name, projMeta.nameEn)}` : ''}
+      {!compact && (
+        <div
+          style={{
+            padding: isMobile ? '16px 16px 8px' : '20px 24px 8px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+          }}
+        >
+          <LogoPill char={char} color={color} icon={serviceIcon(name)} size={44} />
+          <div>
+            <div style={{ fontSize: 18, fontWeight: 700 }}>
+              {name || t('Без названия', 'Untitled')}
+            </div>
+            <div style={{ fontSize: 12, color: SUB0.muted, fontFamily: mono }}>
+              {catMeta ? t(catMeta.name, catMeta.nameEn) : ''}
+              {projMeta ? ` · ${t(projMeta.name, projMeta.nameEn)}` : ''}
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
-      {!initial?.id && <ServicePickerInline onPick={onPickService} />}
+      {!compact && !initial?.id && <ServicePickerInline onPick={onPickService} />}
 
       <div
         style={{
@@ -554,44 +561,46 @@ export function SubscriptionForm({ initial, onClose, onBack }: Props) {
         </div>
       </div>
 
-      <div
-        style={{
-          padding: isMobile ? '12px 16px' : '14px 24px',
-          borderTop: `1px solid ${SUB0.line}`,
-          display: 'flex',
-          justifyContent: 'space-between',
-          gap: 8,
-          background: SUB0.panel,
-          flexWrap: 'wrap',
-        }}
-      >
-        {initial?.id ? (
-          <button
-            style={{
-              ...btnSecondary,
-              color: SUB0.danger,
-              borderColor: '#f3d6c2',
-            }}
-            onClick={onClose}
-          >
-            {t('Удалить', 'Delete')}
-          </button>
-        ) : onBack ? (
-          <button onClick={onBack} style={btnSecondary}>
-            ← {t('Выбрать другой сервис', 'Pick another service')}
-          </button>
-        ) : (
-          <span />
-        )}
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button onClick={onClose} style={btnSecondary}>
-            {t('Отмена', 'Cancel')}
-          </button>
-          <button onClick={onClose} style={btnPrimary}>
-            {initial?.id ? t('Сохранить', 'Save') : t('Создать', 'Create')}
-          </button>
+      {!compact && (
+        <div
+          style={{
+            padding: isMobile ? '12px 16px' : '14px 24px',
+            borderTop: `1px solid ${SUB0.line}`,
+            display: 'flex',
+            justifyContent: 'space-between',
+            gap: 8,
+            background: SUB0.panel,
+            flexWrap: 'wrap',
+          }}
+        >
+          {initial?.id ? (
+            <button
+              style={{
+                ...btnSecondary,
+                color: SUB0.danger,
+                borderColor: '#f3d6c2',
+              }}
+              onClick={onClose}
+            >
+              {t('Удалить', 'Delete')}
+            </button>
+          ) : onBack ? (
+            <button onClick={onBack} style={btnSecondary}>
+              ← {t('Выбрать другой сервис', 'Pick another service')}
+            </button>
+          ) : (
+            <span />
+          )}
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={onClose} style={btnSecondary}>
+              {t('Отмена', 'Cancel')}
+            </button>
+            <button onClick={onClose} style={btnPrimary}>
+              {initial?.id ? t('Сохранить', 'Save') : t('Создать', 'Create')}
+            </button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

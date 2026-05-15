@@ -67,8 +67,58 @@ export function fmtPrice(price: number, cur: CabinetCurrency): string {
 
 export const MOCK_USER = {
   initials: 'АК',
+  firstName: 'Анна',
+  firstNameEn: 'Anna',
   name: 'Анна Климова',
   nameEn: 'Anna Klimova',
   email: 'anna@example.ru',
   plan: 'FREE',
+  timezone: 'Europe/Moscow',
+  telegramHandle: '@anna_klimova',
 };
+
+export interface Timezone {
+  id: string;
+  label: string;
+  offset: string;
+}
+
+export const TIMEZONES: Timezone[] = [
+  { id: 'Europe/Kaliningrad', label: 'Europe/Kaliningrad', offset: 'GMT+2' },
+  { id: 'Europe/Moscow', label: 'Europe/Moscow', offset: 'GMT+3' },
+  { id: 'Europe/Samara', label: 'Europe/Samara', offset: 'GMT+4' },
+  { id: 'Asia/Yekaterinburg', label: 'Asia/Yekaterinburg', offset: 'GMT+5' },
+  { id: 'Asia/Omsk', label: 'Asia/Omsk', offset: 'GMT+6' },
+  { id: 'Asia/Novosibirsk', label: 'Asia/Novosibirsk', offset: 'GMT+7' },
+  { id: 'Asia/Irkutsk', label: 'Asia/Irkutsk', offset: 'GMT+8' },
+  { id: 'Asia/Yakutsk', label: 'Asia/Yakutsk', offset: 'GMT+9' },
+  { id: 'Asia/Vladivostok', label: 'Asia/Vladivostok', offset: 'GMT+10' },
+  { id: 'Asia/Magadan', label: 'Asia/Magadan', offset: 'GMT+11' },
+  { id: 'Asia/Kamchatka', label: 'Asia/Kamchatka', offset: 'GMT+12' },
+];
+
+export type InvoiceStatus = 'paid' | 'refund';
+
+export interface Invoice {
+  date: string;
+  num: string;
+  plan: string;
+  amount: number;
+  status: InvoiceStatus;
+}
+
+export const MOCK_INVOICES: Invoice[] = [
+  { date: '01.05.2026', num: 'INV-1042', plan: 'Pro · 1 мес', amount: 290, status: 'paid' },
+  { date: '12.02.2026', num: 'INV-0844', plan: 'Pro · 1 мес', amount: 290, status: 'refund' },
+  { date: '01.02.2026', num: 'INV-0812', plan: 'Pro · 1 мес', amount: 290, status: 'paid' },
+  { date: '01.01.2026', num: 'INV-0741', plan: 'Pro · 1 мес', amount: 290, status: 'paid' },
+  { date: '01.12.2025', num: 'INV-0688', plan: 'Pro · 1 мес', amount: 290, status: 'paid' },
+  { date: '01.11.2025', num: 'INV-0612', plan: 'Pro · 1 мес', amount: 290, status: 'paid' },
+  { date: '01.10.2025', num: 'INV-0559', plan: 'Pro · 1 мес', amount: 290, status: 'paid' },
+  { date: '01.09.2025', num: 'INV-0498', plan: 'Pro · 1 мес', amount: 290, status: 'paid' },
+  { date: '01.08.2025', num: 'INV-0431', plan: 'Pro · 1 мес', amount: 290, status: 'paid' },
+  { date: '01.07.2025', num: 'INV-0377', plan: 'Pro · 1 мес', amount: 290, status: 'paid' },
+  { date: '01.06.2025', num: 'INV-0321', plan: 'Pro · 1 мес', amount: 290, status: 'paid' },
+  { date: '01.05.2025', num: 'INV-0264', plan: 'Pro · 1 мес', amount: 290, status: 'paid' },
+];
+

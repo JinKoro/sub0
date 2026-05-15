@@ -26,7 +26,7 @@ export function ForWhom() {
   return (
     <Section bg={SUB0.bg} pad={isMobile ? '64px 20px' : '120px 48px'}>
       <SectionEyebrow num="06">{t('Для кого', "Who it's for")}</SectionEyebrow>
-      <H2 accent={t('для бизнеса.', 'one for teams.')}>
+      <H2 accent={t('и для бизнеса.', 'and one for business.')}>
         {t('Один Sub0 для себя —', 'One Sub0 for you —')}
       </H2>
 

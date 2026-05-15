@@ -36,9 +36,8 @@ Login/Register; для залогиненных — «В дашборд».
 
 ### Логин
 
-- Email/пароль + Google OAuth — MVP.
-- Yandex OAuth — v1.1.
-- 2FA + быстрая авторизация — v2.
+- Email/пароль — MVP.
+- OAuth (Google, Yandex) + 2FA + быстрая авторизация — v2.
 
 ### Настройки
 
@@ -66,7 +65,6 @@ Login/Register; для залогиненных — «В дашборд».
 ### Авторизация
 
 - Email + пароль (`argon2id`).
-- Google OAuth (PKCE + state + nonce).
 - JWT access 15m + refresh 90d с ротацией (`httpOnly + Secure +
 SameSite=Lax` cookie). Юзер не перезаходит вручную — но это **не**
   «сессия без expiry»: токены прозрачно обновляются на каждом
@@ -132,10 +130,6 @@ TZ юзера, иначе будут приходить в 3 ночи.
 - Блог.
 - FAQ.
 
-### Авторизация
-
-- Yandex OAuth.
-
 ### Нотификации
 
 - Telegram-бот: link-flow через deep-link с одноразовым nonce; очередь
@@ -167,6 +161,7 @@ TZ юзера, иначе будут приходить в 3 ночи.
 - Портал идей.
 - Публичный roadmap.
 - Team-аккаунты по проектам (мульти-юзер на проект, роли).
+- OAuth-провайдеры (Google, Yandex) с PKCE + state + nonce.
 - Управление сессиями (DB-sessions либо JWT-blacklist) + 2FA (TOTP).
 - Инструменты без регистрации (на лендинге — калькулятор расходов
   и т.п.).

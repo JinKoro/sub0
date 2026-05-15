@@ -22,7 +22,6 @@ categories, customer state) — читать обязательно.
 | `BillingPeriod`     | MONTH=1, YEAR=2                                   |
 | `Locale`            | RU=1, EN=2                                        |
 | `Plan`              | FREE=1, PRO=2, TEAM=3 (TEAM — v2)                 |
-| `OAuthProvider`     | YANDEX=1, GOOGLE=2                                |
 | `CustomerState`     | CREATED=1, ACTIVE=2, ARCHIVED=3                   |
 | `ProjectState`      | ACTIVE=1, ARCHIVED=2                              |
 | `SubscriptionState` | ACTIVE=1, PAUSED=2, CANCELLED=3, ARCHIVED=4       |
@@ -158,7 +157,7 @@ Limits: backfill ограничен 24 месяцами назад от `now()` 
 - **Customer** — soft-delete: `deleted_at = now()`,
   `state_id = ARCHIVED`. Через 30 дней (152-ФЗ grace period) —
   hard-delete по cron'у: каскад удаляет всё дочернее (project,
-  subscription, billing_history, oauth_account, refresh_token).
+  subscription, billing_history, refresh_token).
 
 После hard-delete никаких остатков в логах (см.
 `ctx-security.md` § 9 — PII redaction).

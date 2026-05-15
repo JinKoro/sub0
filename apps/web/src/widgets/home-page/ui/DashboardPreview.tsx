@@ -329,7 +329,7 @@ export function DashboardPreview() {
                       fontWeight: 600,
                     }}
                   >
-                    <LogoPill char={r.char} color={r.color} size={20} />
+                    <LogoPill char={r.char} color={r.color} icon={r.icon} size={20} />
                     {r.name}
                   </div>
                   {!isMobile && (

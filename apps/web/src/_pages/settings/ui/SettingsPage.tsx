@@ -1,51 +1,91 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { SUB0, mono } from '@/shared/constants/tokens';
 import { useLang } from '@/shared/contexts/lang-context';
 import { useIsMobile } from '@/shared/hooks/use-is-mobile';
-import { Card } from '@/shared/components/ui/Card';
+import { SettingsAccount } from './SettingsAccount';
+import { SettingsBilling } from './SettingsBilling';
+import { SettingsNotifications } from './SettingsNotifications';
+import { SettingsSecurity } from './SettingsSecurity';
 
-interface Anchor {
-  id: 'account' | 'billing' | 'notifications';
+type SectionId = 'account' | 'billing' | 'notifications' | 'security';
+
+interface Section {
+  id: SectionId;
   ru: string;
   en: string;
-  ruSub: string;
-  enSub: string;
+  ic: string;
 }
 
-const ANCHORS: Anchor[] = [
-  {
-    id: 'account',
-    ru: 'Настройки аккаунта',
-    en: 'Account settings',
-    ruSub: 'Профиль, валюта, таймзона, язык — придёт в следующей задаче.',
-    enSub: 'Profile, currency, timezone, language — coming in the next task.',
-  },
-  {
-    id: 'billing',
-    ru: 'Тарифы и оплата',
-    en: 'Plans & billing',
-    ruSub: 'Подписка Sub0, история счетов и способы оплаты.',
-    enSub: 'Sub0 plan, invoice history and payment methods.',
-  },
-  {
-    id: 'notifications',
-    ru: 'Уведомления',
-    en: 'Notifications',
-    ruSub: 'Правила email-напоминаний о списаниях и продлениях.',
-    enSub: 'Email reminder rules for charges and renewals.',
-  },
+const SECTIONS: Section[] = [
+  { id: 'account', ru: 'Аккаунт', en: 'Account', ic: '◈' },
+  { id: 'billing', ru: 'Тарифы', en: 'Plans', ic: '₽' },
+  { id: 'notifications', ru: 'Уведомления', en: 'Notifications', ic: '◐' },
+  { id: 'security', ru: 'Безопасность и вход', en: 'Security & sign-in', ic: '✦' },
 ];
+
+function readSectionFromHash(): SectionId {
+  if (typeof window === 'undefined') return 'account';
+  const h = (window.location.hash || '').replace('#', '');
+  return (SECTIONS.find((s) => s.id === h)?.id ?? 'account') as SectionId;
+}
 
 export function SettingsPage() {
   const { t } = useLang();
   const isMobile = useIsMobile();
+  // Section state is one-way derived from URL hash. The sidebar pushes the
+  // hash directly; this effect picks it up. Avoids the StrictMode race we'd
+  // get from a second "section → hash" reverse-sync effect.
+  const [section, setSection] = useState<SectionId>('account');
+
+  useEffect(() => {
+    setSection(readSectionFromHash());
+    // Reset scroll on initial mount — the URL hash drives section state,
+    // not anchor scrolling, so we'd otherwise land on a half-scrolled page.
+    window.scrollTo(0, 0);
+    let lastHash = window.location.hash;
+    const sync = () => {
+      const h = window.location.hash;
+      if (h === lastHash) return;
+      lastHash = h;
+      setSection(readSectionFromHash());
+      window.scrollTo(0, 0);
+    };
+    window.addEventListener('hashchange', sync);
+    // Next.js Link with the same pathname uses history.pushState, which
+    // doesn't fire hashchange. Patch it (scoped to this mount) so same-page
+    // hash navigation from the user menu / header tab still updates state.
+    const origPush = window.history.pushState;
+    const origReplace = window.history.replaceState;
+    window.history.pushState = function (...args) {
+      origPush.apply(this, args);
+      sync();
+    };
+    window.history.replaceState = function (...args) {
+      origReplace.apply(this, args);
+      sync();
+    };
+    return () => {
+      window.removeEventListener('hashchange', sync);
+      window.history.pushState = origPush;
+      window.history.replaceState = origReplace;
+    };
+  }, []);
+
+  const navigateSection = (id: SectionId) => {
+    setSection(id);
+    if (window.location.hash !== `#${id}`) {
+      window.history.replaceState(null, '', `#${id}`);
+    }
+  };
+
   return (
     <div
       style={{
-        padding: isMobile ? '20px 16px' : '32px 28px',
-        maxWidth: 1320,
+        maxWidth: 1240,
         margin: '0 auto',
+        padding: isMobile ? '20px 16px 60px' : '32px 28px 80px',
       }}
     >
       <div style={{ marginBottom: 24 }}>
@@ -73,53 +113,75 @@ export function SettingsPage() {
         </h1>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-        {ANCHORS.map((a) => (
-          <Card key={a.id} padding={24}>
-            <section id={a.id}>
-              <div
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: isMobile ? '1fr' : '240px 1fr',
+          gap: isMobile ? 16 : 32,
+          alignItems: 'start',
+        }}
+      >
+        <nav
+          style={{
+            position: isMobile ? 'static' : 'sticky',
+            top: isMobile ? 'auto' : 80,
+            display: 'flex',
+            flexDirection: isMobile ? 'row' : 'column',
+            gap: isMobile ? 6 : 2,
+            overflowX: isMobile ? 'auto' : 'visible',
+            padding: isMobile ? '4px 2px' : 0,
+          }}
+        >
+          {SECTIONS.map((s) => {
+            const on = section === s.id;
+            return (
+              <button
+                key={s.id}
+                onClick={() => navigateSection(s.id)}
                 style={{
-                  fontSize: 11,
-                  fontFamily: mono,
-                  color: SUB0.muted,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.08em',
-                  marginBottom: 6,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 10,
+                  padding: isMobile ? '9px 14px' : '10px 12px',
+                  borderRadius: 8,
+                  border: 'none',
+                  background: on ? SUB0.ink : 'transparent',
+                  color: on ? SUB0.bg : SUB0.ink,
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                  fontSize: 14,
+                  fontWeight: 600,
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0,
+                  textAlign: 'left',
+                  justifyContent: 'flex-start',
                 }}
               >
-                #{a.id}
-              </div>
-              <div
-                style={{
-                  fontSize: 22,
-                  fontWeight: 700,
-                  letterSpacing: '-0.02em',
-                  marginBottom: 8,
-                }}
-              >
-                {t(a.ru, a.en)}
-              </div>
-              <div style={{ fontSize: 14, color: SUB0.muted, maxWidth: 600 }}>
-                {t(a.ruSub, a.enSub)}
-              </div>
-              <div
-                style={{
-                  marginTop: 16,
-                  padding: '20px 24px',
-                  border: `1px dashed ${SUB0.line}`,
-                  borderRadius: 10,
-                  background: SUB0.bg,
-                  fontSize: 13,
-                  fontFamily: mono,
-                  color: SUB0.muted,
-                  textAlign: 'center',
-                }}
-              >
-                {t('Содержимое раздела — в следующей задаче.', 'Section content — coming next task.')}
-              </div>
-            </section>
-          </Card>
-        ))}
+                <span
+                  style={{
+                    fontFamily: mono,
+                    width: 24,
+                    textAlign: 'center',
+                    color: on ? SUB0.bg : SUB0.muted,
+                    opacity: on ? 0.9 : 1,
+                    fontWeight: 700,
+                    fontSize: s.ic === '₽' ? 15 : 18,
+                  }}
+                >
+                  {s.ic}
+                </span>
+                <span style={{ flex: 1 }}>{t(s.ru, s.en)}</span>
+              </button>
+            );
+          })}
+        </nav>
+
+        <div>
+          {section === 'account' && <SettingsAccount />}
+          {section === 'billing' && <SettingsBilling />}
+          {section === 'notifications' && <SettingsNotifications />}
+          {section === 'security' && <SettingsSecurity />}
+        </div>
       </div>
     </div>
   );

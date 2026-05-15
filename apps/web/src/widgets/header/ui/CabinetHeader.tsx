@@ -33,6 +33,7 @@ function activeTabId(pathname: string | null): string {
   if (pathname.startsWith('/dashboard')) return 'dashboard';
   if (pathname.startsWith('/subscriptions')) return 'subscriptions';
   if (pathname.startsWith('/calendar')) return 'calendar';
+  if (pathname.startsWith('/settings')) return 'notifications';
   return '';
 }
 
@@ -76,7 +77,7 @@ export function CabinetHeader() {
         WebkitBackdropFilter: 'blur(12px)',
       }}
     >
-      <HeaderLogo hideText={isMobile} />
+      <HeaderLogo hideText={isMobile} href="/dashboard" />
 
       {isMobile && (
         <div ref={burgerRef} style={{ position: 'relative' }}>
@@ -102,10 +103,12 @@ export function CabinetHeader() {
         <nav style={{ display: 'flex', gap: 4, marginLeft: 8 }}>
           {TABS.map((tb) => {
             const isActive = active === tb.id;
+            const goesToSettings = tb.href.startsWith('/settings');
             return (
               <Link
                 key={tb.id}
                 href={tb.href}
+                scroll={!goesToSettings}
                 style={{
                   padding: '8px 14px',
                   borderRadius: 8,
@@ -230,10 +233,12 @@ function CabinetMobileDrawer({
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           {TABS.map((tb) => {
             const isActive = active === tb.id;
+            const goesToSettings = tb.href.startsWith('/settings');
             return (
               <Link
                 key={tb.id}
                 href={tb.href}
+                scroll={!goesToSettings}
                 onClick={onClose}
                 style={{
                   display: 'flex',

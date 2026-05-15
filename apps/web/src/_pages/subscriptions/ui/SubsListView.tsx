@@ -367,7 +367,7 @@ function SubsList({ rows, onEdit }: RowsProps) {
                 gap: 12,
               }}
             >
-              <LogoPill char={r.char} color={r.color ?? SUB0.muted} size={32} />
+              <LogoPill char={r.char} color={r.color ?? SUB0.muted} icon={r.icon} size={32} />
               <div style={{ minWidth: 0 }}>
                 <div
                   style={{
@@ -551,7 +551,7 @@ function SubsGrid({ rows, onEdit }: RowsProps) {
                   marginBottom: 14,
                 }}
               >
-                <LogoPill char={r.char} color={r.color ?? SUB0.muted} size={40} />
+                <LogoPill char={r.char} color={r.color ?? SUB0.muted} icon={r.icon} size={40} />
                 <Pill color={statusMeta.color} bg={`${statusMeta.color}12`} dot>
                   {t(statusMeta.ru, statusMeta.en)}
                 </Pill>
