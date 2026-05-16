@@ -17,3 +17,6 @@ node_modules/
 # IDE / OS
 .DS_Store
 .idea
+
+# Playwright MCP scratch artifacts
+.playwright-mcp/

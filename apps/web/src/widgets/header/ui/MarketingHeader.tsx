@@ -268,9 +268,8 @@ export function MarketingHeader() {
         {
           label: t('Отзывы', 'Reviews'),
           desc: t('Что говорят пользователи о Sub0', 'What users say about Sub0'),
-          href: '#',
+          href: '/reviews',
           icon: ICONS.reviews,
-          soon: true,
         },
         {
           label: t('Карта сайта', 'Sitemap'),
