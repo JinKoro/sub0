@@ -60,7 +60,7 @@ export function Footer() {
         [t('Блог', 'Blog'), '#'],
         ['FAQ', '/faq'],
         ['Roadmap', '#'],
-        [t('Отзывы', 'Reviews'), '#'],
+        [t('Отзывы', 'Reviews'), '/reviews'],
         [t('Карта сайта', 'Sitemap'), '#'],
       ],
       soonItems: [0, 2, 4],
