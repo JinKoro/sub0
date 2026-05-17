@@ -7,3 +7,4 @@ export * from './service';
 export * from './subscription';
 export * from './billing-history';
 export * from './verification-token';
+export * from './mail-outbox';

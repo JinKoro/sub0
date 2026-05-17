@@ -99,6 +99,13 @@
       "when": 1779011794416,
       "tag": "0013_create_verification_token",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1779012006396,
+      "tag": "0014_create_mail_outbox",
+      "breakpoints": true
     }
   ]
 }
