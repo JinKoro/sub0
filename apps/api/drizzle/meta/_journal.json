@@ -85,6 +85,13 @@
       "when": 1779000000000,
       "tag": "0011_drop_oauth_account",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1778975745335,
+      "tag": "0012_add_customer_marketing_consent_at",
+      "breakpoints": true
     }
   ]
 }

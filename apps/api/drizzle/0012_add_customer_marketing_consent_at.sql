@@ -1,0 +1,1 @@
+ALTER TABLE "customer" ADD COLUMN "marketing_consent_at" timestamp with time zone;

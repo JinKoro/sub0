@@ -16,6 +16,9 @@ export const customer = pgTable(
     planId: integer('plan_id').notNull().default(Plan.FREE),
     planExpiresAt: timestamp('plan_expires_at', { withTimezone: true }),
     stateId: integer('state_id').notNull().default(CustomerState.CREATED),
+    // Факт явного согласия на маркетинговые рассылки (152-ФЗ / ФЗ-38).
+    // NULL = согласие не давалось либо отозвано.
+    marketingConsentAt: timestamp('marketing_consent_at', { withTimezone: true }),
     deletedAt: timestamp('deleted_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true })
