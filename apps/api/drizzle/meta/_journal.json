@@ -92,6 +92,13 @@
       "when": 1778975745335,
       "tag": "0012_add_customer_marketing_consent_at",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1779011794416,
+      "tag": "0013_create_verification_token",
+      "breakpoints": true
     }
   ]
 }
