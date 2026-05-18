@@ -2,30 +2,36 @@
 
 import { CSSProperties, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useLang } from '@/shared/contexts/lang-context';
 import { SUB0 } from '@/shared/constants/tokens';
+import { login } from '@/shared/api/auth';
 
 export function LoginForm() {
   const { t } = useLang();
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPass, setShowPass] = useState(false);
   const [focusField, setFocusField] = useState<'email' | 'pass' | null>(null);
-  const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
 
   const canSubmit = email.includes('@') && password.length >= 1;
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!canSubmit || loading) return;
     setLoading(true);
     setError(false);
-    setTimeout(() => {
+    try {
+      await login(email, password);
+      // Server set the sub0_session cookie; middleware will allow the cabinet.
+      router.replace('/dashboard');
+    } catch {
       setLoading(false);
-      setSubmitted(true);
-    }, 1200);
+      setError(true);
+    }
   }
 
   const inputStyle = (field: 'email' | 'pass'): CSSProperties => ({
@@ -41,60 +47,6 @@ export function LoginForm() {
     fontFamily: 'inherit',
     letterSpacing: '-0.01em',
   });
-
-  if (submitted) {
-    return (
-      <div style={{ textAlign: 'center', width: '100%', maxWidth: 400 }}>
-        <div
-          style={{
-            width: 56,
-            height: 56,
-            borderRadius: '50%',
-            background: '#f0f7f0',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            margin: '0 auto 24px',
-          }}
-        >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-            <path
-              d="M5 13l4 4L19 7"
-              stroke={SUB0.good}
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </div>
-        <h2 style={{ fontSize: 24, fontWeight: 700, letterSpacing: '-0.03em', marginBottom: 10 }}>
-          {t('Добро пожаловать!', 'Welcome back!')}
-        </h2>
-        <p style={{ color: SUB0.muted, fontSize: 15, marginBottom: 32, lineHeight: 1.5 }}>
-          {t('Вы успешно вошли в Sub0.', 'You have successfully signed in to Sub0.')}
-        </p>
-        <Link
-          href="/"
-          style={{
-            display: 'inline-block',
-            padding: '13px 28px',
-            background: SUB0.ink,
-            color: '#fff',
-            borderRadius: 10,
-            fontSize: 15,
-            fontWeight: 600,
-            textDecoration: 'none',
-            letterSpacing: '-0.01em',
-            transition: 'opacity .15s',
-          }}
-          onMouseOver={(e) => (e.currentTarget.style.opacity = '0.85')}
-          onMouseOut={(e) => (e.currentTarget.style.opacity = '1')}
-        >
-          {t('Перейти на главную', 'Go to home')}
-        </Link>
-      </div>
-    );
-  }
 
   return (
     <form onSubmit={handleSubmit} style={{ width: '100%', maxWidth: 400 }}>

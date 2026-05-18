@@ -65,7 +65,15 @@ forbidUnknownValues, transform })` + DTO с `class-validator`.
   невалиден, jti чёрно-списком в БД с TTL до expiry). Logout / смена
   пароля → удаление **всех** refresh’ей юзера.
 - Cookie refresh-токена: `httpOnly`, `Secure`, `SameSite=Lax`,
-  `Path=/auth`.
+  `Path=/api/v1/auth` (scoped только на auth-роуты).
+- Session-cookie `sub0_session` = access-JWT: `httpOnly`, `Secure`,
+  `SameSite=Lax`, `Path=/`, TTL = access TTL (15м). Нужна для
+  серверного гейта роутов кабинета во фронте (Next `middleware.ts`):
+  проверяется **stateless** по RS256-public key, без БД и без
+  обращения к API. Не содержит ничего сверх стандартных access-
+  claims (`sub`, `plan`, `typ=access`). На `logout` / смене пароля
+  чистится вместе со всеми refresh. `Secure` управляется
+  `COOKIE_SECURE` (false только для локального HTTP-dev).
 - Lockout: 10 неудачных login за 15 минут (ключ — `email + IP`) → блок
   на 15 минут.
 - Удаление аккаунта (MVP): soft-delete сразу, hard-delete через
