@@ -2,9 +2,11 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { SUB0, mono } from '@/shared/constants/tokens';
 import { useLang } from '@/shared/contexts/lang-context';
 import { MOCK_USER } from '@/shared/constants/cabinet';
+import { logout } from '@/shared/api/auth';
 
 interface MenuItem {
   ic: string;
@@ -16,8 +18,22 @@ interface MenuItem {
 
 export function UserMenu() {
   const { t } = useLang();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
   const ref = useRef<HTMLDivElement | null>(null);
+
+  async function handleLogout() {
+    if (loggingOut) return;
+    setLoggingOut(true);
+    try {
+      await logout();
+    } catch {
+      // ignore — redirect regardless; middleware will gate protected routes
+    }
+    setOpen(false);
+    router.replace('/login');
+  }
 
   useEffect(() => {
     const close = (e: MouseEvent) => {
@@ -196,18 +212,24 @@ export function UserMenu() {
               </Link>
             ))}
             <div style={{ borderTop: `1px solid ${SUB0.line}`, margin: '4px 0' }} />
-            <Link
-              href="/"
-              onClick={() => setOpen(false)}
+            <button
+              type="button"
+              onClick={handleLogout}
+              disabled={loggingOut}
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: 12,
+                width: '100%',
                 padding: '10px 10px',
                 borderRadius: 6,
-                textDecoration: 'none',
+                border: 'none',
+                background: 'transparent',
+                textAlign: 'left',
+                cursor: loggingOut ? 'default' : 'pointer',
                 color: SUB0.danger,
                 fontSize: 14,
+                fontFamily: 'inherit',
               }}
               onMouseEnter={(e) => (e.currentTarget.style.background = '#fdf0eb')}
               onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
@@ -223,8 +245,8 @@ export function UserMenu() {
               >
                 ↩
               </span>
-              {t('Выйти', 'Log out')}
-            </Link>
+              {loggingOut ? t('Выходим…', 'Logging out…') : t('Выйти', 'Log out')}
+            </button>
           </div>
 
           <Link
