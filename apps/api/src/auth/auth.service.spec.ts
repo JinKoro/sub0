@@ -36,7 +36,11 @@ function makeDeps() {
     verifyRefresh: jest.fn(),
     hashRefresh: (t: string) => `sha:${t}`,
   };
-  const service = new AuthService(customers, refreshTokens, tokens, hasher);
+  const registration = {
+    createNewAccount: jest.fn(),
+    reissueVerification: jest.fn(),
+  };
+  const service = new AuthService(customers, refreshTokens, tokens, hasher, registration);
   return { service, customers, refreshTokens, tokens };
 }
 

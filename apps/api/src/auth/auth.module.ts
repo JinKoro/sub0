@@ -5,6 +5,7 @@ import { PassportModule } from '@nestjs/passport';
 import { AuthController } from './auth.controller';
 import { DrizzleCustomerRepository, DrizzleRefreshTokenRepository } from './auth.repositories';
 import { AuthService } from './auth.service';
+import { DrizzleRegistrationRepository } from './registration.repository';
 import { JwtTokenService } from './jwt-token.service';
 import { JwtStrategy, JWT_PUBLIC_KEY } from './jwt.strategy';
 import { Argon2PasswordHasher } from './password-hasher';
@@ -16,6 +17,7 @@ import { TOKEN_SERVICE } from './token.service';
   providers: [
     DrizzleCustomerRepository,
     DrizzleRefreshTokenRepository,
+    DrizzleRegistrationRepository,
     Argon2PasswordHasher,
     JwtStrategy,
     {
@@ -41,12 +43,14 @@ import { TOKEN_SERVICE } from './token.service';
         refreshTokens: DrizzleRefreshTokenRepository,
         tokens: JwtTokenService,
         hasher: Argon2PasswordHasher,
-      ) => new AuthService(customers, refreshTokens, tokens, hasher),
+        registration: DrizzleRegistrationRepository,
+      ) => new AuthService(customers, refreshTokens, tokens, hasher, registration),
       inject: [
         DrizzleCustomerRepository,
         DrizzleRefreshTokenRepository,
         TOKEN_SERVICE,
         Argon2PasswordHasher,
+        DrizzleRegistrationRepository,
       ],
     },
   ],

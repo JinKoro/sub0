@@ -27,6 +27,47 @@ export interface CustomerRepository {
   findById(id: string): Promise<CustomerRecord | null>;
 }
 
+export interface RegisterInput {
+  email: string;
+  name: string;
+  timezone: string;
+  localeId?: number;
+  marketingConsent?: boolean;
+}
+
+export interface RegisterResult {
+  status: 'pending_verification';
+  email: string;
+}
+
+export interface CreateAccountArgs {
+  email: string;
+  name: string;
+  timezone: string;
+  localeId: number;
+  marketingConsent: boolean;
+  sku: string;
+  color: string;
+  tokenHash: string;
+  verifyPath: string;
+  expiresAt: Date;
+}
+
+export interface ReissueArgs {
+  customerId: string;
+  email: string;
+  localeId: number;
+  tokenHash: string;
+  verifyPath: string;
+  expiresAt: Date;
+}
+
+/** All writes happen inside a single Postgres transaction in the adapter. */
+export interface RegistrationRepository {
+  createNewAccount(args: CreateAccountArgs): Promise<void>;
+  reissueVerification(args: ReissueArgs): Promise<void>;
+}
+
 export interface NewRefreshTokenRow {
   customerId: string;
   tokenHash: string;
