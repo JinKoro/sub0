@@ -14,6 +14,7 @@ import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import type { RequestContext } from './auth.types';
 import { LoginDto } from './dto/login.dto';
+import { RegisterDto } from './dto/register.dto';
 import type { AuthUser } from './jwt.strategy';
 import { JwtAuthGuard } from './jwt-auth.guard';
 
@@ -68,6 +69,13 @@ export class AuthController {
     this.setRefreshCookie(res, refreshToken);
     this.setSessionCookie(res, accessToken);
     return { accessToken };
+  }
+
+  @Post('register')
+  @HttpCode(200)
+  register(@Body() dto: RegisterDto, @Req() req: Request) {
+    // No tokens — the customer has no password yet (set via #54 verify-email).
+    return this.auth.register(dto, ctxOf(req));
   }
 
   @Post('login')

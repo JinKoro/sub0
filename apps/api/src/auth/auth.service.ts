@@ -1,15 +1,23 @@
-import { UnauthorizedException } from '@nestjs/common';
-import { CustomerState } from '@subzero/shared';
+import { ConflictException, UnauthorizedException } from '@nestjs/common';
+import { CustomerState, Locale } from '@subzero/shared';
 
 import type {
   AuthTokens,
   CustomerRepository,
   LoginInput,
   RefreshTokenRepository,
+  RegisterInput,
+  RegisterResult,
+  RegistrationRepository,
   RequestContext,
 } from './auth.types';
+import { createOpaqueToken } from './opaque-token';
 import type { PasswordHasher } from './password-hasher';
+import { randomProjectColor } from '../shared/project-color';
+import { generateSku } from '../shared/sku';
 import type { TokenService } from './token.service';
+
+const VERIFY_TTL_MS = 24 * 60 * 60 * 1000;
 
 function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
@@ -21,7 +29,49 @@ export class AuthService {
     private readonly refreshTokens: RefreshTokenRepository,
     private readonly tokens: TokenService,
     private readonly hasher: PasswordHasher,
+    private readonly registration: RegistrationRepository,
   ) {}
+
+  async register(input: RegisterInput, _ctx: RequestContext): Promise<RegisterResult> {
+    const email = normalizeEmail(input.email);
+    const existing = await this.customers.findActiveByEmail(email);
+    if (existing && existing.stateId === CustomerState.ACTIVE) {
+      throw new ConflictException('email already registered');
+    }
+
+    const localeId = input.localeId ?? Locale.RU;
+    const { token, tokenHash } = createOpaqueToken();
+    const verifyPath = `/registration/complete?token=${token}`;
+    const expiresAt = new Date(Date.now() + VERIFY_TTL_MS);
+
+    // "Forgot to verify, registers again" — keep the customer/project, just
+    // invalidate the old EMAIL_VERIFY token and send a fresh link.
+    if (existing && existing.stateId === CustomerState.CREATED) {
+      await this.registration.reissueVerification({
+        customerId: existing.id,
+        email,
+        localeId,
+        tokenHash,
+        verifyPath,
+        expiresAt,
+      });
+      return { status: 'pending_verification', email };
+    }
+
+    await this.registration.createNewAccount({
+      email,
+      name: input.name,
+      timezone: input.timezone,
+      localeId,
+      marketingConsent: input.marketingConsent ?? false,
+      sku: generateSku('prj'),
+      color: randomProjectColor(),
+      tokenHash,
+      verifyPath,
+      expiresAt,
+    });
+    return { status: 'pending_verification', email };
+  }
 
   async login(input: LoginInput, ctx: RequestContext): Promise<AuthTokens> {
     const customer = await this.customers.findActiveByEmail(normalizeEmail(input.email));

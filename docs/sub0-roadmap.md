@@ -64,11 +64,18 @@ Login/Register; для залогиненных — «В дашборд».
 
 ### Авторизация
 
+- **Регистрация — двухшаговая.** Шаг 1: `name + email + consents`
+  → customer `state = CREATED` (без пароля) + дефолтный project
+  `Personal` + одноразовая ссылка `/registration/complete?token=`
+  на email (через `mail_outbox`). Шаг 2: по ссылке юзер задаёт
+  пароль → `state = ACTIVE` + выдача токенов. Пароль в DTO
+  регистрации **не** передаётся.
 - Email + пароль (`argon2id`).
 - JWT access 15m + refresh 90d с ротацией (`httpOnly + Secure +
 SameSite=Lax` cookie). Юзер не перезаходит вручную — но это **не**
   «сессия без expiry»: токены прозрачно обновляются на каждом
-  запросе.
+  запросе. Access-JWT дублируется в `sub0_session` cookie
+  (`Path=/`) для серверного гейта роутов кабинета.
 - Email verification обязательна **до первой оплаты**.
 - Удаление аккаунта (soft → hard через 30 дней) — требование 152-ФЗ
   / GDPR.
