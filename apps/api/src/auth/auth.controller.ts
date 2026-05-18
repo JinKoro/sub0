@@ -15,6 +15,8 @@ import { AuthService } from './auth.service';
 import type { RequestContext } from './auth.types';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { EmailOnlyDto, ResetPasswordDto, VerifyEmailDto } from './dto/verification.dto';
+import { VerificationService } from './verification.service';
 import type { AuthUser } from './jwt.strategy';
 import { JwtAuthGuard } from './jwt-auth.guard';
 
@@ -38,6 +40,7 @@ function ctxOf(req: Request): RequestContext {
 export class AuthController {
   constructor(
     private readonly auth: AuthService,
+    private readonly verification: VerificationService,
     private readonly config: ConfigService,
   ) {}
 
@@ -76,6 +79,39 @@ export class AuthController {
   register(@Body() dto: RegisterDto, @Req() req: Request) {
     // No tokens — the customer has no password yet (set via #54 verify-email).
     return this.auth.register(dto, ctxOf(req));
+  }
+
+  @Post('verify-email')
+  @HttpCode(200)
+  async verifyEmail(
+    @Body() dto: VerifyEmailDto,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const result = await this.verification.verifyEmail(dto, ctxOf(req));
+    if ('accessToken' in result) {
+      this.issue(res, result.accessToken, result.refreshToken);
+      return { accessToken: result.accessToken, customer: result.customer };
+    }
+    return result; // { status: 'email_updated' }
+  }
+
+  @Post('resend-verification')
+  @HttpCode(200)
+  resendVerification(@Body() dto: EmailOnlyDto) {
+    return this.verification.resendVerification(dto.email);
+  }
+
+  @Post('forgot-password')
+  @HttpCode(200)
+  forgotPassword(@Body() dto: EmailOnlyDto) {
+    return this.verification.forgotPassword(dto.email);
+  }
+
+  @Post('reset-password')
+  @HttpCode(200)
+  resetPassword(@Body() dto: ResetPasswordDto) {
+    return this.verification.resetPassword(dto.token, dto.newPassword);
   }
 
   @Post('login')

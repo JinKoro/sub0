@@ -48,9 +48,11 @@ email/Telegram/Web-Push нотификациями. OAuth-провайдеры �
 forbidUnknownValues, transform })` + DTO с `class-validator`.
 - Web (server actions / route handlers): `zod` на каждом входе. Никогда
   не доверяем shape `FormData` или JSON.
-- Лимиты в схемах: email ≤ 254, password 12–128, имя ≤ 100, название
-  подписки ≤ 200, currency — enum `["RUB", "USD", "EUR", "BYN"]`,
-  периодичность — enum.
+- Лимиты в схемах: email ≤ 254, password 8–128 (≥1 цифра, ≥1 буква
+  — решение владельца, #54; единый источник `@subzero/shared`
+  `isValidPassword` / `PASSWORD_MIN` / `PASSWORD_MAX`, переиспользуется
+  фронтом #50), имя ≤ 100, название подписки ≤ 200, currency — enum
+  `["RUB", "USD", "EUR", "BYN"]`, периодичность — enum.
 - Никаких `dangerouslySetInnerHTML` без `isomorphic-dompurify` и
   одной строки комментария-обоснования.
 

@@ -6,6 +6,8 @@ import { AuthController } from './auth.controller';
 import { DrizzleCustomerRepository, DrizzleRefreshTokenRepository } from './auth.repositories';
 import { AuthService } from './auth.service';
 import { DrizzleRegistrationRepository } from './registration.repository';
+import { DrizzleVerificationRepository } from './verification.repository';
+import { VerificationService } from './verification.service';
 import { JwtTokenService } from './jwt-token.service';
 import { JwtStrategy, JWT_PUBLIC_KEY } from './jwt.strategy';
 import { Argon2PasswordHasher } from './password-hasher';
@@ -18,6 +20,7 @@ import { TOKEN_SERVICE } from './token.service';
     DrizzleCustomerRepository,
     DrizzleRefreshTokenRepository,
     DrizzleRegistrationRepository,
+    DrizzleVerificationRepository,
     Argon2PasswordHasher,
     JwtStrategy,
     {
@@ -51,6 +54,23 @@ import { TOKEN_SERVICE } from './token.service';
         TOKEN_SERVICE,
         Argon2PasswordHasher,
         DrizzleRegistrationRepository,
+      ],
+    },
+    {
+      provide: VerificationService,
+      useFactory: (
+        repo: DrizzleVerificationRepository,
+        refreshTokens: DrizzleRefreshTokenRepository,
+        registration: DrizzleRegistrationRepository,
+        tokens: JwtTokenService,
+        hasher: Argon2PasswordHasher,
+      ) => new VerificationService(repo, refreshTokens, registration, tokens, hasher),
+      inject: [
+        DrizzleVerificationRepository,
+        DrizzleRefreshTokenRepository,
+        DrizzleRegistrationRepository,
+        TOKEN_SERVICE,
+        Argon2PasswordHasher,
       ],
     },
   ],
