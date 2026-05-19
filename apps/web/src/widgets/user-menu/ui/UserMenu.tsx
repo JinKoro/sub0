@@ -4,8 +4,9 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { SUB0, mono } from '@/shared/constants/tokens';
+import { Plan } from '@subzero/shared';
 import { useLang } from '@/shared/contexts/lang-context';
-import { MOCK_USER } from '@/shared/constants/cabinet';
+import { useProfile } from '@/shared/contexts/profile-context';
 import { logout } from '@/shared/api/auth';
 
 interface MenuItem {
@@ -18,6 +19,10 @@ interface MenuItem {
 
 export function UserMenu() {
   const { t } = useLang();
+  const { profile, initials } = useProfile();
+  const displayName = profile?.name?.trim() || profile?.email || '';
+  const email = profile?.email ?? '';
+  const planLabel = profile ? (Plan[profile.planId] ?? 'FREE') : 'FREE';
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
@@ -79,7 +84,7 @@ export function UserMenu() {
             transition: 'border-color .15s',
           }}
         >
-          {MOCK_USER.initials}
+          {initials}
         </span>
       </button>
       {open && (
@@ -120,11 +125,11 @@ export function UserMenu() {
                 fontSize: 14,
               }}
             >
-              {MOCK_USER.initials}
+              {initials}
             </span>
             <div style={{ minWidth: 0 }}>
               <div style={{ fontSize: 14, fontWeight: 700, color: SUB0.ink }}>
-                {t(MOCK_USER.name, MOCK_USER.nameEn)}
+                {displayName}
               </div>
               <div
                 style={{
@@ -136,7 +141,7 @@ export function UserMenu() {
                   whiteSpace: 'nowrap',
                 }}
               >
-                {MOCK_USER.email}
+                {email}
               </div>
             </div>
           </div>
@@ -168,7 +173,7 @@ export function UserMenu() {
                 }}
               >
                 <span style={{ width: 6, height: 6, borderRadius: 999, background: SUB0.blue }} />
-                {MOCK_USER.plan}
+                {planLabel}
               </span>
               <span style={{ fontSize: 12, color: SUB0.muted }}>
                 {t('Текущий тариф', 'Current plan')}

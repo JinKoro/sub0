@@ -13,7 +13,6 @@ function makeDeps() {
   const repo: VerificationRepository = {
     findToken: jest.fn(),
     completeRegistration: jest.fn().mockResolvedValue(undefined),
-    applyEmailChange: jest.fn().mockResolvedValue(undefined),
     createPasswordReset: jest.fn().mockResolvedValue(undefined),
     completePasswordReset: jest.fn().mockResolvedValue(undefined),
     findActiveCustomerByEmail: jest.fn().mockResolvedValue(null),
@@ -105,7 +104,6 @@ function resetRow(over: Partial<TokenRow> = {}): TokenRow {
     id: 'tok-r',
     customerId: 'c1',
     typeId: VerificationTokenType.PASSWORD_RESET,
-    payload: null,
     expiresAt: new Date(Date.now() + 60_000),
     usedAt: null,
     customerStateId: CustomerState.ACTIVE,

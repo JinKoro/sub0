@@ -89,11 +89,8 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ) {
     const result = await this.verification.verifyEmail(dto, ctxOf(req));
-    if ('accessToken' in result) {
-      this.issue(res, result.accessToken, result.refreshToken);
-      return { accessToken: result.accessToken, customer: result.customer };
-    }
-    return result; // { status: 'email_updated' }
+    this.issue(res, result.accessToken, result.refreshToken);
+    return { accessToken: result.accessToken, customer: result.customer };
   }
 
   @Post('resend-verification')

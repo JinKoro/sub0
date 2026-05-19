@@ -4,6 +4,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 
 import { AuthModule } from './auth/auth.module';
 import { validateEnv } from './config/env.schema';
+import { CustomerModule } from './customer/customer.module';
 import { DbModule } from './db/db.module';
 import { HealthModule } from './health/health.module';
 import { MailModule } from './mail/mail.module';
@@ -15,6 +16,7 @@ import { MailModule } from './mail/mail.module';
     DbModule,
     HealthModule,
     AuthModule,
+    CustomerModule,
     MailModule,
   ],
 })

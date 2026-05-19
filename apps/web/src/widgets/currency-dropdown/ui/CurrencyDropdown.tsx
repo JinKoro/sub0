@@ -4,11 +4,13 @@ import { useEffect, useRef, useState } from 'react';
 import { SUB0, mono } from '@/shared/constants/tokens';
 import { useLang } from '@/shared/contexts/lang-context';
 import { useCabinet } from '@/shared/contexts/cabinet-context';
+import { usePrefs } from '@/shared/hooks/use-prefs';
 import { CURRENCY_OPTIONS } from '@/shared/constants/cabinet';
 
 export function CurrencyDropdown() {
   const { t } = useLang();
-  const { currency, setCurrency } = useCabinet();
+  const { currency } = useCabinet();
+  const { setCurrency } = usePrefs();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement | null>(null);
 

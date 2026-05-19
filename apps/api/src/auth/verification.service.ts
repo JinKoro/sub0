@@ -67,15 +67,6 @@ export class VerificationService {
       };
     }
 
-    if (row.customerStateId === CustomerState.ACTIVE && row.payload?.newEmail) {
-      await this.repo.applyEmailChange({
-        tokenId: row.id,
-        customerId: row.customerId,
-        newEmail: row.payload.newEmail,
-      });
-      return { status: 'email_updated' };
-    }
-
     throw new BadRequestException('token not applicable to customer state');
   }
 
