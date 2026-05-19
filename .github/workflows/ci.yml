@@ -17,6 +17,20 @@ jobs:
     name: ${{ matrix.task }}
     runs-on: ubuntu-latest
     if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: sub0
+          POSTGRES_PASSWORD: sub0
+          POSTGRES_DB: sub0
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U sub0 -d sub0"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     strategy:
       fail-fast: false
       matrix:
