@@ -108,4 +108,21 @@ describe('AuthService.register', () => {
       'tx failed',
     );
   });
+
+  it('rejects with 409 when an ARCHIVED customer uses the email (no 500)', async () => {
+    const { service, customers, registration } = makeDeps();
+    (customers.findActiveByEmail as jest.Mock).mockResolvedValue({
+      id: 'c-arch',
+      email: 'new.user@example.com',
+      passwordHash: 'x',
+      planId: 1,
+      stateId: CustomerState.ARCHIVED,
+    } as CustomerRecord);
+
+    await expect(service.register(baseDto, { userAgent: null, ip: null })).rejects.toThrow(
+      ConflictException,
+    );
+    expect(registration.createNewAccount).not.toHaveBeenCalled();
+    expect(registration.reissueVerification).not.toHaveBeenCalled();
+  });
 });

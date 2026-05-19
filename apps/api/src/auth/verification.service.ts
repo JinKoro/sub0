@@ -115,6 +115,9 @@ export class VerificationService {
 
   async resetPassword(token: string, newPassword: string): Promise<{ status: 'password_reset' }> {
     const row = await this.validToken(token, VerificationTokenType.PASSWORD_RESET);
+    if (row.customerStateId === CustomerState.ARCHIVED) {
+      throw new BadRequestException('account is archived');
+    }
     if (!isValidPassword(newPassword)) {
       throw new BadRequestException('weak password');
     }

@@ -35,7 +35,9 @@ export class AuthService {
   async register(input: RegisterInput, _ctx: RequestContext): Promise<RegisterResult> {
     const email = normalizeEmail(input.email);
     const existing = await this.customers.findActiveByEmail(email);
-    if (existing && existing.stateId === CustomerState.ACTIVE) {
+    // ACTIVE or ARCHIVED — email is taken (the partial unique index would
+    // 500 otherwise). Reactivation is a separate flow (#16), not here.
+    if (existing && existing.stateId !== CustomerState.CREATED) {
       throw new ConflictException('email already registered');
     }
 
