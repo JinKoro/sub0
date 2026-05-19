@@ -25,6 +25,15 @@ export const envSchema = z
       .enum(['true', 'false'])
       .default('true')
       .transform((v) => v === 'true'),
+
+    // Mail (#64): MailHog locally, SMTP provider in prod.
+    APP_BASE_URL: z.string().url().default('http://localhost:3000'),
+    SMTP_HOST: z.string().default('localhost'),
+    SMTP_PORT: z.coerce.number().int().positive().default(1025),
+    SMTP_USER: z.string().optional(),
+    SMTP_PASS: z.string().optional(),
+    EMAIL_FROM: z.string().default('Sub0 <noreply@sub0.local>'),
+    MAIL_RETENTION_DAYS: z.coerce.number().int().positive().default(30),
   })
   // keep unrelated process.env entries (SMTP_*, PATH, …) so ConfigService still sees them
   .passthrough();
