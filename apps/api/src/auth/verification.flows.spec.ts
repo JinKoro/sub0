@@ -146,4 +146,13 @@ describe('VerificationService.resetPassword', () => {
     );
     await expect(service.resetPassword('raw', 'n3wPassword')).rejects.toThrow(BadRequestException);
   });
+
+  it('ARCHIVED customer → 400, no rehash / no refresh revoke', async () => {
+    const { service, repo } = makeDeps();
+    (repo.findToken as jest.Mock).mockResolvedValue(
+      resetRow({ customerStateId: CustomerState.ARCHIVED }),
+    );
+    await expect(service.resetPassword('raw', 'n3wPassword')).rejects.toThrow(BadRequestException);
+    expect(repo.completePasswordReset).not.toHaveBeenCalled();
+  });
 });
