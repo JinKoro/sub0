@@ -34,3 +34,29 @@ export function resendVerification(email: string): Promise<{ status: string }> {
     body: JSON.stringify({ email: email.trim().toLowerCase() }),
   });
 }
+
+export interface RegisterInput {
+  email: string;
+  name: string;
+  marketingConsent: boolean;
+  localeId?: number;
+}
+
+export interface RegisterResult {
+  status: string;
+  email: string;
+}
+
+/** Step 1 of registration. timezone is taken from the browser. */
+export function register(input: RegisterInput): Promise<RegisterResult> {
+  return api<RegisterResult>('/auth/register', {
+    method: 'POST',
+    body: JSON.stringify({
+      email: input.email.trim().toLowerCase(),
+      name: input.name.trim(),
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      marketingConsent: input.marketingConsent,
+      ...(input.localeId ? { localeId: input.localeId } : {}),
+    }),
+  });
+}
