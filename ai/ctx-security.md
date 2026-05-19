@@ -95,14 +95,18 @@ forbidUnknownValues, transform })` + DTO с `class-validator`.
 
 #### 3. Anti-spam (формы)
 
-- `@nestjs/throttler` на:
+- Rate-limit на auth-эндпоинтах — на **edge (Traefik)**, не в
+  приложении (AGENTS.md: API stateless; rate-limit — инфра-концерн,
+  не доменный код). В коде `@nestjs/throttler` НЕ заводим. Политика
+  (настраивается в Traefik):
   - `POST /auth/register` — 5 / IP / час.
   - `POST /auth/login` — 10 / `email+IP` / 15 мин (комбинируется
-    с lockout).
-  - `POST /auth/password-reset` — 3 / email / час.
-- CAPTCHA (Cloudflare Turnstile) на `/auth/register` и
-  `/auth/password-reset`. **Не** на login (UX; добавим при
-  наблюдаемом абузе).
+    с lockout — lockout остаётся в приложении, см. §2).
+  - `POST /auth/forgot-password` — 3 / email / час.
+- CAPTCHA **не используется** (решение владельца): ни Cloudflare
+  Turnstile, ни иная — нигде, включая `/auth/register` и
+  password-reset. Не предлагать и не флагать как пробел в review.
+  Анти-абуз не-account-state — на edge (Traefik), см. выше.
 - Honeypot — на любую публичную форму контакта/фидбэка, если
   появится: non-empty value → silent 200.
 
@@ -211,7 +215,9 @@ forbidUnknownValues, transform })` + DTO с `class-validator`.
    idempotency по `provider_event_id`?
 5. Файлы: MIME whitelist + magic byte + re-encode? Bank statements
    не пишутся на диск?
-6. Throttler на auth-эндпоинтах, CAPTCHA на register / reset?
+6. Rate-limit на auth-эндпоинтах — на Traefik (не `@nestjs/throttler`);
+   lockout (§2) — в приложении; CAPTCHA не используется (решение
+   владельца) — её отсутствие не findings.
 7. CSP + helmet + CORS allowlist?
 8. Logging: PII в allow-list; никаких токенов / паролей / тел выписок
    в логах?

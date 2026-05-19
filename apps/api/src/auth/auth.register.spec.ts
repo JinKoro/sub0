@@ -29,7 +29,12 @@ function makeDeps() {
     reissueVerification: jest.fn().mockResolvedValue(undefined),
   };
   const tokens = {} as TokenService;
-  const service = new AuthService(customers, refreshTokens, tokens, hasher, registration);
+  const lockout = {
+    assertNotLockedOut: jest.fn().mockResolvedValue(undefined),
+    recordSuccess: jest.fn().mockResolvedValue(undefined),
+    recordFailure: jest.fn().mockResolvedValue(undefined),
+  };
+  const service = new AuthService(customers, refreshTokens, tokens, hasher, registration, lockout);
   return { service, customers, registration };
 }
 

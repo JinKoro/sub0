@@ -1,15 +1,26 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { and, eq, isNull } from 'drizzle-orm';
+import { and, count, desc, eq, gte, isNull, lt } from 'drizzle-orm';
 
 import { DRIZZLE, type DrizzleDB } from '../db/db.module';
 import { customer } from '../db/schema/customer';
+import { loginAttempt } from '../db/schema/login-attempt';
 import { refreshToken } from '../db/schema/refresh-token';
 import type {
   CustomerRecord,
   CustomerRepository,
+  LoginAttemptKey,
+  LoginAttemptRepository,
   NewRefreshTokenRow,
   RefreshTokenRepository,
 } from './auth.types';
+
+/** email + IP (NULL-safe) — the lockout bucket. */
+function keyWhere(key: LoginAttemptKey) {
+  return and(
+    eq(loginAttempt.email, key.email),
+    key.ip === null ? isNull(loginAttempt.ip) : eq(loginAttempt.ip, key.ip),
+  );
+}
 
 @Injectable()
 export class DrizzleCustomerRepository implements CustomerRepository {
@@ -81,5 +92,46 @@ export class DrizzleRefreshTokenRepository implements RefreshTokenRepository {
       .update(refreshToken)
       .set({ revokedAt: new Date() })
       .where(and(eq(refreshToken.customerId, customerId), isNull(refreshToken.revokedAt)));
+  }
+}
+
+@Injectable()
+export class DrizzleLoginAttemptRepository implements LoginAttemptRepository {
+  constructor(@Inject(DRIZZLE) private readonly db: DrizzleDB) {}
+
+  async record(attempt: LoginAttemptKey & { succeeded: boolean }): Promise<void> {
+    await this.db.insert(loginAttempt).values({
+      email: attempt.email,
+      ip: attempt.ip,
+      succeeded: attempt.succeeded,
+    });
+  }
+
+  async lastSuccessAt(key: LoginAttemptKey): Promise<Date | null> {
+    const rows = await this.db
+      .select({ at: loginAttempt.createdAt })
+      .from(loginAttempt)
+      .where(and(keyWhere(key), eq(loginAttempt.succeeded, true)))
+      .orderBy(desc(loginAttempt.createdAt))
+      .limit(1);
+    return rows[0]?.at ?? null;
+  }
+
+  async countFailuresSince(args: LoginAttemptKey & { since: Date }): Promise<number> {
+    const rows = await this.db
+      .select({ c: count() })
+      .from(loginAttempt)
+      .where(
+        and(
+          keyWhere(args),
+          eq(loginAttempt.succeeded, false),
+          gte(loginAttempt.createdAt, args.since),
+        ),
+      );
+    return Number(rows[0]?.c ?? 0);
+  }
+
+  async deleteBefore(cutoff: Date): Promise<void> {
+    await this.db.delete(loginAttempt).where(lt(loginAttempt.createdAt, cutoff));
   }
 }

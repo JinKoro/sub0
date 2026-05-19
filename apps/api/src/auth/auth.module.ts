@@ -3,8 +3,14 @@ import { ConfigService } from '@nestjs/config';
 import { PassportModule } from '@nestjs/passport';
 
 import { AuthController } from './auth.controller';
-import { DrizzleCustomerRepository, DrizzleRefreshTokenRepository } from './auth.repositories';
+import {
+  DrizzleCustomerRepository,
+  DrizzleLoginAttemptRepository,
+  DrizzleRefreshTokenRepository,
+} from './auth.repositories';
 import { AuthService } from './auth.service';
+import { LockoutScheduler } from './lockout.scheduler';
+import { LockoutService } from './lockout.service';
 import { DrizzleRegistrationRepository } from './registration.repository';
 import { DrizzleVerificationRepository } from './verification.repository';
 import { VerificationService } from './verification.service';
@@ -19,10 +25,17 @@ import { TOKEN_SERVICE } from './token.service';
   providers: [
     DrizzleCustomerRepository,
     DrizzleRefreshTokenRepository,
+    DrizzleLoginAttemptRepository,
     DrizzleRegistrationRepository,
     DrizzleVerificationRepository,
     Argon2PasswordHasher,
     JwtStrategy,
+    LockoutScheduler,
+    {
+      provide: LockoutService,
+      useFactory: (attempts: DrizzleLoginAttemptRepository) => new LockoutService(attempts),
+      inject: [DrizzleLoginAttemptRepository],
+    },
     {
       provide: JWT_PUBLIC_KEY,
       useFactory: (c: ConfigService) => c.getOrThrow<string>('JWT_PUBLIC_KEY'),
@@ -47,13 +60,15 @@ import { TOKEN_SERVICE } from './token.service';
         tokens: JwtTokenService,
         hasher: Argon2PasswordHasher,
         registration: DrizzleRegistrationRepository,
-      ) => new AuthService(customers, refreshTokens, tokens, hasher, registration),
+        lockout: LockoutService,
+      ) => new AuthService(customers, refreshTokens, tokens, hasher, registration, lockout),
       inject: [
         DrizzleCustomerRepository,
         DrizzleRefreshTokenRepository,
         TOKEN_SERVICE,
         Argon2PasswordHasher,
         DrizzleRegistrationRepository,
+        LockoutService,
       ],
     },
     {
