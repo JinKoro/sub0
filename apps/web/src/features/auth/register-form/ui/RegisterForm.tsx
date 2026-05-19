@@ -2,8 +2,11 @@
 
 import { CSSProperties, useState } from 'react';
 import Link from 'next/link';
+import { Locale } from '@subzero/shared';
 import { useLang } from '@/shared/contexts/lang-context';
 import { SUB0 } from '@/shared/constants/tokens';
+import { register } from '@/shared/api/auth';
+import { ApiError } from '@/shared/api/client';
 
 // ── Provider icons ─────────────────────────────────────────────────────────────
 
@@ -322,7 +325,7 @@ function getProvider(email: string): Provider | null {
 // ── RegisterForm ───────────────────────────────────────────────────────────────
 
 export function RegisterForm() {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [agree1, setAgree1] = useState(true);
@@ -330,17 +333,32 @@ export function RegisterForm() {
   const [focusField, setFocusField] = useState<'name' | 'email' | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const canSubmit = name.trim().length > 0 && email.includes('@') && agree1;
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!canSubmit || loading) return;
     setLoading(true);
-    setTimeout(() => {
+    setError(null);
+    try {
+      await register({
+        email,
+        name,
+        marketingConsent: agree2,
+        localeId: lang === 'en' ? Locale.EN : Locale.RU,
+      });
       setLoading(false);
       setSubmitted(true);
-    }, 1200);
+    } catch (err) {
+      setLoading(false);
+      setError(
+        err instanceof ApiError && err.status === 409
+          ? t('Этот email уже зарегистрирован.', 'This email is already registered.')
+          : t('Что-то пошло не так. Попробуйте ещё раз.', 'Something went wrong. Try again.'),
+      );
+    }
   }
 
   const inputStyle = (field: 'name' | 'email'): CSSProperties => ({
@@ -503,6 +521,22 @@ export function RegisterForm() {
           autoComplete="email"
         />
       </div>
+
+      {error && (
+        <div
+          style={{
+            padding: '11px 14px',
+            borderRadius: 8,
+            background: '#fff5f2',
+            border: '1px solid #f5c5b5',
+            fontSize: 13,
+            color: SUB0.danger,
+            marginBottom: 14,
+          }}
+        >
+          {error}
+        </div>
+      )}
 
       <button
         type="submit"
