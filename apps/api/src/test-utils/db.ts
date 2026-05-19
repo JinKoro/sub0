@@ -3,10 +3,15 @@ import { join } from 'node:path';
 
 import { Client, Pool } from 'pg';
 
-const ADMIN_URL = 'postgresql://sub0:sub0@localhost:5432/postgres';
+// Base без имени БД; CI/локалка переопределяют через TEST_PG_BASE_URL.
+const BASE_URL = (process.env.TEST_PG_BASE_URL ?? 'postgresql://sub0:sub0@localhost:5432').replace(
+  /\/+$/,
+  '',
+);
+const ADMIN_URL = `${BASE_URL}/postgres`;
 // One DB per jest worker — spec files run in parallel.
 export const TEST_DB = `sub0_test_${process.env.JEST_WORKER_ID ?? '1'}`;
-export const TEST_DB_URL = `postgresql://sub0:sub0@localhost:5432/${TEST_DB}`;
+export const TEST_DB_URL = `${BASE_URL}/${TEST_DB}`;
 
 const DRIZZLE_DIR = join(__dirname, '..', '..', 'drizzle');
 
