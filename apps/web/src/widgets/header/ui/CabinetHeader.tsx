@@ -8,6 +8,7 @@ import { useLang } from '@/shared/contexts/lang-context';
 import { useIsMobile } from '@/shared/hooks/use-is-mobile';
 import { CURRENCY_OPTIONS } from '@/shared/constants/cabinet';
 import { useCabinet } from '@/shared/contexts/cabinet-context';
+import { usePrefs } from '@/shared/hooks/use-prefs';
 import { ProjectSwitcher } from '@/widgets/project-switcher/ui/ProjectSwitcher';
 import { CurrencyDropdown } from '@/widgets/currency-dropdown/ui/CurrencyDropdown';
 import { UserMenu } from '@/widgets/user-menu/ui/UserMenu';
@@ -38,11 +39,12 @@ function activeTabId(pathname: string | null): string {
 }
 
 export function CabinetHeader() {
-  const { t, lang, toggle } = useLang();
+  const { t, lang } = useLang();
   const isMobile = useIsMobile();
   const pathname = usePathname();
   const [burgerOpen, setBurgerOpen] = useState(false);
-  const { currency, setCurrency } = useCabinet();
+  const { currency } = useCabinet();
+  const prefs = usePrefs();
   const burgerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -89,11 +91,11 @@ export function CabinetHeader() {
           {burgerOpen && (
             <CabinetMobileDrawer
               currency={currency}
-              setCurrency={setCurrency}
+              setCurrency={prefs.setCurrency}
               onClose={() => setBurgerOpen(false)}
               active={active}
               lang={lang}
-              toggleLang={toggle}
+              setLang={prefs.setLang}
             />
           )}
         </div>
@@ -149,9 +151,7 @@ export function CabinetHeader() {
                 return (
                   <button
                     key={l}
-                    onClick={() => {
-                      if (lang !== l) toggle();
-                    }}
+                    onClick={() => prefs.setLang(l)}
                     style={{
                       padding: '5px 9px',
                       borderRadius: 5,
@@ -187,7 +187,7 @@ interface DrawerProps {
   onClose: () => void;
   active: string;
   lang: 'ru' | 'en';
-  toggleLang: () => void;
+  setLang: (l: 'ru' | 'en') => void;
 }
 
 function CabinetMobileDrawer({
@@ -196,7 +196,7 @@ function CabinetMobileDrawer({
   onClose,
   active,
   lang,
-  toggleLang,
+  setLang,
 }: DrawerProps) {
   const { t } = useLang();
 
@@ -281,9 +281,7 @@ function CabinetMobileDrawer({
             return (
               <button
                 key={l}
-                onClick={() => {
-                  if (lang !== l) toggleLang();
-                }}
+                onClick={() => setLang(l)}
                 style={{
                   flex: 1,
                   padding: '8px 10px',

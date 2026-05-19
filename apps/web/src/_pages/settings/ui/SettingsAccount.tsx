@@ -1,13 +1,15 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { SUB0, mono } from '@/shared/constants/tokens';
 import { useLang } from '@/shared/contexts/lang-context';
 import { useIsMobile } from '@/shared/hooks/use-is-mobile';
 import { useCabinet } from '@/shared/contexts/cabinet-context';
+import { useProfile } from '@/shared/contexts/profile-context';
 import { Card } from '@/shared/components/ui/Card';
-import { MOCK_USER } from '@/shared/constants/cabinet';
 import type { CabinetCurrency } from '@/entities/subscription/model/cabinet-types';
+import { ApiError } from '@/shared/api/client';
+import { deleteAccount, savePreferences, saveProfile } from '@/shared/api/customer';
 import { SectionHead } from './parts/SectionHead';
 import { Row } from './parts/Row';
 import { Input } from './parts/Input';
@@ -15,35 +17,155 @@ import { SegControl } from './parts/SegControl';
 import { TimezoneDropdown } from './parts/TimezoneDropdown';
 import { sBtnGhost, sBtnPrimary, sBtnDanger } from './parts/styles';
 
-interface Profile {
-  firstName: string;
-  email: string;
-  timezone: string;
-}
+// shared enums (Locale RU=1/EN=2, Currency RUB=1/USD=2/EUR=3/BYN=4).
+const LOCALE_ID: Record<'ru' | 'en', number> = { ru: 1, en: 2 };
+const CUR_TO_ID: Record<CabinetCurrency, number> = { RUB: 1, USD: 2, EUR: 3, BYN: 4 };
+
+type SaveState = 'idle' | 'saving' | 'saved';
 
 export function SettingsAccount() {
   const { t, lang, toggle } = useLang();
   const isMobile = useIsMobile();
   const { currency, setCurrency } = useCabinet();
-  const fileRef = useRef<HTMLInputElement | null>(null);
-  const [profile, setProfile] = useState<Profile>({
-    firstName: lang === 'en' ? MOCK_USER.firstNameEn : MOCK_USER.firstName,
-    email: MOCK_USER.email,
-    timezone: MOCK_USER.timezone,
-  });
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const { profile, loading, initials, setProfile } = useProfile();
 
-  const onAvatarPick = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0];
-    if (f) setAvatarUrl(URL.createObjectURL(f));
+  const [name, setName] = useState('');
+  const [savedName, setSavedName] = useState('');
+  const [timezone, setTimezone] = useState('');
+  const [version, setVersion] = useState(1);
+  const [profileState, setProfileState] = useState<SaveState>('idle');
+  const [prefState, setPrefState] = useState<SaveState>('idle');
+  const [err, setErr] = useState<string | null>(null);
+  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  // Seed editable state from the shared profile (and re-seed after a save
+  // replaces it via setProfile).
+  useEffect(() => {
+    if (!profile) return;
+    setName(profile.name ?? '');
+    setSavedName(profile.name ?? '');
+    setTimezone(profile.timezone);
+    setVersion(profile.version);
+  }, [profile]);
+
+  useEffect(
+    () => () => {
+      timers.current.forEach(clearTimeout);
+    },
+    [],
+  );
+
+  const flashSaved = (set: (s: SaveState) => void) => {
+    set('saved');
+    timers.current.push(setTimeout(() => set('idle'), 2500));
   };
 
   const setLang = (v: 'ru' | 'en') => {
     if (lang !== v) toggle();
   };
 
+  const fail = (e: unknown) => {
+    if (e instanceof ApiError && e.status === 409) {
+      setErr(
+        t(
+          'Профиль изменён в другой вкладке — обновите страницу',
+          'Profile changed elsewhere — reload the page',
+        ),
+      );
+    } else {
+      setErr(t('Не удалось сохранить', 'Save failed'));
+    }
+  };
+
+  const onSaveProfile = async () => {
+    setProfileState('saving');
+    setErr(null);
+    try {
+      const p = await saveProfile(name, version);
+      setProfile(p);
+      flashSaved(setProfileState);
+    } catch (e) {
+      setProfileState('idle');
+      fail(e);
+    }
+  };
+
+  const onCancelProfile = () => {
+    setName(savedName);
+    setErr(null);
+  };
+
+  const onSavePreferences = async () => {
+    setPrefState('saving');
+    setErr(null);
+    try {
+      const p = await savePreferences({
+        localeId: LOCALE_ID[lang],
+        timezone,
+        currencyId: CUR_TO_ID[currency],
+        version,
+      });
+      setProfile(p);
+      flashSaved(setPrefState);
+    } catch (e) {
+      setPrefState('idle');
+      fail(e);
+    }
+  };
+
+  const onDeleteAccount = async () => {
+    if (
+      !window.confirm(
+        t(
+          'Удалить аккаунт? Профиль и все данные будут удалены через 30 дней.',
+          'Delete account? Your profile and all data will be erased after 30 days.',
+        ),
+      )
+    ) {
+      return;
+    }
+    try {
+      await deleteAccount();
+      window.location.href = '/';
+    } catch {
+      setErr(t('Не удалось удалить аккаунт', 'Failed to delete account'));
+    }
+  };
+
+  const profileDirty = name.trim() !== savedName.trim();
+
+  const saveLabel = (s: SaveState) =>
+    s === 'saving'
+      ? t('Сохранение…', 'Saving…')
+      : s === 'saved'
+        ? t('Сохранено', 'Saved')
+        : t('Сохранить', 'Save changes');
+
+  if (loading || !profile) {
+    return (
+      <div style={{ padding: 24, color: SUB0.muted, fontSize: 14 }}>
+        {t('Загрузка…', 'Loading…')}
+      </div>
+    );
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      {err && (
+        <div
+          style={{
+            padding: '10px 14px',
+            borderRadius: 8,
+            background: '#fdece5',
+            border: '1px solid #f3d6c2',
+            color: '#9a3b12',
+            fontSize: 13,
+          }}
+        >
+          {err}
+        </div>
+      )}
+
       <SectionHead title={t('Профиль', 'Profile')} />
       <Card padding={0}>
         <div
@@ -56,93 +178,35 @@ export function SettingsAccount() {
             flexWrap: 'wrap',
           }}
         >
-          <button
-            onClick={() => fileRef.current?.click()}
-            title={t('Загрузить фото', 'Upload photo')}
+          <span
+            aria-hidden="true"
             style={{
-              position: 'relative',
               width: 64,
               height: 64,
               borderRadius: 999,
-              padding: 0,
-              background: avatarUrl
-                ? `center/cover no-repeat url(${avatarUrl})`
-                : SUB0.blue,
+              background: SUB0.blue,
               color: '#fff',
-              border: 'none',
-              cursor: 'pointer',
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
               fontWeight: 700,
               fontSize: 22,
               letterSpacing: '-0.02em',
-              overflow: 'visible',
+              flexShrink: 0,
             }}
           >
-            <span
-              style={{
-                width: 64,
-                height: 64,
-                borderRadius: 999,
-                overflow: 'hidden',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: 'transparent',
-              }}
-            >
-              {!avatarUrl && MOCK_USER.initials}
-            </span>
-            <span
-              aria-hidden="true"
-              style={{
-                position: 'absolute',
-                right: -2,
-                bottom: -2,
-                width: 24,
-                height: 24,
-                borderRadius: 999,
-                background: SUB0.ink,
-                color: SUB0.bg,
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                border: `2px solid ${SUB0.panel}`,
-                boxShadow: '0 2px 6px rgba(10,10,10,.12)',
-              }}
-            >
-              <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
-                <path
-                  d="M5.5 3.2L4.6 4.5H2.6A1.6 1.6 0 0 0 1 6.1V12a1.6 1.6 0 0 0 1.6 1.6h10.8A1.6 1.6 0 0 0 15 12V6.1a1.6 1.6 0 0 0-1.6-1.6h-2L10.5 3.2A.8.8 0 0 0 9.85 2.9h-3.7a.8.8 0 0 0-.65.3z"
-                  stroke="currentColor"
-                  strokeWidth="1.3"
-                  strokeLinejoin="round"
-                />
-                <circle cx="8" cy="9" r="2.2" stroke="currentColor" strokeWidth="1.3" />
-              </svg>
-            </span>
-          </button>
-          <input
-            ref={fileRef}
-            type="file"
-            accept="image/*"
-            hidden
-            onChange={onAvatarPick}
-          />
+            {initials}
+          </span>
           <div style={{ flex: 1, minWidth: 200 }}>
-            <div style={{ fontSize: 15, fontWeight: 700 }}>{profile.firstName}</div>
+            <div style={{ fontSize: 15, fontWeight: 700 }}>{name || profile.email}</div>
             <div style={{ fontSize: 12, color: SUB0.muted, marginTop: 3 }}>
-              {t('Нажмите, чтобы загрузить фото', 'Tap to upload a photo')}
+              {t('Аватар по инициалам имени', 'Avatar from your name initials')}
             </div>
           </div>
         </div>
 
         <Row label={t('Имя', 'First name')}>
-          <Input
-            value={profile.firstName}
-            onChange={(v) => setProfile({ ...profile, firstName: v })}
-          />
+          <Input value={name} onChange={setName} />
         </Row>
 
         <Row
@@ -184,8 +248,22 @@ export function SettingsAccount() {
             flexWrap: 'wrap',
           }}
         >
-          <button style={sBtnGhost}>{t('Отмена', 'Cancel')}</button>
-          <button style={sBtnPrimary}>{t('Сохранить', 'Save changes')}</button>
+          <button
+            style={sBtnGhost}
+            onClick={onCancelProfile}
+            disabled={!profileDirty || profileState === 'saving'}
+          >
+            {t('Отмена', 'Cancel')}
+          </button>
+          <button
+            style={sBtnPrimary}
+            onClick={onSaveProfile}
+            disabled={
+              !profileDirty || profileState !== 'idle' || name.trim().length === 0
+            }
+          >
+            {saveLabel(profileState)}
+          </button>
         </div>
       </Card>
 
@@ -202,10 +280,7 @@ export function SettingsAccount() {
           />
         </Row>
         <Row label={t('Часовой пояс', 'Timezone')}>
-          <TimezoneDropdown
-            value={profile.timezone}
-            onChange={(v) => setProfile({ ...profile, timezone: v })}
-          />
+          <TimezoneDropdown value={timezone} onChange={setTimezone} />
         </Row>
         <Row
           label={t('Валюта', 'Currency')}
@@ -225,6 +300,24 @@ export function SettingsAccount() {
             ]}
           />
         </Row>
+        <div
+          style={{
+            padding: isMobile ? '12px 16px' : '14px 24px',
+            display: 'flex',
+            justifyContent: 'flex-end',
+            gap: 8,
+            borderTop: `1px solid ${SUB0.line2}`,
+            flexWrap: 'wrap',
+          }}
+        >
+          <button
+            style={sBtnPrimary}
+            onClick={onSavePreferences}
+            disabled={prefState === 'saving'}
+          >
+            {saveLabel(prefState)}
+          </button>
+        </div>
       </Card>
 
       <SectionHead title={t('Опасная зона', 'Danger zone')} danger />
@@ -236,19 +329,19 @@ export function SettingsAccount() {
             'Removes subscriptions, charge history, and calendar. Account stays active.',
           )}
         >
-          <button style={sBtnDanger}>
-            {t('Удалить подписки', 'Delete subscriptions')}
-          </button>
+          <button style={sBtnDanger}>{t('Удалить подписки', 'Delete subscriptions')}</button>
         </Row>
         <Row
           label={t('Удалить аккаунт', 'Delete account')}
           hint={t(
-            'Безвозвратно удалит профиль и все данные о подписках через 14 дней.',
-            'Permanently deletes your profile and all subscription data after 14 days.',
+            'Безвозвратно удалит профиль и все данные о подписках через 30 дней.',
+            'Permanently deletes your profile and all subscription data after 30 days.',
           )}
           last
         >
-          <button style={sBtnDanger}>{t('Удалить аккаунт', 'Delete account')}</button>
+          <button style={sBtnDanger} onClick={onDeleteAccount}>
+            {t('Удалить аккаунт', 'Delete account')}
+          </button>
         </Row>
       </Card>
     </div>

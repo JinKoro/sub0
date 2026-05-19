@@ -2,7 +2,6 @@ export interface TokenRow {
   id: string;
   customerId: string;
   typeId: number;
-  payload: { newEmail?: string } | null;
   expiresAt: Date;
   usedAt: Date | null;
   customerStateId: number;
@@ -14,12 +13,6 @@ export interface CompleteRegistrationArgs {
   tokenId: string;
   customerId: string;
   passwordHash: string;
-}
-
-export interface ApplyEmailChangeArgs {
-  tokenId: string;
-  customerId: string;
-  newEmail: string;
 }
 
 export interface CreatePasswordResetArgs {
@@ -48,7 +41,6 @@ export interface ActiveCustomer {
 export interface VerificationRepository {
   findToken(tokenHash: string): Promise<TokenRow | null>;
   completeRegistration(args: CompleteRegistrationArgs): Promise<void>;
-  applyEmailChange(args: ApplyEmailChangeArgs): Promise<void>;
   createPasswordReset(args: CreatePasswordResetArgs): Promise<void>;
   completePasswordReset(args: CompletePasswordResetArgs): Promise<void>;
   findActiveCustomerByEmail(email: string): Promise<ActiveCustomer | null>;
@@ -59,6 +51,8 @@ export interface VerifyEmailInput {
   password?: string;
 }
 
-export type VerifyEmailResult =
-  | { accessToken: string; refreshToken: string; customer: { id: string; email: string } }
-  | { status: 'email_updated' };
+export interface VerifyEmailResult {
+  accessToken: string;
+  refreshToken: string;
+  customer: { id: string; email: string };
+}

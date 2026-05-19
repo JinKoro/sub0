@@ -11,7 +11,9 @@ export const verificationToken = pgTable(
       .notNull()
       .references(() => customer.id, { onDelete: 'cascade' }),
     typeId: integer('type_id').notNull(),
-    // Для смены email — { newEmail }. Для EMAIL_VERIFY при регистрации — NULL.
+    // Зарезервировано. Смена email как фича отсутствует (email = логин,
+    // read-only); колонка не читается кодом, всегда NULL. Оставлена в
+    // схеме без миграции на будущее.
     payload: jsonb('payload').$type<{ newEmail: string }>(),
     tokenHash: text('token_hash').notNull(),
     expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),

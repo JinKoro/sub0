@@ -9,7 +9,6 @@ import { refreshToken } from '../db/schema/refresh-token';
 import { verificationToken } from '../db/schema/verification-token';
 import type {
   ActiveCustomer,
-  ApplyEmailChangeArgs,
   CompletePasswordResetArgs,
   CompleteRegistrationArgs,
   CreatePasswordResetArgs,
@@ -29,7 +28,6 @@ export class DrizzleVerificationRepository implements VerificationRepository {
         id: verificationToken.id,
         customerId: verificationToken.customerId,
         typeId: verificationToken.typeId,
-        payload: verificationToken.payload,
         expiresAt: verificationToken.expiresAt,
         usedAt: verificationToken.usedAt,
         customerStateId: customer.stateId,
@@ -48,19 +46,6 @@ export class DrizzleVerificationRepository implements VerificationRepository {
       await tx
         .update(customer)
         .set({ passwordHash: args.passwordHash, stateId: CustomerState.ACTIVE })
-        .where(eq(customer.id, args.customerId));
-      await tx
-        .update(verificationToken)
-        .set({ usedAt: new Date() })
-        .where(eq(verificationToken.id, args.tokenId));
-    });
-  }
-
-  async applyEmailChange(args: ApplyEmailChangeArgs): Promise<void> {
-    await this.db.transaction(async (tx) => {
-      await tx
-        .update(customer)
-        .set({ email: args.newEmail })
         .where(eq(customer.id, args.customerId));
       await tx
         .update(verificationToken)

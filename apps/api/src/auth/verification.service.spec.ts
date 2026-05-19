@@ -13,7 +13,6 @@ function makeDeps() {
   const repo: VerificationRepository = {
     findToken: jest.fn(),
     completeRegistration: jest.fn().mockResolvedValue(undefined),
-    applyEmailChange: jest.fn().mockResolvedValue(undefined),
     createPasswordReset: jest.fn().mockResolvedValue(undefined),
     completePasswordReset: jest.fn().mockResolvedValue(undefined),
     findActiveCustomerByEmail: jest.fn(),
@@ -45,7 +44,6 @@ function row(over: Partial<TokenRow> = {}): TokenRow {
     id: 'tok-1',
     customerId: 'cust-1',
     typeId: VerificationTokenType.EMAIL_VERIFY,
-    payload: null,
     expiresAt: new Date(Date.now() + 60_000),
     usedAt: null,
     customerStateId: CustomerState.CREATED,
@@ -125,19 +123,13 @@ describe('VerificationService.verifyEmail', () => {
     ).rejects.toThrow(BadRequestException);
   });
 
-  it('ACTIVE + payload.newEmail → updates email, no password needed', async () => {
+  it('ACTIVE customer at verify-email (email-change removed) → 400', async () => {
     const { service, repo } = makeDeps();
     (repo.findToken as jest.Mock).mockResolvedValue(
-      row({ customerStateId: CustomerState.ACTIVE, payload: { newEmail: 'new@example.com' } }),
+      row({ customerStateId: CustomerState.ACTIVE }),
     );
-
-    const res = await service.verifyEmail({ token: 't' }, { userAgent: null, ip: null });
-
-    expect(repo.applyEmailChange).toHaveBeenCalledWith({
-      tokenId: 'tok-1',
-      customerId: 'cust-1',
-      newEmail: 'new@example.com',
-    });
-    expect(res).toEqual({ status: 'email_updated' });
+    await expect(
+      service.verifyEmail({ token: 't' }, { userAgent: null, ip: null }),
+    ).rejects.toThrow(BadRequestException);
   });
 });

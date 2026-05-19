@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from 'next';
+import { cookies } from 'next/headers';
 import { Inter_Tight, JetBrains_Mono, Instrument_Serif } from 'next/font/google';
 import { LangProvider } from '@/shared/contexts/lang-context';
+import { LANG_COOKIE, parseLang } from '@/shared/lib/pref-cookies';
 import './globals.css';
 
 const interTight = Inter_Tight({
@@ -51,14 +53,15 @@ export const viewport: Viewport = {
   themeColor: '#0a0a0a',
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const lang = parseLang((await cookies()).get(LANG_COOKIE)?.value);
   return (
-    <html lang="ru">
+    <html lang={lang}>
       <body
         className={`${interTight.className} ${jetbrainsMono.variable} ${instrumentSerif.variable}`}
         style={{ letterSpacing: '-0.01em' }}
       >
-        <LangProvider>{children}</LangProvider>
+        <LangProvider initialLang={lang}>{children}</LangProvider>
       </body>
     </html>
   );
