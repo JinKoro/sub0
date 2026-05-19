@@ -82,3 +82,26 @@ export interface RefreshTokenRepository {
   revoke(tokenHash: string): Promise<void>;
   revokeAllForCustomer(customerId: string): Promise<void>;
 }
+
+/** Lockout key: failed-login bucket is `email + IP` (ctx-security §2). */
+export interface LoginAttemptKey {
+  email: string;
+  ip: string | null;
+}
+
+/** Public surface of the lockout service (so AuthService is mockable). */
+export interface Lockout {
+  assertNotLockedOut(key: LoginAttemptKey): Promise<void>;
+  recordSuccess(key: LoginAttemptKey): Promise<void>;
+  recordFailure(key: LoginAttemptKey): Promise<void>;
+}
+
+export interface LoginAttemptRepository {
+  record(attempt: LoginAttemptKey & { succeeded: boolean }): Promise<void>;
+  /** Most recent successful login for the key, or null. */
+  lastSuccessAt(key: LoginAttemptKey): Promise<Date | null>;
+  /** Failed attempts for the key with `created_at >= since`. */
+  countFailuresSince(args: LoginAttemptKey & { since: Date }): Promise<number>;
+  /** Retention: drop rows older than the lockout window. */
+  deleteBefore(cutoff: Date): Promise<void>;
+}

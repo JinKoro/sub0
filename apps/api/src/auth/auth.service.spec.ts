@@ -2,6 +2,7 @@ import { UnauthorizedException } from '@nestjs/common';
 import { CustomerState } from '@subzero/shared';
 
 import { AuthService } from './auth.service';
+import { LockedOutException } from './lockout.service';
 import { Argon2PasswordHasher } from './password-hasher';
 import type { CustomerRecord, CustomerRepository, RefreshTokenRepository } from './auth.types';
 import type { TokenService } from './token.service';
@@ -40,8 +41,13 @@ function makeDeps() {
     createNewAccount: jest.fn(),
     reissueVerification: jest.fn(),
   };
-  const service = new AuthService(customers, refreshTokens, tokens, hasher, registration);
-  return { service, customers, refreshTokens, tokens };
+  const lockout = {
+    assertNotLockedOut: jest.fn().mockResolvedValue(undefined),
+    recordSuccess: jest.fn().mockResolvedValue(undefined),
+    recordFailure: jest.fn().mockResolvedValue(undefined),
+  };
+  const service = new AuthService(customers, refreshTokens, tokens, hasher, registration, lockout);
+  return { service, customers, refreshTokens, tokens, lockout };
 }
 
 describe('AuthService.login', () => {
@@ -103,6 +109,55 @@ describe('AuthService.login', () => {
       service.login({ email: 'user@example.com', password: 'Sup3rSecret' }, { userAgent: null, ip: null }),
     ).rejects.toThrow(UnauthorizedException);
     expect(refreshTokens.create).not.toHaveBeenCalled();
+  });
+
+  it('blocks login when locked out, even with valid credentials', async () => {
+    const { service, customers, refreshTokens, lockout } = makeDeps();
+    const passwordHash = await hasher.hash('Sup3rSecret');
+    (customers.findActiveByEmail as jest.Mock).mockResolvedValue(makeCustomer({ passwordHash }));
+    lockout.assertNotLockedOut.mockRejectedValue(new LockedOutException());
+
+    await expect(
+      service.login({ email: 'user@example.com', password: 'Sup3rSecret' }, { userAgent: null, ip: '1.2.3.4' }),
+    ).rejects.toBeInstanceOf(LockedOutException);
+    expect(refreshTokens.create).not.toHaveBeenCalled();
+  });
+
+  it('records a failed attempt on unknown email', async () => {
+    const { service, customers, lockout } = makeDeps();
+    (customers.findActiveByEmail as jest.Mock).mockResolvedValue(null);
+
+    await expect(
+      service.login({ email: 'Nobody@Example.com', password: 'x' }, { userAgent: null, ip: '1.2.3.4' }),
+    ).rejects.toThrow(UnauthorizedException);
+    expect(lockout.recordFailure).toHaveBeenCalledWith({ email: 'nobody@example.com', ip: '1.2.3.4' });
+    expect(lockout.recordSuccess).not.toHaveBeenCalled();
+  });
+
+  it('records a failed attempt on wrong password', async () => {
+    const { service, customers, lockout } = makeDeps();
+    const passwordHash = await hasher.hash('correct-horse');
+    (customers.findActiveByEmail as jest.Mock).mockResolvedValue(makeCustomer({ passwordHash }));
+
+    await expect(
+      service.login({ email: 'user@example.com', password: 'wrong' }, { userAgent: null, ip: '1.2.3.4' }),
+    ).rejects.toThrow(UnauthorizedException);
+    expect(lockout.recordFailure).toHaveBeenCalledWith({ email: 'user@example.com', ip: '1.2.3.4' });
+    expect(lockout.recordSuccess).not.toHaveBeenCalled();
+  });
+
+  it('records a successful attempt (normalized key) on valid login', async () => {
+    const { service, customers, lockout } = makeDeps();
+    const passwordHash = await hasher.hash('Sup3rSecret');
+    (customers.findActiveByEmail as jest.Mock).mockResolvedValue(makeCustomer({ passwordHash }));
+
+    await service.login(
+      { email: 'User@Example.com ', password: 'Sup3rSecret' },
+      { userAgent: 'jest', ip: '127.0.0.1' },
+    );
+
+    expect(lockout.recordSuccess).toHaveBeenCalledWith({ email: 'user@example.com', ip: '127.0.0.1' });
+    expect(lockout.recordFailure).not.toHaveBeenCalled();
   });
 });
 

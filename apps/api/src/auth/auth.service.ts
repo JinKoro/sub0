@@ -4,6 +4,7 @@ import { CustomerState, Locale } from '@subzero/shared';
 import type {
   AuthTokens,
   CustomerRepository,
+  Lockout,
   LoginInput,
   RefreshTokenRepository,
   RegisterInput,
@@ -30,6 +31,7 @@ export class AuthService {
     private readonly tokens: TokenService,
     private readonly hasher: PasswordHasher,
     private readonly registration: RegistrationRepository,
+    private readonly lockout: Lockout,
   ) {}
 
   async register(input: RegisterInput, _ctx: RequestContext): Promise<RegisterResult> {
@@ -76,14 +78,23 @@ export class AuthService {
   }
 
   async login(input: LoginInput, ctx: RequestContext): Promise<AuthTokens> {
-    const customer = await this.customers.findActiveByEmail(normalizeEmail(input.email));
+    const email = normalizeEmail(input.email);
+    const key = { email, ip: ctx.ip };
+    // Checked before credential verification → a locked bucket blocks even a
+    // correct password (ctx-security §2).
+    await this.lockout.assertNotLockedOut(key);
+
+    const customer = await this.customers.findActiveByEmail(email);
     if (!customer || !customer.passwordHash || customer.stateId !== CustomerState.ACTIVE) {
+      await this.lockout.recordFailure(key);
       throw new UnauthorizedException();
     }
     const ok = await this.hasher.verify(customer.passwordHash, input.password);
     if (!ok) {
+      await this.lockout.recordFailure(key);
       throw new UnauthorizedException();
     }
+    await this.lockout.recordSuccess(key);
 
     const accessToken = this.tokens.signAccess({ sub: customer.id, plan: customer.planId });
     const refresh = this.tokens.signRefresh(customer.id);
