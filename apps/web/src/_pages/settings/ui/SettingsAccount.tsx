@@ -299,6 +299,7 @@ export function SettingsAccount() {
             options={[
               { id: 'RUB', label: '₽ RUB' },
               { id: 'USD', label: '$ USD' },
+              { id: 'EUR', label: '€ EUR' },
               { id: 'BYN', label: 'BYN' },
             ]}
           />

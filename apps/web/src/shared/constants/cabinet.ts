@@ -10,6 +10,7 @@ export const CURRENCY_RATES: Record<CabinetCurrency, number> = {
 export const CURRENCY_OPTIONS: { id: CabinetCurrency; label: string; labelEn: string; sym: string }[] = [
   { id: 'RUB', label: 'Рос. рубль', labelEn: 'Russian ruble', sym: '₽' },
   { id: 'USD', label: 'Доллар США', labelEn: 'US dollar', sym: '$' },
+  { id: 'EUR', label: 'Евро', labelEn: 'Euro', sym: '€' },
   { id: 'BYN', label: 'Бел. рубль', labelEn: 'Belarusian ruble', sym: 'BYN' },
 ];
 
@@ -67,8 +68,6 @@ export function fmtPrice(price: number, cur: CabinetCurrency): string {
 
 export const MOCK_USER = {
   initials: 'АК',
-  firstName: 'Анна',
-  firstNameEn: 'Anna',
   name: 'Анна Климова',
   nameEn: 'Anna Klimova',
   email: 'anna@example.ru',
