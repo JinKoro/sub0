@@ -65,7 +65,16 @@ forbidUnknownValues, transform })` + DTO с `class-validator`.
 - Access JWT — 15 минут, RS256, ключ-pair в env, ротация раз в квартал.
 - Refresh JWT — 90 дней, ротация на каждый refresh (старый
   невалиден, jti чёрно-списком в БД с TTL до expiry). Logout / смена
-  пароля → удаление **всех** refresh’ей юзера.
+  пароля / soft-delete → удаление **всех** refresh’ей юзера.
+- **Side effect ротации:** access stateless, не проверяется в БД, не
+  имеет ревокации. После «удаления refresh’ей со всех устройств»
+  параллельная сессия остаётся валидной до истечения её текущего
+  access (≤15 мин) — следующий refresh-cycle на ней даст 401. Это
+  by design для API-stateless: компромисс — ≤15 мин «хвост» против
+  сложности per-request blacklist в БД. Если для конкретного потока
+  нужен мгновенный разлогин (например, после смены email-логина или
+  компрометации), фронт делает явный `POST /auth/logout` или сужает
+  access TTL под фичу.
 - Cookie refresh-токена: `httpOnly`, `Secure`, `SameSite=Lax`,
   `Path=/api/v1/auth` (scoped только на auth-роуты).
 - Session-cookie `sub0_session` = access-JWT: `httpOnly`, `Secure`,
@@ -80,7 +89,11 @@ forbidUnknownValues, transform })` + DTO с `class-validator`.
   на 15 минут.
 - Удаление аккаунта (MVP): soft-delete сразу, hard-delete через
   30 дней. После hard-delete — никаких остатков в логах. 152-ФЗ:
-  30-дневный grace period покрывает требование.
+  30-дневный grace period покрывает требование. `DELETE /customers/me`
+  на бэке снимает обе cookie (`sub0_session`, `refresh_token`) —
+  иначе текущая вкладка по живому access ещё открывала бы `/dashboard`
+  до 15 минут. Регистрация на soft-deleted email отбивается 409 —
+  реактивация архивного аккаунта — отдельный (отложенный) flow.
 - **Project scoping (MVP):** все ресурсы (`subscription`,
   `category_custom`, `billing_history`, `notification_settings` если
   per-project) scoped по `project_id`. На любом запросе с

@@ -37,10 +37,19 @@ export class AuthService {
   async register(input: RegisterInput, _ctx: RequestContext): Promise<RegisterResult> {
     const email = normalizeEmail(input.email);
     const existing = await this.customers.findActiveByEmail(email);
-    // ACTIVE or ARCHIVED — email is taken (the partial unique index would
-    // 500 otherwise). Reactivation is a separate flow (#16), not here.
+    // ACTIVE → email is taken.
     if (existing && existing.stateId !== CustomerState.CREATED) {
       throw new ConflictException('email already registered');
+    }
+    // Soft-deleted account: re-registration on the same email is blocked.
+    // Reactivation is a separate flow — not in #16. Without this check the
+    // partial unique index (`WHERE deleted_at IS NULL`) would let us silently
+    // create a second customer row for the same address (#73).
+    if (!existing) {
+      const archived = await this.customers.findArchivedByEmail(email);
+      if (archived) {
+        throw new ConflictException('email already registered');
+      }
     }
 
     const localeId = input.localeId ?? Locale.RU;

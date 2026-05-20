@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { and, count, desc, eq, gte, isNull, lt } from 'drizzle-orm';
+import { CustomerState } from '@subzero/shared';
+import { and, count, desc, eq, gte, isNotNull, isNull, lt } from 'drizzle-orm';
 
 import { DRIZZLE, type DrizzleDB } from '../db/db.module';
 import { customer } from '../db/schema/customer';
@@ -52,6 +53,28 @@ export class DrizzleCustomerRepository implements CustomerRepository {
       })
       .from(customer)
       .where(and(eq(customer.id, id), isNull(customer.deletedAt)))
+      .limit(1);
+    return rows[0] ?? null;
+  }
+
+  async findArchivedByEmail(email: string): Promise<CustomerRecord | null> {
+    const rows = await this.db
+      .select({
+        id: customer.id,
+        email: customer.email,
+        passwordHash: customer.passwordHash,
+        planId: customer.planId,
+        stateId: customer.stateId,
+      })
+      .from(customer)
+      .where(
+        and(
+          eq(customer.email, email),
+          eq(customer.stateId, CustomerState.ARCHIVED),
+          isNotNull(customer.deletedAt),
+        ),
+      )
+      .orderBy(desc(customer.deletedAt))
       .limit(1);
     return rows[0] ?? null;
   }

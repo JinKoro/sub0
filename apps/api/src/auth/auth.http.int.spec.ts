@@ -1,8 +1,9 @@
 import type { INestApplication } from '@nestjs/common';
+import { CustomerState } from '@subzero/shared';
 import request from 'supertest';
 
 import { TOKEN_SERVICE, type TokenService } from './token.service';
-import { closeTestPool, createTestDb, dropTestDb, truncateAll } from '../test-utils/db';
+import { closeTestPool, createTestDb, dropTestDb, testPool, truncateAll } from '../test-utils/db';
 import { createTestApp } from '../test-utils/app';
 import { seedCustomer } from '../test-utils/seed';
 
@@ -64,6 +65,21 @@ describe('Auth HTTP layer', () => {
       const res = await http
         .post(`${PFX}/register`)
         .send({ email: 'taken@ex.com', name: 'Dup', timezone: 'Europe/Moscow' });
+      expect(res.status).toBe(409);
+    });
+
+    it('409 when email belongs to a soft-deleted (ARCHIVED) customer (#73)', async () => {
+      // Real lifecycle: register → verify → DELETE /me leaves an ARCHIVED row
+      // with deleted_at IS NOT NULL. The partial unique index would otherwise
+      // let us silently create a second customer for the same address.
+      const id = await seedCustomer({ email: 'gone@ex.com', password: 'Passw0rd1' });
+      await testPool().query(
+        `UPDATE customer SET deleted_at = now(), state_id = $2 WHERE id = $1`,
+        [id, CustomerState.ARCHIVED],
+      );
+      const res = await http
+        .post(`${PFX}/register`)
+        .send({ email: 'gone@ex.com', name: 'Again', timezone: 'Europe/Moscow' });
       expect(res.status).toBe(409);
     });
   });

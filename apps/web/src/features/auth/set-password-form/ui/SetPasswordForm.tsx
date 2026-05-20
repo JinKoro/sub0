@@ -8,6 +8,7 @@ import { useLang } from '@/shared/contexts/lang-context';
 import { SUB0 } from '@/shared/constants/tokens';
 import { resendVerification, verifyEmail } from '@/shared/api/auth';
 import { ApiError } from '@/shared/api/client';
+import { EmailSentScreen } from '@/shared/components/auth/EmailSentScreen';
 
 type Phase = 'form' | 'expired' | 'resent';
 
@@ -120,36 +121,45 @@ export function SetPasswordForm({ token }: { token: string }) {
     );
   }
 
+  // After a fresh email was sent: render the same brand-aware screen as the
+  // first-step register (#73), so the user lands on a familiar "Open Gmail / …"
+  // CTA instead of a bare confirmation line.
+  if (phase === 'resent') {
+    return (
+      <EmailSentScreen
+        email={resendEmail}
+        titleRu="Завершите регистрацию"
+        titleEn="Complete your registration"
+        bodyRu="Отправили письмо со ссылкой для завершения регистрации на "
+        bodyEn="We sent a confirmation link to "
+      />
+    );
+  }
+
   // Token rejected (invalid / expired / used) → offer a fresh email.
-  if (phase === 'expired' || phase === 'resent') {
+  if (phase === 'expired') {
     return (
       <form onSubmit={handleResend} style={{ width: '100%', maxWidth: 400 }}>
         <h1 style={title}>{t('Ссылка недействительна', 'Link is no longer valid')}</h1>
         <p style={subtitle}>
-          {phase === 'resent'
-            ? t('Письмо отправлено — проверьте почту.', 'Email sent — check your inbox.')
-            : t(
-                'Ссылка просрочена или уже использована. Запросите новое письмо.',
-                'The link expired or was already used. Request a new email.',
-              )}
+          {t(
+            'Ссылка просрочена или уже использована. Запросите новое письмо.',
+            'The link expired or was already used. Request a new email.',
+          )}
         </p>
-        {phase === 'expired' && (
-          <>
-            <input
-              type="email"
-              placeholder="user@example.com"
-              value={resendEmail}
-              onChange={(e) => setResendEmail(e.target.value)}
-              onFocus={() => setFocusField('em')}
-              onBlur={() => setFocusField(null)}
-              style={{ ...inputStyle('em'), marginBottom: 12 }}
-              autoComplete="email"
-            />
-            <button type="submit" disabled={!resendEmail.includes('@') || loading} style={primaryBtn(resendEmail.includes('@') && !loading)}>
-              {loading ? t('Отправляем…', 'Sending…') : t('Запросить новое письмо', 'Request a new email')}
-            </button>
-          </>
-        )}
+        <input
+          type="email"
+          placeholder="user@example.com"
+          value={resendEmail}
+          onChange={(e) => setResendEmail(e.target.value)}
+          onFocus={() => setFocusField('em')}
+          onBlur={() => setFocusField(null)}
+          style={{ ...inputStyle('em'), marginBottom: 12 }}
+          autoComplete="email"
+        />
+        <button type="submit" disabled={!resendEmail.includes('@') || loading} style={primaryBtn(resendEmail.includes('@') && !loading)}>
+          {loading ? t('Отправляем…', 'Sending…') : t('Запросить новое письмо', 'Request a new email')}
+        </button>
         {error && <p style={{ color: SUB0.danger, fontSize: 13, marginTop: 14, textAlign: 'center' }}>{error}</p>}
       </form>
     );

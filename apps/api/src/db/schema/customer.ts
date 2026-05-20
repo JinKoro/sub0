@@ -8,7 +8,7 @@ export const customer = pgTable(
     id: uuid('id').primaryKey().defaultRandom(),
     email: varchar('email', { length: 320 }).notNull(),
     passwordHash: text('password_hash'),
-    name: varchar('name', { length: 255 }),
+    name: varchar('name', { length: 100 }),
     avatarUrl: text('avatar_url'),
     timezone: varchar('timezone', { length: 64 }).notNull(),
     localeId: integer('locale_id').notNull().default(Locale.RU),

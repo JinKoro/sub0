@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { CSSProperties, useEffect, useRef, useState } from 'react';
 import { SUB0, mono } from '@/shared/constants/tokens';
 import { useLang } from '@/shared/contexts/lang-context';
 import { useIsMobile } from '@/shared/hooks/use-is-mobile';
 import { useCabinet } from '@/shared/contexts/cabinet-context';
 import { useProfile } from '@/shared/contexts/profile-context';
 import { Card } from '@/shared/components/ui/Card';
+import { ConfirmDialog } from '@/shared/components/ui/ConfirmDialog';
 import type { CabinetCurrency } from '@/entities/subscription/model/cabinet-types';
 import { ApiError } from '@/shared/api/client';
 import { deleteAccount, savePreferences, saveProfile } from '@/shared/api/customer';
@@ -23,6 +24,24 @@ const CUR_TO_ID: Record<CabinetCurrency, number> = { RUB: 1, USD: 2, EUR: 3, BYN
 
 type SaveState = 'idle' | 'saving' | 'saved';
 
+// Hold the "Saved" indication long enough for the user to notice (#73).
+const SAVED_HOLD_MS = 2000;
+
+// "Saved" state visually stays prominent: green fill + full opacity (so the
+// default browser :disabled greying doesn't wash it out).
+function saveBtnStyle(state: SaveState): CSSProperties {
+  if (state === 'saved') {
+    return {
+      ...sBtnPrimary,
+      background: '#0a7a3f',
+      color: '#fff',
+      opacity: 1,
+      cursor: 'default',
+    };
+  }
+  return sBtnPrimary;
+}
+
 export function SettingsAccount() {
   const { t, lang, toggle } = useLang();
   const isMobile = useIsMobile();
@@ -36,6 +55,8 @@ export function SettingsAccount() {
   const [profileState, setProfileState] = useState<SaveState>('idle');
   const [prefState, setPrefState] = useState<SaveState>('idle');
   const [err, setErr] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleteBusy, setDeleteBusy] = useState(false);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   // Seed editable state from the shared profile (and re-seed after a save
@@ -57,7 +78,7 @@ export function SettingsAccount() {
 
   const flashSaved = (set: (s: SaveState) => void) => {
     set('saved');
-    timers.current.push(setTimeout(() => set('idle'), 2500));
+    timers.current.push(setTimeout(() => set('idle'), SAVED_HOLD_MS));
   };
 
   const setLang = (v: 'ru' | 'en') => {
@@ -114,20 +135,14 @@ export function SettingsAccount() {
   };
 
   const onDeleteAccount = async () => {
-    if (
-      !window.confirm(
-        t(
-          'Удалить аккаунт? Профиль и все данные будут удалены через 30 дней.',
-          'Delete account? Your profile and all data will be erased after 30 days.',
-        ),
-      )
-    ) {
-      return;
-    }
+    setDeleteBusy(true);
+    setErr(null);
     try {
       await deleteAccount();
       window.location.href = '/';
     } catch {
+      setDeleteBusy(false);
+      setConfirmDelete(false);
       setErr(t('Не удалось удалить аккаунт', 'Failed to delete account'));
     }
   };
@@ -256,10 +271,10 @@ export function SettingsAccount() {
             {t('Отмена', 'Cancel')}
           </button>
           <button
-            style={sBtnPrimary}
+            style={saveBtnStyle(profileState)}
             onClick={onSaveProfile}
             disabled={
-              !profileDirty || profileState !== 'idle' || name.trim().length === 0
+              profileState !== 'idle' || !profileDirty || name.trim().length === 0
             }
           >
             {saveLabel(profileState)}
@@ -311,14 +326,29 @@ export function SettingsAccount() {
           }}
         >
           <button
-            style={sBtnPrimary}
+            style={saveBtnStyle(prefState)}
             onClick={onSavePreferences}
-            disabled={prefState === 'saving'}
+            disabled={prefState !== 'idle'}
           >
             {saveLabel(prefState)}
           </button>
         </div>
       </Card>
+
+      <ConfirmDialog
+        open={confirmDelete}
+        busy={deleteBusy}
+        destructive
+        title={t('Удалить аккаунт?', 'Delete account?')}
+        description={t(
+          'Профиль и все данные о подписках будут удалены через 30 дней. Сразу после подтверждения сессия завершится на всех устройствах.',
+          'Your profile and all subscription data will be erased after 30 days. Your session will end on all devices right after you confirm.',
+        )}
+        confirmLabel={deleteBusy ? t('Удаляем…', 'Deleting…') : t('Удалить аккаунт', 'Delete account')}
+        cancelLabel={t('Отмена', 'Cancel')}
+        onCancel={() => setConfirmDelete(false)}
+        onConfirm={onDeleteAccount}
+      />
 
       <SectionHead title={t('Опасная зона', 'Danger zone')} danger />
       <Card padding={0} style={{ borderColor: '#f3d6c2' }}>
@@ -339,7 +369,7 @@ export function SettingsAccount() {
           )}
           last
         >
-          <button style={sBtnDanger} onClick={onDeleteAccount}>
+          <button style={sBtnDanger} onClick={() => setConfirmDelete(true)}>
             {t('Удалить аккаунт', 'Delete account')}
           </button>
         </Row>

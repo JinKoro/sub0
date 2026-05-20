@@ -1,5 +1,5 @@
-import { Body, Controller, Delete, Get, HttpCode, Post, Req, UseGuards } from '@nestjs/common';
-import type { Request } from 'express';
+import { Body, Controller, Delete, Get, HttpCode, Post, Req, Res, UseGuards } from '@nestjs/common';
+import type { Request, Response } from 'express';
 
 import { CustomerService } from './customer.service';
 import type { CustomerProfile } from './customer.types';
@@ -8,6 +8,11 @@ import { PreferencesDto } from './dto/preferences.dto';
 import { ProfileDto } from './dto/profile.dto';
 import type { AuthUser } from '../auth/jwt.strategy';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+
+// Same names/paths as AuthController — must match for clearCookie to take effect.
+const REFRESH_COOKIE = 'refresh_token';
+const REFRESH_PATH = '/api/v1/auth';
+const SESSION_COOKIE = 'sub0_session';
 
 function uid(req: Request): string {
   return (req.user as AuthUser).id;
@@ -48,7 +53,12 @@ export class CustomerController {
 
   @Delete('me')
   @HttpCode(204)
-  async deleteMe(@Req() req: Request): Promise<void> {
+  async deleteMe(@Req() req: Request, @Res({ passthrough: true }) res: Response): Promise<void> {
     await this.customers.deleteMe(uid(req));
+    // Force-logout the current device: service already revoked refresh tokens
+    // for the customer (#16), but the access cookie lives ≤15 min. Without
+    // clearing it the user can still hit /dashboard until the JWT expires (#73).
+    res.clearCookie(SESSION_COOKIE, { path: '/' });
+    res.clearCookie(REFRESH_COOKIE, { path: REFRESH_PATH });
   }
 }
