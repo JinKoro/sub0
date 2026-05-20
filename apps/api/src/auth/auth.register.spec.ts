@@ -16,6 +16,7 @@ const hasher = new Argon2PasswordHasher();
 function makeDeps() {
   const customers: CustomerRepository = {
     findActiveByEmail: jest.fn().mockResolvedValue(null),
+    findArchivedByEmail: jest.fn().mockResolvedValue(null),
     findById: jest.fn(),
   };
   const refreshTokens: RefreshTokenRepository = {
@@ -114,9 +115,13 @@ describe('AuthService.register', () => {
     );
   });
 
-  it('rejects with 409 when an ARCHIVED customer uses the email (no 500)', async () => {
+  it('rejects with 409 when an ARCHIVED customer uses the email (no 500, no re-send)', async () => {
+    // Real repo: findActiveByEmail filters `deleted_at IS NULL`, so a
+    // soft-deleted customer is NOT found by it. The 409 branch fires off the
+    // dedicated `findArchivedByEmail` lookup (#73).
     const { service, customers, registration } = makeDeps();
-    (customers.findActiveByEmail as jest.Mock).mockResolvedValue({
+    (customers.findActiveByEmail as jest.Mock).mockResolvedValue(null);
+    (customers.findArchivedByEmail as jest.Mock).mockResolvedValue({
       id: 'c-arch',
       email: 'new.user@example.com',
       passwordHash: 'x',
@@ -127,6 +132,7 @@ describe('AuthService.register', () => {
     await expect(service.register(baseDto, { userAgent: null, ip: null })).rejects.toThrow(
       ConflictException,
     );
+    expect(customers.findArchivedByEmail).toHaveBeenCalledWith('new.user@example.com');
     expect(registration.createNewAccount).not.toHaveBeenCalled();
     expect(registration.reissueVerification).not.toHaveBeenCalled();
   });

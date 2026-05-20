@@ -23,6 +23,7 @@ function makeCustomer(over: Partial<CustomerRecord> = {}): CustomerRecord {
 function makeDeps() {
   const customers: CustomerRepository = {
     findActiveByEmail: jest.fn(),
+    findArchivedByEmail: jest.fn().mockResolvedValue(null),
     findById: jest.fn(),
   };
   const refreshTokens: RefreshTokenRepository = {

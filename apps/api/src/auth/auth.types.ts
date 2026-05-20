@@ -24,6 +24,12 @@ export interface AuthTokens {
 export interface CustomerRepository {
   /** Active = not soft-deleted. Uniqueness is guaranteed by partial index. */
   findActiveByEmail(email: string): Promise<CustomerRecord | null>;
+  /**
+   * Soft-deleted (ARCHIVED) customer with this email, if any. Used by
+   * register to block re-use of a soft-deleted email — reactivation is a
+   * separate flow.
+   */
+  findArchivedByEmail(email: string): Promise<CustomerRecord | null>;
   findById(id: string): Promise<CustomerRecord | null>;
 }
 
