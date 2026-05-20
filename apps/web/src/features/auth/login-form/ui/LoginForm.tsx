@@ -2,7 +2,7 @@
 
 import { CSSProperties, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useLang } from '@/shared/contexts/lang-context';
 import { SUB0 } from '@/shared/constants/tokens';
 import { login } from '@/shared/api/auth';
@@ -10,6 +10,8 @@ import { login } from '@/shared/api/auth';
 export function LoginForm() {
   const { t } = useLang();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const resetOk = searchParams.get('reset') === 'ok';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPass, setShowPass] = useState(false);
@@ -152,13 +154,29 @@ export function LoginForm() {
       </div>
 
       <div style={{ textAlign: 'right', marginBottom: 20 }}>
-        <a
-          href="#"
+        <Link
+          href="/forgot-password"
           style={{ fontSize: 13, color: SUB0.blue, textDecoration: 'none', fontWeight: 500 }}
         >
           {t('Забыли пароль?', 'Forgot password?')}
-        </a>
+        </Link>
       </div>
+
+      {resetOk && !error && (
+        <div
+          style={{
+            padding: '11px 14px',
+            borderRadius: 8,
+            background: '#eaf6ee',
+            border: '1px solid #c2e0cc',
+            fontSize: 13,
+            color: '#0a7a3f',
+            marginBottom: 14,
+          }}
+        >
+          {t('Пароль обновлён. Войдите с новым паролем.', 'Password updated. Sign in with your new password.')}
+        </div>
+      )}
 
       {error && (
         <div

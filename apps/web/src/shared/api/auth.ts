@@ -35,6 +35,23 @@ export function resendVerification(email: string): Promise<{ status: string }> {
   });
 }
 
+/** Always returns 200 (anti-enumeration). Sends a reset link if the email
+ * belongs to a non-archived customer. */
+export function forgotPassword(email: string): Promise<{ status: string }> {
+  return api<{ status: string }>('/auth/forgot-password', {
+    method: 'POST',
+    body: JSON.stringify({ email: email.trim().toLowerCase() }),
+  });
+}
+
+/** Completes a password reset. Backend revokes ALL refresh tokens on success. */
+export function resetPassword(token: string, newPassword: string): Promise<{ status: string }> {
+  return api<{ status: string }>('/auth/reset-password', {
+    method: 'POST',
+    body: JSON.stringify({ token, newPassword }),
+  });
+}
+
 export interface RegisterInput {
   email: string;
   name: string;
