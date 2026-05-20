@@ -16,6 +16,7 @@ function makeDeps() {
     createPasswordReset: jest.fn().mockResolvedValue(undefined),
     completePasswordReset: jest.fn().mockResolvedValue(undefined),
     findActiveCustomerByEmail: jest.fn(),
+    findArchivedCustomerByEmail: jest.fn().mockResolvedValue(null),
   };
   const refreshTokens: RefreshTokenRepository = {
     create: jest.fn(),

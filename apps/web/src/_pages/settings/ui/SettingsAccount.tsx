@@ -24,22 +24,14 @@ const CUR_TO_ID: Record<CabinetCurrency, number> = { RUB: 1, USD: 2, EUR: 3, BYN
 
 type SaveState = 'idle' | 'saving' | 'saved';
 
-// Hold the "Saved" indication long enough for the user to notice (#73).
+// Hold the "Сохранено" indication long enough for the user to notice (#73).
 const SAVED_HOLD_MS = 2000;
 
-// "Saved" state visually stays prominent: green fill + full opacity (so the
-// default browser :disabled greying doesn't wash it out).
+// Cancel the browser :disabled greying during saving/saved so the button
+// doesn't flicker — the only visible change is "Сохранить" → "Сохранено".
 function saveBtnStyle(state: SaveState): CSSProperties {
-  if (state === 'saved') {
-    return {
-      ...sBtnPrimary,
-      background: '#0a7a3f',
-      color: '#fff',
-      opacity: 1,
-      cursor: 'default',
-    };
-  }
-  return sBtnPrimary;
+  if (state === 'idle') return sBtnPrimary;
+  return { ...sBtnPrimary, opacity: 1, cursor: 'default' };
 }
 
 export function SettingsAccount() {
@@ -150,11 +142,7 @@ export function SettingsAccount() {
   const profileDirty = name.trim() !== savedName.trim();
 
   const saveLabel = (s: SaveState) =>
-    s === 'saving'
-      ? t('Сохранение…', 'Saving…')
-      : s === 'saved'
-        ? t('Сохранено', 'Saved')
-        : t('Сохранить', 'Save changes');
+    s === 'saved' ? t('Сохранено', 'Saved') : t('Сохранить', 'Save changes');
 
   if (loading || !profile) {
     return (

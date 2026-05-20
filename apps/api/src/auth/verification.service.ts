@@ -6,6 +6,7 @@ import { createOpaqueToken, hashToken } from './opaque-token';
 import type { PasswordHasher } from './password-hasher';
 import type { TokenService } from './token.service';
 import type {
+  ForgotPasswordResult,
   TokenRow,
   VerificationRepository,
   VerifyEmailInput,
@@ -87,9 +88,14 @@ export class VerificationService {
     return { status: 'sent' };
   }
 
-  /** Always 200 regardless of whether the email exists (anti-enumeration). */
-  async forgotPassword(email: string): Promise<{ status: 'sent' }> {
-    const c = await this.repo.findActiveCustomerByEmail(normalizeEmail(email));
+  /**
+   * Unknown email → 200 `sent` (anti-enumeration).
+   * Archived account → 200 `archived` so the UI can explain instead of
+   * silently lying — register flow already leaks the same info via 409.
+   */
+  async forgotPassword(email: string): Promise<ForgotPasswordResult> {
+    const norm = normalizeEmail(email);
+    const c = await this.repo.findActiveCustomerByEmail(norm);
     if (c && c.stateId !== CustomerState.ARCHIVED) {
       const { token, tokenHash } = createOpaqueToken();
       await this.repo.createPasswordReset({
@@ -100,7 +106,10 @@ export class VerificationService {
         verifyPath: `/reset-password?token=${token}`,
         expiresAt: new Date(Date.now() + PASSWORD_RESET_TTL_MS),
       });
+      return { status: 'sent' };
     }
+    const archived = await this.repo.findArchivedCustomerByEmail(norm);
+    if (archived) return { status: 'archived' };
     return { status: 'sent' };
   }
 

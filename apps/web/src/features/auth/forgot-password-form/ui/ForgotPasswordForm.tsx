@@ -23,10 +23,21 @@ export function ForgotPasswordForm() {
     setLoading(true);
     setError(null);
     try {
-      // Backend always returns 200 (anti-enumeration). We unconditionally
-      // show the success screen even if it didn't.
-      await forgotPassword(email);
+      // Backend returns `sent` (anti-enumeration for unknown/active) or
+      // `archived` for soft-deleted accounts. For `archived` we surface an
+      // inline error and stay on the form; for `sent` we show the success
+      // screen even if no email was actually queued.
+      const res = await forgotPassword(email);
       setLoading(false);
+      if (res.status === 'archived') {
+        setError(
+          t(
+            'Этот аккаунт удалён, сброс пароля недоступен.',
+            'This account was deleted, password reset is not available.',
+          ),
+        );
+        return;
+      }
       setSubmitted(true);
     } catch {
       setLoading(false);
@@ -166,3 +177,4 @@ export function ForgotPasswordForm() {
     </form>
   );
 }
+

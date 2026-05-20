@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { CustomerState, VerificationTokenType } from '@subzero/shared';
-import { and, eq, isNull } from 'drizzle-orm';
+import { and, desc, eq, isNotNull, isNull } from 'drizzle-orm';
 
 import { DRIZZLE, type DrizzleDB } from '../db/db.module';
 import { customer } from '../db/schema/customer';
@@ -100,6 +100,22 @@ export class DrizzleVerificationRepository implements VerificationRepository {
       })
       .from(customer)
       .where(and(eq(customer.email, email), isNull(customer.deletedAt)))
+      .limit(1);
+    return rows[0] ?? null;
+  }
+
+  async findArchivedCustomerByEmail(email: string): Promise<{ id: string } | null> {
+    const rows = await this.db
+      .select({ id: customer.id })
+      .from(customer)
+      .where(
+        and(
+          eq(customer.email, email),
+          eq(customer.stateId, CustomerState.ARCHIVED),
+          isNotNull(customer.deletedAt),
+        ),
+      )
+      .orderBy(desc(customer.deletedAt))
       .limit(1);
     return rows[0] ?? null;
   }

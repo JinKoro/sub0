@@ -16,6 +16,7 @@ function makeDeps() {
     createPasswordReset: jest.fn().mockResolvedValue(undefined),
     completePasswordReset: jest.fn().mockResolvedValue(undefined),
     findActiveCustomerByEmail: jest.fn().mockResolvedValue(null),
+    findArchivedCustomerByEmail: jest.fn().mockResolvedValue(null),
   };
   const refreshTokens = {
     create: jest.fn(),
@@ -85,16 +86,11 @@ describe('VerificationService.forgotPassword', () => {
     expect(repo.createPasswordReset).not.toHaveBeenCalled();
   });
 
-  it('archived customer → 200, no token', async () => {
+  it('archived customer → 200 `archived`, no token', async () => {
     const { service, repo } = makeDeps();
-    (repo.findActiveCustomerByEmail as jest.Mock).mockResolvedValue({
-      id: 'c1',
-      localeId: 1,
-      stateId: CustomerState.ARCHIVED,
-      email: 'u@e.com',
-    });
+    (repo.findArchivedCustomerByEmail as jest.Mock).mockResolvedValue({ id: 'c1' });
     const res = await service.forgotPassword('u@e.com');
-    expect(res).toEqual({ status: 'sent' });
+    expect(res).toEqual({ status: 'archived' });
     expect(repo.createPasswordReset).not.toHaveBeenCalled();
   });
 });
