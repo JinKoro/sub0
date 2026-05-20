@@ -44,7 +44,11 @@ export interface VerificationRepository {
   createPasswordReset(args: CreatePasswordResetArgs): Promise<void>;
   completePasswordReset(args: CompletePasswordResetArgs): Promise<void>;
   findActiveCustomerByEmail(email: string): Promise<ActiveCustomer | null>;
+  /** Returns the most recent archived (soft-deleted) row for this email, if any. */
+  findArchivedCustomerByEmail(email: string): Promise<{ id: string } | null>;
 }
+
+export type ForgotPasswordResult = { status: 'sent' } | { status: 'archived' };
 
 export interface VerifyEmailInput {
   token: string;

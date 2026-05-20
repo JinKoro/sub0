@@ -35,6 +35,25 @@ export function resendVerification(email: string): Promise<{ status: string }> {
   });
 }
 
+export type ForgotPasswordResult = { status: 'sent' } | { status: 'archived' };
+
+/** Always 200. `sent` for unknown/active emails (anti-enumeration); `archived`
+ * for soft-deleted accounts so the UI can explain instead of lying. */
+export function forgotPassword(email: string): Promise<ForgotPasswordResult> {
+  return api<ForgotPasswordResult>('/auth/forgot-password', {
+    method: 'POST',
+    body: JSON.stringify({ email: email.trim().toLowerCase() }),
+  });
+}
+
+/** Completes a password reset. Backend revokes ALL refresh tokens on success. */
+export function resetPassword(token: string, newPassword: string): Promise<{ status: string }> {
+  return api<{ status: string }>('/auth/reset-password', {
+    method: 'POST',
+    body: JSON.stringify({ token, newPassword }),
+  });
+}
+
 export interface RegisterInput {
   email: string;
   name: string;

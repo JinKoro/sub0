@@ -1,4 +1,5 @@
 import type { INestApplication } from '@nestjs/common';
+import { CustomerState } from '@subzero/shared';
 import request from 'supertest';
 
 import { MailOutboxWorker } from '../mail/mail-outbox.worker';
@@ -106,5 +107,42 @@ describe('Registration / reset end-to-end (real DB + fake SMTP)', () => {
     expect(
       (await http.post(`${PFX}/login`).send({ email, password: 'N3wPass99' })).status,
     ).toBe(200);
+  });
+
+  it('forgot-password for ARCHIVED customer → 200 `archived`, no outbox row, no email', async () => {
+    const email = 'archived@ex.com';
+    await http.post(`${PFX}/register`).send({ email, name: 'A', timezone: 'Europe/Moscow' });
+    await worker.tick();
+    const vToken = tokenFrom(sent[0]);
+    await http.post(`${PFX}/verify-email`).send({ token: vToken, password: 'Passw0rd1' });
+    await testPool().query(
+      `UPDATE customer SET deleted_at = now(), state_id = $2 WHERE email = $1`,
+      [email, CustomerState.ARCHIVED],
+    );
+
+    sent.length = 0;
+    const before = await testPool().query(
+      'SELECT count(*)::int n FROM mail_outbox WHERE to_email=$1',
+      [email],
+    );
+    const res = await http.post(`${PFX}/forgot-password`).send({ email });
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ status: 'archived' });
+    const after = await testPool().query(
+      'SELECT count(*)::int n FROM mail_outbox WHERE to_email=$1',
+      [email],
+    );
+    expect(after.rows[0].n).toBe(before.rows[0].n); // no new row queued
+    await worker.tick();
+    expect(sent).toHaveLength(0); // and nothing delivered
+  });
+
+  it('forgot-password for unknown email → 200 `sent` (anti-enumeration)', async () => {
+    sent.length = 0;
+    const res = await http.post(`${PFX}/forgot-password`).send({ email: 'ghost@ex.com' });
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ status: 'sent' });
+    await worker.tick();
+    expect(sent).toHaveLength(0);
   });
 });
