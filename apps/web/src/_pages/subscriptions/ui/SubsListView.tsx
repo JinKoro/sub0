@@ -1,6 +1,7 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { SUB0, mono } from '@/shared/constants/tokens';
 import { useLang } from '@/shared/contexts/lang-context';
 import { useIsMobile } from '@/shared/hooks/use-is-mobile';
@@ -10,66 +11,225 @@ import { Pill } from '@/shared/components/ui/Pill';
 import { LogoPill } from '@/shared/components/ui/LogoPill';
 import { Select, type SelectOption } from '@/shared/components/ui/Select';
 import { CabinetCtaButton } from '@/shared/components/ui/CabinetCtaButton';
-import { CATEGORIES, CAB_SUBS } from '@/entities/subscription/model/cabinet-mock';
-import type { CabinetSubscription } from '@/entities/subscription/model/cabinet-types';
+import { listSubscriptions } from '@/entities/subscription/api/list';
+import { listCategories, type CategoryDto } from '@/shared/api/category';
 import {
-  toRub,
+  toCabinetSubscription,
+  type CabinetSubscription,
+} from '@/entities/subscription/model/types';
+import {
   fmtPrice,
   monthShort,
   STATUS_MAP,
   type StatusKey,
 } from '@/shared/constants/cabinet';
+import { ApiError } from '@/shared/api/client';
+import type {
+  SubscriptionListSort,
+  SubscriptionListStatus,
+} from '@subzero/shared';
+import {
+  BillingPeriod,
+  Currency,
+  SubscriptionState,
+} from '@subzero/shared';
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 20;
 
 interface Props {
   onEdit: (sub: CabinetSubscription) => void;
 }
 
-type StatusFilter = 'all' | StatusKey;
+type StatusFilter = SubscriptionListStatus;
+type SortKey = SubscriptionListSort;
+
+const STATUS_VALUES: StatusFilter[] = ['all', 'active', 'paused', 'cancelled', 'archived'];
+const SORT_VALUES: SortKey[] = ['next', 'name', 'price'];
+
+function parseStatus(raw: string | null): StatusFilter {
+  return (STATUS_VALUES as string[]).includes(raw ?? '') ? (raw as StatusFilter) : 'all';
+}
+
+function parseSort(raw: string | null): SortKey {
+  return (SORT_VALUES as string[]).includes(raw ?? '') ? (raw as SortKey) : 'next';
+}
+
+function parsePage(raw: string | null): number {
+  const n = Number(raw);
+  return Number.isFinite(n) && n >= 1 ? Math.floor(n) : 1;
+}
+
+function statusToKey(state: number): StatusKey {
+  if (state === SubscriptionState.PAUSED) return 'paused';
+  if (state === SubscriptionState.CANCELLED) return 'cancel';
+  if (state === SubscriptionState.ARCHIVED) return 'archive';
+  return 'active';
+}
+
+function currencySymbol(currencyId: number): string {
+  if (currencyId === Currency.USD) return 'USD';
+  if (currencyId === Currency.EUR) return 'EUR';
+  if (currencyId === Currency.BYN) return 'BYN';
+  return 'RUB';
+}
+
+function fmtAmount(amount: string, currencyId: number): string {
+  const n = Number(amount);
+  const cur = currencySymbol(currencyId);
+  if (cur === 'RUB') return fmtPrice(n, 'RUB');
+  if (cur === 'USD') return fmtPrice(n, 'USD');
+  if (cur === 'EUR') return fmtPrice(n, 'EUR');
+  return fmtPrice(n, 'BYN');
+}
+
+function parseNextDate(iso: string): { day: number; month: number } {
+  // iso = 'YYYY-MM-DD'
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
+  if (!m) return { day: 1, month: 1 };
+  return { day: Number(m[3]), month: Number(m[2]) };
+}
 
 export function SubsListView({ onEdit }: Props) {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const isMobile = useIsMobile();
   const { project } = useCabinet();
-  const [search, setSearch] = useState('');
-  const [filterCat, setFilterCat] = useState('all');
-  const [filterStatus, setFilterStatus] = useState<StatusFilter>('all');
-  const [sortBy, setSortBy] = useState<'next' | 'name' | 'price'>('next');
-  const [pageNum, setPageNum] = useState(1);
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
-  const rows = useMemo(() => {
-    let list = project === 'all' ? CAB_SUBS : CAB_SUBS.filter((s) => s.project === project);
-    if (search) list = list.filter((s) => s.name.toLowerCase().includes(search.toLowerCase()));
-    if (filterCat !== 'all') list = list.filter((s) => s.cat === filterCat);
-    if (filterStatus !== 'all') list = list.filter((s) => s.status === filterStatus);
-    return [...list].sort((a, b) => {
-      if (sortBy === 'name') return a.name.localeCompare(b.name);
-      if (sortBy === 'price') return toRub(b.price, b.cur) - toRub(a.price, a.cur);
-      return a.nextMonth * 32 + a.nextDay - (b.nextMonth * 32 + b.nextDay);
-    });
-  }, [project, search, filterCat, filterStatus, sortBy]);
+  const urlQ = searchParams.get('q') ?? '';
+  const urlStatus = parseStatus(searchParams.get('status'));
+  const urlCat = searchParams.get('cat') ?? 'all';
+  const urlSort = parseSort(searchParams.get('sort'));
+  const urlPage = parsePage(searchParams.get('page'));
 
-  const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
-  const safePage = Math.min(pageNum, totalPages);
-  const pageRows = rows.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+  // Local input mirror for debounce.
+  const [searchInput, setSearchInput] = useState(urlQ);
 
-  const catOptions: SelectOption[] = [
-    { v: 'all', l: t('Все категории', 'All categories') },
-    ...CATEGORIES.map((c) => ({ v: c.id, l: t(c.name, c.nameEn) })),
-  ];
+  // When url q changes externally (back/forward), sync local input.
+  useEffect(() => {
+    setSearchInput(urlQ);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [urlQ]);
+
+  // Categories — fetched once.
+  const [categories, setCategories] = useState<CategoryDto[]>([]);
+  useEffect(() => {
+    let alive = true;
+    listCategories()
+      .then((list) => alive && setCategories(list))
+      .catch(() => {
+        /* non-fatal: filter just shows fewer options */
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  // Subscriptions list state.
+  const [rows, setRows] = useState<CabinetSubscription[]>([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const reqId = useRef(0);
+
+  useEffect(() => {
+    const my = ++reqId.current;
+    setLoading(true);
+    setError(null);
+    listSubscriptions({
+      projectSku: project === 'all' ? 'all' : project,
+      status: urlStatus,
+      categorySku: urlCat === 'all' ? undefined : urlCat,
+      q: urlQ || undefined,
+      sort: urlSort,
+      page: urlPage,
+      pageSize: PAGE_SIZE,
+    })
+      .then((resp) => {
+        if (my !== reqId.current) return;
+        setRows(resp.items.map(toCabinetSubscription));
+        setTotal(resp.total);
+      })
+      .catch((e: unknown) => {
+        if (my !== reqId.current) return;
+        const msg =
+          e instanceof ApiError
+            ? t('Не удалось загрузить', 'Failed to load')
+            : t('Не удалось загрузить', 'Failed to load');
+        setError(msg);
+        setRows([]);
+        setTotal(0);
+      })
+      .finally(() => {
+        if (my === reqId.current) setLoading(false);
+      });
+  }, [project, urlStatus, urlCat, urlQ, urlSort, urlPage, t]);
+
+  // URL writer.
+  const updateUrl = useCallback(
+    (patch: { q?: string; status?: StatusFilter; cat?: string; sort?: SortKey; page?: number }) => {
+      const sp = new URLSearchParams(searchParams.toString());
+      const set = (k: string, v: string | undefined, def: string) => {
+        if (v === undefined) return;
+        if (v === def || v === '') sp.delete(k);
+        else sp.set(k, v);
+      };
+      if (patch.q !== undefined) set('q', patch.q, '');
+      if (patch.status !== undefined) set('status', patch.status, 'all');
+      if (patch.cat !== undefined) set('cat', patch.cat, 'all');
+      if (patch.sort !== undefined) set('sort', patch.sort, 'next');
+      if (patch.page !== undefined) set('page', patch.page === 1 ? '' : String(patch.page), '');
+      // Drop ?new=1 transient flag if present.
+      sp.delete('new');
+      const qs = sp.toString();
+      router.replace(`/account/subscriptions${qs ? `?${qs}` : ''}`);
+    },
+    [router, searchParams],
+  );
+
+  // Debounce search input → URL.
+  useEffect(() => {
+    if (searchInput === urlQ) return;
+    const h = setTimeout(() => {
+      updateUrl({ q: searchInput, page: 1 });
+    }, 300);
+    return () => clearTimeout(h);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchInput]);
+
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const safePage = Math.min(urlPage, totalPages);
+
+  const catOptions: SelectOption[] = useMemo(
+    () => [
+      { v: 'all', l: t('Все категории', 'All categories') },
+      ...categories.map((c) => ({ v: c.sku, l: lang === 'ru' ? c.nameRu : c.nameEn })),
+    ],
+    [categories, lang, t],
+  );
+
   const statusOptions: SelectOption[] = [
     { v: 'all', l: t('Все статусы', 'All statuses') },
     { v: 'active', l: t('Активные', 'Active') },
     { v: 'paused', l: t('На паузе', 'Paused') },
-    { v: 'cancel', l: t('Отменены', 'Cancelled') },
-    { v: 'archive', l: t('В архиве', 'Archived') },
+    { v: 'cancelled', l: t('Отменены', 'Cancelled') },
+    { v: 'archived', l: t('В архиве', 'Archived') },
   ];
   const sortOptions: SelectOption[] = [
     { v: 'next', l: t('По дате списания', 'By next charge') },
     { v: 'name', l: t('По названию', 'By name') },
     { v: 'price', l: t('По цене', 'By price') },
   ];
+
+  const categoryBySku = useMemo(() => {
+    const map = new Map<string, CategoryDto>();
+    for (const c of categories) map.set(c.sku, c);
+    return map;
+  }, [categories]);
+
+  const noFilters =
+    urlQ === '' && urlStatus === 'all' && urlCat === 'all' && project === 'all';
 
   return (
     <div
@@ -153,11 +313,8 @@ export function SubsListView({ onEdit }: Props) {
               />
             </svg>
             <input
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setPageNum(1);
-              }}
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
               placeholder={t('Поиск по названию…', 'Search by name…')}
               style={{
                 flex: 1,
@@ -170,39 +327,71 @@ export function SubsListView({ onEdit }: Props) {
             />
           </div>
           <Select
-            value={filterCat}
-            onChange={(v) => {
-              setFilterCat(v);
-              setPageNum(1);
-            }}
+            value={urlCat}
+            onChange={(v) => updateUrl({ cat: v, page: 1 })}
             options={catOptions}
           />
           <Select
-            value={filterStatus}
-            onChange={(v) => {
-              setFilterStatus(v as StatusFilter);
-              setPageNum(1);
-            }}
+            value={urlStatus}
+            onChange={(v) => updateUrl({ status: v as StatusFilter, page: 1 })}
             options={statusOptions}
           />
           <Select
-            value={sortBy}
-            onChange={(v) => {
-              setSortBy(v as 'next' | 'name' | 'price');
-              setPageNum(1);
-            }}
+            value={urlSort}
+            onChange={(v) => updateUrl({ sort: v as SortKey, page: 1 })}
             options={sortOptions}
           />
         </div>
       </Card>
 
-      {isMobile ? (
-        <SubsGrid rows={pageRows} onEdit={onEdit} />
-      ) : (
-        <SubsList rows={pageRows} onEdit={onEdit} />
+      {error && (
+        <Card
+          padding={14}
+          style={{
+            marginBottom: 14,
+            background: '#fdecea',
+            borderColor: SUB0.danger,
+          }}
+        >
+          <div style={{ fontSize: 13, color: SUB0.danger }}>{error}</div>
+        </Card>
       )}
 
-      {rows.length > PAGE_SIZE && (
+      {loading ? (
+        <Card padding={60}>
+          <div
+            style={{
+              textAlign: 'center',
+              color: SUB0.muted,
+              fontSize: 14,
+              fontFamily: mono,
+            }}
+          >
+            {t('Загрузка…', 'Loading…')}
+          </div>
+        </Card>
+      ) : rows.length === 0 ? (
+        <Card padding={60}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: 14, color: SUB0.muted, marginBottom: 14 }}>
+              {noFilters
+                ? t('Подписок пока нет — добавьте первую', 'No subscriptions yet — add your first')
+                : t('Ничего не найдено', 'Nothing found')}
+            </div>
+            {noFilters && (
+              <CabinetCtaButton href="/account/subscriptions?new=1">
+                + {t('Новая подписка', 'New subscription')}
+              </CabinetCtaButton>
+            )}
+          </div>
+        </Card>
+      ) : isMobile ? (
+        <SubsGrid rows={rows} onEdit={onEdit} categoryBySku={categoryBySku} />
+      ) : (
+        <SubsList rows={rows} onEdit={onEdit} categoryBySku={categoryBySku} />
+      )}
+
+      {!loading && total > PAGE_SIZE && (
         <div
           style={{
             display: 'flex',
@@ -217,17 +406,17 @@ export function SubsListView({ onEdit }: Props) {
             {t(
               `Показано ${(safePage - 1) * PAGE_SIZE + 1}–${Math.min(
                 safePage * PAGE_SIZE,
-                rows.length,
-              )} из ${rows.length}`,
+                total,
+              )} из ${total}`,
               `Showing ${(safePage - 1) * PAGE_SIZE + 1}–${Math.min(
                 safePage * PAGE_SIZE,
-                rows.length,
-              )} of ${rows.length}`,
+                total,
+              )} of ${total}`,
             )}
           </div>
           <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
             <button
-              onClick={() => setPageNum(Math.max(1, safePage - 1))}
+              onClick={() => updateUrl({ page: Math.max(1, safePage - 1) })}
               disabled={safePage === 1}
               style={{
                 padding: '6px 10px',
@@ -265,7 +454,7 @@ export function SubsListView({ onEdit }: Props) {
               return (
                 <button
                   key={n}
-                  onClick={() => setPageNum(n)}
+                  onClick={() => updateUrl({ page: n })}
                   style={{
                     padding: '6px 10px',
                     minWidth: 32,
@@ -284,7 +473,7 @@ export function SubsListView({ onEdit }: Props) {
               );
             })}
             <button
-              onClick={() => setPageNum(Math.min(totalPages, safePage + 1))}
+              onClick={() => updateUrl({ page: Math.min(totalPages, safePage + 1) })}
               disabled={safePage === totalPages}
               style={{
                 padding: '6px 10px',
@@ -310,9 +499,10 @@ export function SubsListView({ onEdit }: Props) {
 interface RowsProps {
   rows: CabinetSubscription[];
   onEdit: (sub: CabinetSubscription) => void;
+  categoryBySku: Map<string, CategoryDto>;
 }
 
-function SubsList({ rows, onEdit }: RowsProps) {
+function SubsList({ rows, onEdit, categoryBySku }: RowsProps) {
   const { t, lang } = useLang();
   return (
     <Card padding={0}>
@@ -339,11 +529,15 @@ function SubsList({ rows, onEdit }: RowsProps) {
         <div style={{ width: 16, flexShrink: 0 }} />
       </div>
       {rows.map((r) => {
-        const meta = CATEGORIES.find((c) => c.id === r.cat);
-        const statusMeta = STATUS_MAP[r.status];
+        const cat = r.categorySku ? categoryBySku.get(r.categorySku) : undefined;
+        const statusMeta = STATUS_MAP[statusToKey(r.stateId)];
+        const next = parseNextDate(r.nextBillingDate);
+        const char = r.name.charAt(0).toUpperCase() || '?';
+        const isPromoActive =
+          !!r.promoEndsAt && new Date(r.promoEndsAt).getTime() > Date.now();
         return (
           <div
-            key={r.id}
+            key={r.sku}
             onClick={() => onEdit(r)}
             style={{
               display: 'flex',
@@ -367,7 +561,7 @@ function SubsList({ rows, onEdit }: RowsProps) {
                 gap: 12,
               }}
             >
-              <LogoPill char={r.char} color={r.color ?? SUB0.muted} icon={r.icon} size={32} />
+              <LogoPill char={char} color={cat?.color ?? SUB0.muted} icon={r.icon} size={32} />
               <div style={{ minWidth: 0 }}>
                 <div
                   style={{
@@ -379,7 +573,7 @@ function SubsList({ rows, onEdit }: RowsProps) {
                   }}
                 >
                   {r.name}
-                  {r.trial && (
+                  {r.isTrial && (
                     <span
                       style={{
                         fontFamily: mono,
@@ -395,7 +589,7 @@ function SubsList({ rows, onEdit }: RowsProps) {
                       {t('ПРОБНЫЙ', 'TRIAL')}
                     </span>
                   )}
-                  {r.promo && !r.trial && (
+                  {isPromoActive && !r.isTrial && (
                     <span
                       style={{
                         fontFamily: mono,
@@ -429,7 +623,7 @@ function SubsList({ rows, onEdit }: RowsProps) {
                     width: 8,
                     height: 8,
                     borderRadius: 2,
-                    background: meta?.color ?? SUB0.muted,
+                    background: cat?.color ?? SUB0.muted,
                     flexShrink: 0,
                   }}
                 />
@@ -440,7 +634,7 @@ function SubsList({ rows, onEdit }: RowsProps) {
                     whiteSpace: 'nowrap',
                   }}
                 >
-                  {meta ? t(meta.name, meta.nameEn) : ''}
+                  {cat ? (lang === 'ru' ? cat.nameRu : cat.nameEn) : ''}
                 </span>
               </span>
             </div>
@@ -453,21 +647,21 @@ function SubsList({ rows, onEdit }: RowsProps) {
                 fontFamily: mono,
               }}
             >
-              {r.nextDay} {monthShort(r.nextMonth - 1, lang).toLowerCase()}
+              {next.day} {monthShort(next.month - 1, lang).toLowerCase()}
             </div>
             <div
               style={{
                 flex: 1,
                 minWidth: 0,
-                color: r.note ? SUB0.ink : SUB0.muted,
+                color: r.comment ? SUB0.ink : SUB0.muted,
                 fontSize: 12,
-                opacity: r.note ? 0.85 : 0.5,
+                opacity: r.comment ? 0.85 : 0.5,
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
               }}
             >
-              {r.note || '—'}
+              {r.comment || '—'}
             </div>
             <div
               style={{
@@ -478,7 +672,7 @@ function SubsList({ rows, onEdit }: RowsProps) {
                 fontFeatureSettings: '"tnum"',
               }}
             >
-              {fmtPrice(r.price, r.cur)}
+              {fmtAmount(r.amount, r.currencyId)}
             </div>
             <div
               style={{
@@ -490,7 +684,7 @@ function SubsList({ rows, onEdit }: RowsProps) {
                 fontFamily: mono,
               }}
             >
-              {r.cycle === 'monthly' ? t('мес', 'mo') : t('год', 'yr')}
+              {r.billingPeriodId === BillingPeriod.YEAR ? t('год', 'yr') : t('мес', 'mo')}
             </div>
             <div style={{ flex: 0.9, minWidth: 0 }}>
               <Pill color={statusMeta.color} bg={`${statusMeta.color}12`} dot>
@@ -511,23 +705,11 @@ function SubsList({ rows, onEdit }: RowsProps) {
           </div>
         );
       })}
-      {rows.length === 0 && (
-        <div
-          style={{
-            padding: 60,
-            textAlign: 'center',
-            color: SUB0.muted,
-            fontSize: 14,
-          }}
-        >
-          {t('Ничего не найдено', 'Nothing found')}
-        </div>
-      )}
     </Card>
   );
 }
 
-function SubsGrid({ rows, onEdit }: RowsProps) {
+function SubsGrid({ rows, onEdit, categoryBySku }: RowsProps) {
   const { t, lang } = useLang();
   return (
     <div
@@ -538,10 +720,12 @@ function SubsGrid({ rows, onEdit }: RowsProps) {
       }}
     >
       {rows.map((r) => {
-        const meta = CATEGORIES.find((c) => c.id === r.cat);
-        const statusMeta = STATUS_MAP[r.status];
+        const cat = r.categorySku ? categoryBySku.get(r.categorySku) : undefined;
+        const statusMeta = STATUS_MAP[statusToKey(r.stateId)];
+        const next = parseNextDate(r.nextBillingDate);
+        const char = r.name.charAt(0).toUpperCase() || '?';
         return (
-          <Card key={r.id} padding={18} className="s-card" style={{ cursor: 'pointer' }}>
+          <Card key={r.sku} padding={18} className="s-card" style={{ cursor: 'pointer' }}>
             <div onClick={() => onEdit(r)}>
               <div
                 style={{
@@ -551,7 +735,7 @@ function SubsGrid({ rows, onEdit }: RowsProps) {
                   marginBottom: 14,
                 }}
               >
-                <LogoPill char={r.char} color={r.color ?? SUB0.muted} icon={r.icon} size={40} />
+                <LogoPill char={char} color={cat?.color ?? SUB0.muted} icon={r.icon} size={40} />
                 <Pill color={statusMeta.color} bg={`${statusMeta.color}12`} dot>
                   {t(statusMeta.ru, statusMeta.en)}
                 </Pill>
@@ -571,10 +755,10 @@ function SubsGrid({ rows, onEdit }: RowsProps) {
                       width: 7,
                       height: 7,
                       borderRadius: 2,
-                      background: meta?.color ?? SUB0.muted,
+                      background: cat?.color ?? SUB0.muted,
                     }}
                   />
-                  {meta ? t(meta.name, meta.nameEn) : ''}
+                  {cat ? (lang === 'ru' ? cat.nameRu : cat.nameEn) : ''}
                 </span>
               </div>
               <div
@@ -594,10 +778,12 @@ function SubsGrid({ rows, onEdit }: RowsProps) {
                       fontFeatureSettings: '"tnum"',
                     }}
                   >
-                    {fmtPrice(r.price, r.cur)}
+                    {fmtAmount(r.amount, r.currencyId)}
                   </div>
                   <div style={{ fontSize: 11, color: SUB0.muted, fontFamily: mono }}>
-                    {r.cycle === 'monthly' ? t('в месяц', 'per month') : t('в год', 'per year')}
+                    {r.billingPeriodId === BillingPeriod.YEAR
+                      ? t('в год', 'per year')
+                      : t('в месяц', 'per month')}
                   </div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
@@ -613,7 +799,7 @@ function SubsGrid({ rows, onEdit }: RowsProps) {
                     {t('Списание', 'Renews')}
                   </div>
                   <div style={{ fontSize: 13, fontWeight: 600, fontFamily: mono }}>
-                    {r.nextDay} {monthShort(r.nextMonth - 1, lang).toLowerCase()}
+                    {next.day} {monthShort(next.month - 1, lang).toLowerCase()}
                   </div>
                 </div>
               </div>

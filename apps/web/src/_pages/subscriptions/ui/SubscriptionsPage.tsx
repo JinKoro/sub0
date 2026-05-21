@@ -6,7 +6,8 @@ import { SUB0 } from '@/shared/constants/tokens';
 import { useLang } from '@/shared/contexts/lang-context';
 import { Card } from '@/shared/components/ui/Card';
 import { SubscriptionForm } from '@/features/subscription-form/ui/SubscriptionForm';
-import type { CabinetSubscription } from '@/entities/subscription/model/cabinet-types';
+import { getSubscription } from '@/entities/subscription/api/get';
+import type { SubscriptionDto } from '@subzero/shared';
 import { PageShell } from './PageShell';
 import { PageTabs } from './PageTabs';
 import { SubsListView } from './SubsListView';
@@ -14,22 +15,28 @@ import { FileUploadView } from './FileUploadView';
 
 type Mode = 'list' | 'new' | 'edit';
 
-function toFormInitial(sub: CabinetSubscription) {
+// Temporary adapter: SubscriptionDto → existing SubscriptionFormInitial shape.
+// Task 13 will rewrite SubscriptionForm against the DTO directly; for now we
+// just pipe in enough fields so the form renders in edit mode without crashing.
+function toFormInitial(dto: SubscriptionDto) {
   return {
-    id: sub.id,
-    name: sub.name,
-    char: sub.char,
-    color: sub.color ?? SUB0.muted,
-    cat: sub.cat,
-    project: sub.project,
-    price: sub.price,
-    cur: sub.cur,
-    cycle: sub.cycle,
-    status: sub.status,
-    note: sub.note,
-    trial: sub.trial,
-    promo: !!sub.promo,
-    nextDate: '',
+    // `id` here doubles as edit-mode marker; SubscriptionFormInitial.id is
+    // currently `number`, but typecheck for this file is expected to break
+    // until Task 13 — see AGENTS.md / task notes.
+    id: dto.sku as unknown as number,
+    name: dto.name,
+    char: (dto.name.charAt(0) || '?').toUpperCase(),
+    color: '#0a0a0a',
+    cat: dto.categorySku ?? 'other',
+    project: dto.projectSku,
+    price: dto.amount,
+    cur: 'RUB' as const,
+    cycle: 'monthly' as const,
+    status: 'active' as const,
+    note: dto.comment ?? '',
+    trial: dto.isTrial,
+    promo: false,
+    nextDate: dto.nextBillingDate,
     trialEnds: '',
     promos: [],
   };
@@ -42,7 +49,8 @@ export function SubscriptionsPage() {
   const [mode, setMode] = useState<Mode>(() =>
     searchParams.get('new') === '1' ? 'new' : 'list',
   );
-  const [editing, setEditing] = useState<CabinetSubscription | null>(null);
+  const [editSku, setEditSku] = useState<string | null>(null);
+  const [editing, setEditing] = useState<SubscriptionDto | null>(null);
   const [newTab, setNewTab] = useState<'manual' | 'file' | 'inbox'>('manual');
 
   useEffect(() => {
@@ -52,8 +60,27 @@ export function SubscriptionsPage() {
     }
   }, [searchParams, mode]);
 
+  useEffect(() => {
+    if (!editSku) {
+      setEditing(null);
+      return;
+    }
+    let alive = true;
+    getSubscription(editSku)
+      .then((s) => {
+        if (alive) setEditing(s);
+      })
+      .catch(() => {
+        if (alive) setEditSku(null);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [editSku]);
+
   const goList = () => {
     setMode('list');
+    setEditSku(null);
     setEditing(null);
     if (searchParams.get('new')) router.replace('/account/subscriptions');
   };
@@ -121,7 +148,7 @@ export function SubscriptionsPage() {
   return (
     <SubsListView
       onEdit={(sub) => {
-        setEditing(sub);
+        setEditSku(sub.sku);
         setMode('edit');
       }}
     />
