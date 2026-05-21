@@ -10,8 +10,8 @@ import type { CategoryRepository } from './category.types';
 export class DrizzleCategoryRepository implements CategoryRepository {
   constructor(@Inject(DRIZZLE) private readonly db: DrizzleDB) {}
 
-  async listAll(): Promise<CategoryDto[]> {
-    const rows = await this.db
+  listAll(): Promise<CategoryDto[]> {
+    return this.db
       .select({
         sku: category.sku,
         nameRu: category.nameRu,
@@ -20,6 +20,5 @@ export class DrizzleCategoryRepository implements CategoryRepository {
       })
       .from(category)
       .orderBy(asc(category.nameRu));
-    return rows.map((r) => ({ ...r, color: r.color ?? null }));
   }
 }
