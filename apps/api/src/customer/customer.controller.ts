@@ -54,6 +54,12 @@ export class CustomerController {
     await this.customers.changePassword(uid(req), dto.currentPassword, dto.newPassword);
   }
 
+  @Delete('me/subscriptions')
+  @HttpCode(204)
+  async purgeSubscriptions(@Req() req: Request): Promise<void> {
+    await this.customers.purgeSubscriptions(uid(req));
+  }
+
   @Delete('me')
   @HttpCode(204)
   async deleteMe(@Req() req: Request, @Res({ passthrough: true }) res: Response): Promise<void> {
