@@ -1,16 +1,40 @@
-export type SubscriptionStatus = 'active' | 'trial' | 'paused';
+import type { SubscriptionDto } from '@subzero/shared';
 
-export interface Subscription {
+export type { SubscriptionDto };
+
+/** UI-форматированная подписка для существующих компонентов кабинета. */
+export interface CabinetSubscription {
+  sku: string;
   name: string;
-  char: string;
-  cat: string;
-  catEn: string;
-  price: number;
-  cycle: string;
-  cycleEn: string;
-  next: string;
-  nextEn: string;
-  status: SubscriptionStatus;
-  color: string;
-  icon?: string | null;
+  icon: string | null;
+  projectSku: string;
+  categorySku: string | null;
+  amount: string;
+  currencyId: number;
+  billingPeriodId: number;
+  nextBillingDate: string;
+  isTrial: boolean;
+  promoEndsAt: string | null;
+  stateId: number;
+  comment: string | null;
+  version: number;
+}
+
+export function toCabinetSubscription(dto: SubscriptionDto): CabinetSubscription {
+  return {
+    sku: dto.sku,
+    name: dto.name,
+    icon: dto.icon,
+    projectSku: dto.projectSku,
+    categorySku: dto.categorySku,
+    amount: dto.amount,
+    currencyId: dto.currencyId,
+    billingPeriodId: dto.billingPeriodId,
+    nextBillingDate: dto.nextBillingDate,
+    isTrial: dto.isTrial,
+    promoEndsAt: dto.promoEndsAt,
+    stateId: dto.stateId,
+    comment: dto.comment,
+    version: dto.version,
+  };
 }
