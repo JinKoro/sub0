@@ -65,7 +65,26 @@ describe('nextBillingDateAfter', () => {
 
 describe('computeBackfill', () => {
   const now = new Date('2026-05-21T00:00:00Z');
-  it('emits N period entries with promo split', () => {
+  it('emits N period entries with promo applied while still active at periodEnd', () => {
+    const out = computeBackfill({
+      firstBillingDate: new Date('2026-02-21T00:00:00Z'),
+      billingPeriod: BillingPeriod.MONTH,
+      amount: '500.00',
+      promoAmount: '0.00',
+      promoEndsAt: new Date('2026-04-30T00:00:00Z'),
+      now,
+    });
+    // 3 cycles billed at periodEnd: Mar 21 (≤ promo end), Apr 21 (≤ promo end), May 21 (after promo end).
+    expect(out).toHaveLength(3);
+    expect(out[0].isPromo).toBe(true);
+    expect(out[1].isPromo).toBe(true);
+    expect(out[2].isPromo).toBe(false);
+    expect(out[0].amount).toBe('0.00');
+    expect(out[1].amount).toBe('0.00');
+    expect(out[2].amount).toBe('500.00');
+  });
+
+  it('promo not applied when periodEnd falls past promoEndsAt', () => {
     const out = computeBackfill({
       firstBillingDate: new Date('2026-02-21T00:00:00Z'),
       billingPeriod: BillingPeriod.MONTH,
@@ -74,11 +93,10 @@ describe('computeBackfill', () => {
       promoEndsAt: new Date('2026-04-01T00:00:00Z'),
       now,
     });
-    // 3 cycles: Feb-Mar, Mar-Apr (both before promo end), Apr-May (after promo end).
+    // Cycle 0 billedAt Mar 21 (≤ Apr 1, promo). Cycle 1 billedAt Apr 21 (> Apr 1, full).
     expect(out).toHaveLength(3);
     expect(out[0].isPromo).toBe(true);
-    expect(out[1].isPromo).toBe(true);
+    expect(out[1].isPromo).toBe(false);
     expect(out[2].isPromo).toBe(false);
-    expect(out[2].amount).toBe('500.00');
   });
 });

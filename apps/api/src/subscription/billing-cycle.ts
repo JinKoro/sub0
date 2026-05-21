@@ -58,7 +58,7 @@ export function computeBackfill(args: {
     const inPromo =
       args.promoAmount !== null &&
       args.promoEndsAt !== null &&
-      periodStart < args.promoEndsAt;
+      periodEnd <= args.promoEndsAt;
     out.push({
       periodStart,
       periodEnd,
