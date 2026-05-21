@@ -36,7 +36,7 @@ export function SetPasswordForm({ token }: { token: string }) {
     try {
       await verifyEmail(token, password);
       // Backend set the sub0_session cookie — middleware lets the cabinet in.
-      router.replace('/dashboard');
+      router.replace('/account/dashboard');
     } catch (err) {
       setLoading(false);
       if (err instanceof ApiError && err.status === 400) {

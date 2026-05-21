@@ -148,7 +148,7 @@ export function ProjectSwitcher({ isMobile = false }: Props) {
           ))}
           <div style={{ borderTop: `1px solid ${SUB0.line}`, margin: '6px 0' }} />
           <Link
-            href="/projects?new=1"
+            href="/account/projects?new=1"
             onClick={() => setOpen(false)}
             style={{
               display: 'flex',
@@ -186,7 +186,7 @@ export function ProjectSwitcher({ isMobile = false }: Props) {
             {t('Новый проект', 'New project')}
           </Link>
           <Link
-            href="/projects"
+            href="/account/projects"
             onClick={() => setOpen(false)}
             style={{
               display: 'flex',

@@ -29,7 +29,7 @@ export function LoginForm() {
     try {
       await login(email, password);
       // Server set the sub0_session cookie; middleware will allow the cabinet.
-      router.replace('/dashboard');
+      router.replace('/account/dashboard');
     } catch {
       setLoading(false);
       setError(true);

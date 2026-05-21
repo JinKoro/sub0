@@ -32,9 +32,9 @@ export function ProjectsPage() {
   const newMode = params.get('new') !== null;
   const editId = params.get('id');
 
-  const goList = () => router.push('/projects');
-  const goNew = () => router.push('/projects?new=1');
-  const goEdit = (id: string) => router.push(`/projects?id=${id}`);
+  const goList = () => router.push('/account/projects');
+  const goNew = () => router.push('/account/projects?new=1');
+  const goEdit = (id: string) => router.push(`/account/projects?id=${id}`);
 
   // --- NEW ---
   if (newMode) {

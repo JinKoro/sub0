@@ -3,7 +3,7 @@ import { importSPKI, jwtVerify } from 'jose';
 
 const SESSION_COOKIE = 'sub0_session';
 const LOGIN_PATH = '/login';
-const DEFAULT_AUTHED = '/dashboard';
+const DEFAULT_AUTHED = '/account/dashboard';
 
 /**
  * Allowlist of public paths. Anything NOT matching this list requires a valid

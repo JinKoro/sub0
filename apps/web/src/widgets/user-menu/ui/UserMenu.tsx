@@ -49,8 +49,8 @@ export function UserMenu() {
   }, []);
 
   const items: MenuItem[] = [
-    { ic: '⚙', lbl: 'Настройки аккаунта', lblEn: 'Account settings', href: '/settings#account' },
-    { ic: '₽', lbl: 'Тарифы и оплата', lblEn: 'Plans & billing', href: '/settings#billing', iconSize: 15 },
+    { ic: '⚙', lbl: 'Настройки аккаунта', lblEn: 'Account settings', href: '/account/settings#account' },
+    { ic: '₽', lbl: 'Тарифы и оплата', lblEn: 'Plans & billing', href: '/account/settings#billing', iconSize: 15 },
     { ic: '↗', lbl: 'Перейти на главную', lblEn: 'Back to home', href: '/' },
   ];
 

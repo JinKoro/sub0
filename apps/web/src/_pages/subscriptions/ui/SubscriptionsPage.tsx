@@ -55,7 +55,7 @@ export function SubscriptionsPage() {
   const goList = () => {
     setMode('list');
     setEditing(null);
-    if (searchParams.get('new')) router.replace('/subscriptions');
+    if (searchParams.get('new')) router.replace('/account/subscriptions');
   };
 
   if (mode === 'edit' && editing) {

@@ -114,7 +114,7 @@ export function SubsListView({ onEdit }: Props) {
           </h1>
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <CabinetCtaButton href="/subscriptions?new=1">
+          <CabinetCtaButton href="/account/subscriptions?new=1">
             + {t('Новая подписка', 'New subscription')}
           </CabinetCtaButton>
         </div>
