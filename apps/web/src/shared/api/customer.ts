@@ -47,3 +47,7 @@ export function changePassword(currentPassword: string, newPassword: string): Pr
 export function deleteAccount(): Promise<void> {
   return api<void>('/customers/me', { method: 'DELETE' });
 }
+
+export function purgeSubscriptions(): Promise<void> {
+  return api<void>('/customers/me/subscriptions', { method: 'DELETE' });
+}
