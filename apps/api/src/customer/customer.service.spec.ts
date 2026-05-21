@@ -158,7 +158,7 @@ describe('CustomerService.purgeSubscriptions', () => {
   it('бросает 401 если customer не найден / архивирован', async () => {
     const { service, repo } = makeDeps();
     repo.findActiveById.mockResolvedValue(null);
-    await expect(service.purgeSubscriptions(ID)).rejects.toThrow();
+    await expect(service.purgeSubscriptions(ID)).rejects.toThrow(UnauthorizedException);
   });
 });
 
