@@ -18,6 +18,7 @@ import {
   type CategoryDto,
 } from '@subzero/shared';
 import { ServicePickerInline } from './ServicePickerInline';
+import { DeleteSubscriptionButton } from '@/features/delete-subscription/ui/DeleteSubscriptionButton';
 import {
   toCreateDto,
   toUpdateDto,
@@ -618,9 +619,12 @@ export function SubscriptionForm({ initial, onClose, onSaved }: Props) {
           flexWrap: 'wrap',
         }}
       >
-        {isEdit ? (
-          /* TODO: DeleteSubscriptionButton (Task 14) */
-          <span />
+        {isEdit && state.sku ? (
+          <DeleteSubscriptionButton
+            sku={state.sku}
+            name={state.nameCustom || 'Subscription'}
+            onDeleted={onClose}
+          />
         ) : (
           <span />
         )}
