@@ -4,6 +4,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 
 import { AuthModule } from './auth/auth.module';
 import { CategoryModule } from './category/category.module';
+import { ServiceModule } from './service/service.module';
 import { validateEnv } from './config/env.schema';
 import { CustomerModule } from './customer/customer.module';
 import { DbModule } from './db/db.module';
@@ -22,6 +23,7 @@ import { ProjectModule } from './project/project.module';
     MailModule,
     ProjectModule,
     CategoryModule,
+    ServiceModule,
   ],
 })
 export class AppModule {}
