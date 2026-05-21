@@ -5,7 +5,6 @@ import { SUB0, mono } from '@/shared/constants/tokens';
 import { useLang } from '@/shared/contexts/lang-context';
 import { LogoPill } from '@/shared/components/ui/LogoPill';
 import { serviceIcon } from '@/entities/service-catalog/lib/icon-map';
-import { SubscriptionForm } from '@/features/subscription-form/ui/SubscriptionForm';
 import type { CabinetCurrency } from '@/entities/subscription/model/cabinet-types';
 
 interface DetectedItem {
@@ -247,26 +246,16 @@ export function FileUploadView() {
                     style={{
                       background: SUB0.bg,
                       borderTop: `1px dashed ${SUB0.line}`,
+                      padding: '14px 24px',
+                      fontSize: 12,
+                      color: SUB0.muted,
+                      fontFamily: mono,
                     }}
                   >
-                    <SubscriptionForm
-                      compact
-                      onClose={() => setExpandedId(null)}
-                      initial={{
-                        id: it.id,
-                        name: it.name,
-                        char: it.char,
-                        color: it.color,
-                        cat: it.cat,
-                        project: 'personal',
-                        cycle: it.cycle,
-                        price: it.price,
-                        cur: it.cur,
-                        status: 'active',
-                        note: '',
-                        trial: false,
-                      }}
-                    />
+                    {t(
+                      'Редактирование появится после массового импорта (v1.1).',
+                      'Editing will be available after bulk import (v1.1).',
+                    )}
                   </div>
                 )}
               </div>

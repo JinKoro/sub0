@@ -1,13 +1,22 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { SUB0 } from '@/shared/constants/tokens';
 import { useLang } from '@/shared/contexts/lang-context';
 import { Card } from '@/shared/components/ui/Card';
 import { SubscriptionForm } from '@/features/subscription-form/ui/SubscriptionForm';
+import {
+  fromDto,
+  type SubscriptionFormState,
+} from '@/features/subscription-form/types';
 import { getSubscription } from '@/entities/subscription/api/get';
-import type { SubscriptionDto } from '@subzero/shared';
+import { useProjects } from '@/shared/contexts/projects-context';
+import {
+  BillingPeriod,
+  Currency,
+  type SubscriptionDto,
+} from '@subzero/shared';
 import { PageShell } from './PageShell';
 import { PageTabs } from './PageTabs';
 import { SubsListView } from './SubsListView';
@@ -15,30 +24,21 @@ import { FileUploadView } from './FileUploadView';
 
 type Mode = 'list' | 'new' | 'edit';
 
-// Temporary adapter: SubscriptionDto → existing SubscriptionFormInitial shape.
-// Task 13 will rewrite SubscriptionForm against the DTO directly; for now we
-// just pipe in enough fields so the form renders in edit mode without crashing.
-function toFormInitial(dto: SubscriptionDto) {
+function newInitial(projectSku: string): SubscriptionFormState {
   return {
-    // `id` here doubles as edit-mode marker; SubscriptionFormInitial.id is
-    // currently `number`, but typecheck for this file is expected to break
-    // until Task 13 — see AGENTS.md / task notes.
-    id: dto.sku as unknown as number,
-    name: dto.name,
-    char: (dto.name.charAt(0) || '?').toUpperCase(),
-    color: '#0a0a0a',
-    cat: dto.categorySku ?? 'other',
-    project: dto.projectSku,
-    price: dto.amount,
-    cur: 'RUB' as const,
-    cycle: 'monthly' as const,
-    status: 'active' as const,
-    note: dto.comment ?? '',
-    trial: dto.isTrial,
-    promo: false,
-    nextDate: dto.nextBillingDate,
-    trialEnds: '',
-    promos: [],
+    projectSku,
+    serviceSku: null,
+    nameCustom: '',
+    iconCustom: null,
+    categorySku: '',
+    amount: '',
+    currencyId: Currency.RUB,
+    billingPeriodId: BillingPeriod.MONTH,
+    firstBillingDate: new Date().toISOString().slice(0, 10),
+    isTrial: false,
+    promoAmount: '',
+    promoEndsAt: '',
+    comment: '',
   };
 }
 
@@ -46,6 +46,7 @@ export function SubscriptionsPage() {
   const { t } = useLang();
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { projects } = useProjects();
   const [mode, setMode] = useState<Mode>(() =>
     searchParams.get('new') === '1' ? 'new' : 'list',
   );
@@ -85,6 +86,8 @@ export function SubscriptionsPage() {
     if (searchParams.get('new')) router.replace('/account/subscriptions');
   };
 
+  const defaultProjectSku = useMemo(() => projects[0]?.sku ?? '', [projects]);
+
   if (mode === 'edit' && editing) {
     return (
       <PageShell
@@ -93,7 +96,7 @@ export function SubscriptionsPage() {
         onClose={goList}
       >
         <Card padding={0}>
-          <SubscriptionForm initial={toFormInitial(editing)} onClose={goList} />
+          <SubscriptionForm initial={fromDto(editing)} onClose={goList} />
         </Card>
       </PageShell>
     );
@@ -117,21 +120,15 @@ export function SubscriptionsPage() {
         />
 
         <Card padding={0} style={{ marginTop: 14 }}>
-          {newTab === 'manual' && (
-            <SubscriptionForm
-              initial={{
-                name: '',
-                char: '?',
-                color: SUB0.blue,
-                cat: 'other',
-                project: 'personal',
-                cycle: 'monthly',
-                price: '',
-                cur: 'RUB',
-              }}
-              onClose={goList}
-            />
-          )}
+          {newTab === 'manual' && defaultProjectSku ? (
+            <SubscriptionForm initial={newInitial(defaultProjectSku)} onClose={goList} />
+          ) : newTab === 'manual' ? (
+            <div style={{ padding: 40, textAlign: 'center' }}>
+              <div style={{ fontSize: 14, color: SUB0.muted }}>
+                {t('Сначала создайте проект', 'Create a project first')}
+              </div>
+            </div>
+          ) : null}
           {newTab === 'file' && <FileUploadView />}
           {newTab === 'inbox' && (
             <div style={{ padding: 40, textAlign: 'center' }}>
