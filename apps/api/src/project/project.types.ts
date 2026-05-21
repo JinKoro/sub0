@@ -28,7 +28,7 @@ export interface ProjectRepository {
   /** Count of active (not soft-deleted) projects — for the "must keep one" rule. */
   countActive(customerId: string): Promise<number>;
 
-  findActiveById(customerId: string, projectId: string): Promise<ProjectRow | null>;
+  findActiveBySku(customerId: string, sku: string): Promise<ProjectRow | null>;
 
   create(args: {
     customerId: string;
@@ -38,20 +38,20 @@ export interface ProjectRepository {
   }): Promise<ProjectRow>;
 
   /**
-   * Optimistic lock — `WHERE id = ? AND customer_id = ? AND version = ?`.
+   * Optimistic lock — `WHERE sku = ? AND customer_id = ? AND version = ?`.
    * Bumps `version`. Returns false when no row matched (stale version / wrong owner).
    */
   update(args: {
     customerId: string;
-    projectId: string;
+    sku: string;
     version: number;
     patch: ProjectUpdate;
   }): Promise<boolean>;
 
   /**
-   * Cascade hard-delete in one transaction: subscriptions for this project
-   * are removed (their billing_history rows cascade off subscription_id),
-   * then the project row itself.
+   * Cascade hard-delete in one transaction. Looks up the project by SKU,
+   * then drops subscriptions for it (their billing_history cascade off
+   * subscription_id), then the project row itself.
    */
-  hardDelete(customerId: string, projectId: string): Promise<void>;
+  hardDelete(customerId: string, sku: string): Promise<void>;
 }

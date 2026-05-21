@@ -22,8 +22,8 @@ interface ProjectsCtx {
   loading: boolean;
   error: string | null;
   create: (name: string, color?: string) => Promise<ProjectDto>;
-  update: (id: string, patch: ProjectUpdate, version: number) => Promise<ProjectDto>;
-  remove: (id: string) => Promise<void>;
+  update: (sku: string, patch: ProjectUpdate, version: number) => Promise<ProjectDto>;
+  remove: (sku: string) => Promise<void>;
   refresh: () => Promise<void>;
 }
 
@@ -72,15 +72,15 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
     return p;
   }, []);
 
-  const update = useCallback(async (id: string, patch: ProjectUpdate, version: number) => {
-    const p = await updateProjectReq(id, patch, version);
-    setProjects((prev) => prev.map((x) => (x.id === id ? p : x)));
+  const update = useCallback(async (sku: string, patch: ProjectUpdate, version: number) => {
+    const p = await updateProjectReq(sku, patch, version);
+    setProjects((prev) => prev.map((x) => (x.sku === sku ? p : x)));
     return p;
   }, []);
 
-  const remove = useCallback(async (id: string) => {
-    await deleteProjectReq(id);
-    setProjects((prev) => prev.filter((x) => x.id !== id));
+  const remove = useCallback(async (sku: string) => {
+    await deleteProjectReq(sku);
+    setProjects((prev) => prev.filter((x) => x.sku !== sku));
   }, []);
 
   return (

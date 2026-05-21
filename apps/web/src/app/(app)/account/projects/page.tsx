@@ -1,5 +1,5 @@
-import { ProjectsPage } from '@/_pages/projects/ui/ProjectsPage';
+import { ProjectsListView } from '@/_pages/projects/ui/ProjectsListView';
 
 export default function Page() {
-  return <ProjectsPage />;
+  return <ProjectsListView />;
 }

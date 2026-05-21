@@ -9,12 +9,12 @@ import { ProjectService } from './project.service';
 import type { ProjectRepository, ProjectRow } from './project.types';
 
 const CID = 'c0000000-0000-0000-0000-000000000001';
-const PID = 'p0000000-0000-0000-0000-000000000001';
+const SKU = 'prj-ABCDEF01';
 
 function makeRow(over: Partial<ProjectRow> = {}): ProjectRow {
   return {
-    id: PID,
-    sku: 'prj-ABCDEF01',
+    id: 'p0000000-0000-0000-0000-000000000001',
+    sku: SKU,
     name: 'Personal',
     color: '#1347ff',
     subscriptionsCount: 0,
@@ -27,7 +27,7 @@ function makeDeps() {
   const repo: jest.Mocked<ProjectRepository> = {
     listActive: jest.fn(),
     countActive: jest.fn(),
-    findActiveById: jest.fn(),
+    findActiveBySku: jest.fn(),
     create: jest.fn(),
     update: jest.fn(),
     hardDelete: jest.fn().mockResolvedValue(undefined),
@@ -88,22 +88,22 @@ describe('ProjectService.create', () => {
 describe('ProjectService.update', () => {
   it('throws 400 with an empty patch', async () => {
     const { service, repo } = makeDeps();
-    await expect(service.update(CID, PID, {}, 1)).rejects.toBeInstanceOf(BadRequestException);
-    expect(repo.findActiveById).not.toHaveBeenCalled();
+    await expect(service.update(CID, SKU, {}, 1)).rejects.toBeInstanceOf(BadRequestException);
+    expect(repo.findActiveBySku).not.toHaveBeenCalled();
   });
 
   it('throws 400 on a malformed color', async () => {
     const { service } = makeDeps();
-    await expect(service.update(CID, PID, { color: 'not-hex' }, 1)).rejects.toBeInstanceOf(
+    await expect(service.update(CID, SKU, { color: 'not-hex' }, 1)).rejects.toBeInstanceOf(
       BadRequestException,
     );
   });
 
   it('throws 404 when the project does not exist', async () => {
     const { service, repo } = makeDeps();
-    repo.findActiveById.mockResolvedValue(null);
+    repo.findActiveBySku.mockResolvedValue(null);
 
-    await expect(service.update(CID, PID, { name: 'New' }, 1)).rejects.toBeInstanceOf(
+    await expect(service.update(CID, SKU, { name: 'New' }, 1)).rejects.toBeInstanceOf(
       NotFoundException,
     );
     expect(repo.update).not.toHaveBeenCalled();
@@ -111,26 +111,26 @@ describe('ProjectService.update', () => {
 
   it('throws 409 when the version is stale', async () => {
     const { service, repo } = makeDeps();
-    repo.findActiveById.mockResolvedValue(makeRow({ version: 3 }));
+    repo.findActiveBySku.mockResolvedValue(makeRow({ version: 3 }));
     repo.update.mockResolvedValue(false);
 
-    await expect(service.update(CID, PID, { name: 'New' }, 2)).rejects.toBeInstanceOf(
+    await expect(service.update(CID, SKU, { name: 'New' }, 2)).rejects.toBeInstanceOf(
       ConflictException,
     );
   });
 
   it('updates name and color together', async () => {
     const { service, repo } = makeDeps();
-    repo.findActiveById
+    repo.findActiveBySku
       .mockResolvedValueOnce(makeRow({ version: 1 }))
       .mockResolvedValueOnce(makeRow({ version: 2, name: 'Family', color: '#abcdef' }));
     repo.update.mockResolvedValue(true);
 
-    const out = await service.update(CID, PID, { name: '  Family  ', color: '#abcdef' }, 1);
+    const out = await service.update(CID, SKU, { name: '  Family  ', color: '#abcdef' }, 1);
 
     expect(repo.update).toHaveBeenCalledWith({
       customerId: CID,
-      projectId: PID,
+      sku: SKU,
       version: 1,
       patch: { name: 'Family', color: '#abcdef' }, // trimmed name, normalized color
     });
@@ -141,12 +141,12 @@ describe('ProjectService.update', () => {
 
   it('updates only color when name is omitted', async () => {
     const { service, repo } = makeDeps();
-    repo.findActiveById
+    repo.findActiveBySku
       .mockResolvedValueOnce(makeRow({ version: 1 }))
       .mockResolvedValueOnce(makeRow({ version: 2, color: '#abcdef' }));
     repo.update.mockResolvedValue(true);
 
-    await service.update(CID, PID, { color: '#abcdef' }, 1);
+    await service.update(CID, SKU, { color: '#abcdef' }, 1);
 
     expect(repo.update.mock.calls[0]![0].patch).toEqual({ color: '#abcdef' });
   });
@@ -155,28 +155,28 @@ describe('ProjectService.update', () => {
 describe('ProjectService.delete', () => {
   it('throws 404 when the project does not exist', async () => {
     const { service, repo } = makeDeps();
-    repo.findActiveById.mockResolvedValue(null);
+    repo.findActiveBySku.mockResolvedValue(null);
 
-    await expect(service.delete(CID, PID)).rejects.toBeInstanceOf(NotFoundException);
+    await expect(service.delete(CID, SKU)).rejects.toBeInstanceOf(NotFoundException);
     expect(repo.hardDelete).not.toHaveBeenCalled();
   });
 
   it('refuses to delete the last active project (422)', async () => {
     const { service, repo } = makeDeps();
-    repo.findActiveById.mockResolvedValue(makeRow());
+    repo.findActiveBySku.mockResolvedValue(makeRow());
     repo.countActive.mockResolvedValue(1);
 
-    await expect(service.delete(CID, PID)).rejects.toBeInstanceOf(UnprocessableEntityException);
+    await expect(service.delete(CID, SKU)).rejects.toBeInstanceOf(UnprocessableEntityException);
     expect(repo.hardDelete).not.toHaveBeenCalled();
   });
 
   it('cascades through the repository when more than one project remains', async () => {
     const { service, repo } = makeDeps();
-    repo.findActiveById.mockResolvedValue(makeRow());
+    repo.findActiveBySku.mockResolvedValue(makeRow());
     repo.countActive.mockResolvedValue(2);
 
-    await service.delete(CID, PID);
+    await service.delete(CID, SKU);
 
-    expect(repo.hardDelete).toHaveBeenCalledWith(CID, PID);
+    expect(repo.hardDelete).toHaveBeenCalledWith(CID, SKU);
   });
 });

@@ -39,7 +39,7 @@ export function SubscriptionForm({ initial, onClose, onBack, compact = false }: 
   const [color, setColor] = useState(initial?.color ?? SUB0.blue);
   const [cat, setCat] = useState(initial?.cat ?? 'other');
   // Default to the first available project so the field is never silently empty.
-  const [project, setProject] = useState(initial?.project ?? projects[0]?.id ?? '');
+  const [project, setProject] = useState(initial?.project ?? projects[0]?.sku ?? '');
   const [price, setPrice] = useState(initial?.price?.toString() ?? '');
   const [cur, setCur] = useState<CabinetCurrency>(initial?.cur ?? 'RUB');
   const [cycle, setCycle] = useState<CabinetSubCycle>(initial?.cycle ?? 'monthly');
@@ -141,7 +141,7 @@ export function SubscriptionForm({ initial, onClose, onBack, compact = false }: 
   ];
 
   const projectOpts: SelectOption[] = projects.map((p) => ({
-    v: p.id,
+    v: p.sku,
     l: p.name,
     leading: (
       <span style={{ width: 8, height: 8, borderRadius: 999, background: p.color, flexShrink: 0 }} />
@@ -156,7 +156,7 @@ export function SubscriptionForm({ initial, onClose, onBack, compact = false }: 
   };
 
   const catMeta = CATEGORIES.find((c) => c.id === cat);
-  const projMeta = projects.find((p) => p.id === project);
+  const projMeta = projects.find((p) => p.sku === project);
   const btnPrimary = {
     padding: '10px 14px',
     borderRadius: 8,

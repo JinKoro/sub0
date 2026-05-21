@@ -1,98 +1,19 @@
 'use client';
 
-import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { SUB0, mono } from '@/shared/constants/tokens';
 import { useLang } from '@/shared/contexts/lang-context';
 import { useIsMobile } from '@/shared/hooks/use-is-mobile';
 import { useProjects } from '@/shared/contexts/projects-context';
 import { Card } from '@/shared/components/ui/Card';
 import { CabinetCtaButton } from '@/shared/components/ui/CabinetCtaButton';
-import { ProjShell } from './ProjShell';
-import { ProjectForm } from './ProjectForm';
 import { ProjectListRow } from './ProjectListRow';
 
-export function ProjectsPage() {
+export function ProjectsListView() {
   const { t } = useLang();
   const isMobile = useIsMobile();
-  const router = useRouter();
-  const params = useSearchParams();
-  const { projects, loading, create, update, remove } = useProjects();
+  const { projects, loading } = useProjects();
 
-  const newMode = params.get('new') !== null;
-  const editId = params.get('id');
-
-  const goList = () => router.push('/account/projects');
-  const goEdit = (id: string) => router.push(`/account/projects?id=${id}`);
-
-  // --- NEW ---
-  if (newMode) {
-    return (
-      <ProjShell
-        eyebrow={t('Новый проект', 'New project')}
-        title={t('Новый проект', 'New project')}
-        onBack={goList}
-      >
-        <Card padding={0}>
-          <ProjectForm
-            onSave={async (name, color) => {
-              await create(name, color);
-              goList();
-            }}
-            onCancel={goList}
-          />
-        </Card>
-      </ProjShell>
-    );
-  }
-
-  // --- EDIT ---
-  if (editId) {
-    if (loading) {
-      return (
-        <ProjShell
-          eyebrow={t('Редактирование проекта', 'Edit project')}
-          title={t('Загрузка…', 'Loading…')}
-          onBack={goList}
-        >
-          <Card padding={0}>
-            <div style={{ padding: 24, color: SUB0.muted, fontSize: 14 }}>
-              {t('Загрузка…', 'Loading…')}
-            </div>
-          </Card>
-        </ProjShell>
-      );
-    }
-    const editing = projects.find((p) => p.id === editId);
-    if (!editing) {
-      // Likely deleted in another tab — bounce back to the list.
-      goList();
-      return null;
-    }
-    return (
-      <ProjShell
-        eyebrow={t('Редактирование проекта', 'Edit project')}
-        title={editing.name}
-        onBack={goList}
-      >
-        <Card padding={0}>
-          <ProjectForm
-            initial={editing}
-            onSave={async (name, color, version) => {
-              await update(editing.id, { name, color }, version);
-              goList();
-            }}
-            onCancel={goList}
-            onDelete={async () => {
-              await remove(editing.id);
-              goList();
-            }}
-          />
-        </Card>
-      </ProjShell>
-    );
-  }
-
-  // --- LIST ---
   return (
     <div
       style={{
@@ -134,7 +55,7 @@ export function ProjectsPage() {
             {t('Проекты', 'Projects')}
           </h1>
           {projects.length > 0 && (
-            <CabinetCtaButton href="/account/projects?new=1">
+            <CabinetCtaButton href="/account/projects/new">
               + {t('Новый проект', 'New project')}
             </CabinetCtaButton>
           )}
@@ -207,7 +128,7 @@ export function ProjectsPage() {
               )}
             </div>
             <div style={{ marginTop: 16, display: 'inline-flex' }}>
-              <CabinetCtaButton href="/account/projects?new=1">
+              <CabinetCtaButton href="/account/projects/new">
                 + {t('Новый проект', 'New project')}
               </CabinetCtaButton>
             </div>
@@ -228,16 +149,16 @@ export function ProjectsPage() {
         )}
 
         {projects.map((p, i) => (
-          <ProjectListRow
-            key={p.id}
-            project={p}
-            onOpen={() => goEdit(p.id)}
-            last={i === projects.length - 1}
-          />
+          <Link
+            key={p.sku}
+            href={`/account/projects/${p.sku}`}
+            style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}
+          >
+            <ProjectListRow project={p} last={i === projects.length - 1} />
+          </Link>
         ))}
       </Card>
 
-      {/* Note about "All projects" */}
       <div
         style={{
           marginTop: 18,

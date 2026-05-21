@@ -5,7 +5,6 @@ import {
   Get,
   HttpCode,
   Param,
-  ParseUUIDPipe,
   Post,
   Req,
   UseGuards,
@@ -24,6 +23,8 @@ function uid(req: Request): string {
 }
 
 // Project HTTP convention: GET reads, POST writes, DELETE deletes — no PATCH.
+// Public id over the wire is `sku` (ctx-architecture.md §2). UUID never leaves
+// the database — clients address resources by their stable SKU.
 @Controller('projects')
 @UseGuards(JwtAuthGuard)
 export class ProjectController {
@@ -39,27 +40,25 @@ export class ProjectController {
     return this.projects.create(uid(req), dto.name, dto.color);
   }
 
-  // Same URL for update (name and/or color). Matches the project's
-  // POST-for-writes convention (no PATCH). 200 OK — the resource already
-  // existed; only POST /projects (create) is 201 Created.
-  @Post(':id')
+  // 200 OK — the resource already existed; only POST /projects (create) is 201.
+  @Post(':sku')
   @HttpCode(200)
   update(
     @Req() req: Request,
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('sku') sku: string,
     @Body() dto: UpdateProjectDto,
   ): Promise<ProjectDto> {
     return this.projects.update(
       uid(req),
-      id,
+      sku,
       { name: dto.name, color: dto.color },
       dto.version,
     );
   }
 
-  @Delete(':id')
+  @Delete(':sku')
   @HttpCode(204)
-  async delete(@Req() req: Request, @Param('id', ParseUUIDPipe) id: string): Promise<void> {
-    await this.projects.delete(uid(req), id);
+  async delete(@Req() req: Request, @Param('sku') sku: string): Promise<void> {
+    await this.projects.delete(uid(req), sku);
   }
 }

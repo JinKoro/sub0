@@ -19,7 +19,6 @@ export class DrizzleProjectRepository implements ProjectRepository {
         name: project.name,
         color: project.color,
         version: project.version,
-        // Count of subscriptions that aren't soft-deleted; 0 when there are none.
         subscriptionsCount: sql<number>`COALESCE(SUM(CASE WHEN ${subscription.id} IS NOT NULL AND ${subscription.deletedAt} IS NULL THEN 1 ELSE 0 END), 0)::int`,
       })
       .from(project)
@@ -58,7 +57,7 @@ export class DrizzleProjectRepository implements ProjectRepository {
     return row?.n ?? 0;
   }
 
-  async findActiveById(customerId: string, projectId: string): Promise<ProjectRow | null> {
+  async findActiveBySku(customerId: string, sku: string): Promise<ProjectRow | null> {
     const [row] = await this.db
       .select({
         id: project.id,
@@ -70,7 +69,7 @@ export class DrizzleProjectRepository implements ProjectRepository {
       .from(project)
       .where(
         and(
-          eq(project.id, projectId),
+          eq(project.sku, sku),
           eq(project.customerId, customerId),
           eq(project.stateId, ProjectState.ACTIVE),
           isNull(project.deletedAt),
@@ -121,7 +120,7 @@ export class DrizzleProjectRepository implements ProjectRepository {
 
   async update(args: {
     customerId: string;
-    projectId: string;
+    sku: string;
     version: number;
     patch: ProjectUpdate;
   }): Promise<boolean> {
@@ -134,7 +133,7 @@ export class DrizzleProjectRepository implements ProjectRepository {
       .set(set)
       .where(
         and(
-          eq(project.id, args.projectId),
+          eq(project.sku, args.sku),
           eq(project.customerId, args.customerId),
           eq(project.version, args.version),
           eq(project.stateId, ProjectState.ACTIVE),
@@ -144,18 +143,24 @@ export class DrizzleProjectRepository implements ProjectRepository {
     return (res.rowCount ?? 0) > 0;
   }
 
-  async hardDelete(customerId: string, projectId: string): Promise<void> {
-    // billing_history.project_id has no ON DELETE CASCADE — drop subscriptions
-    // first so their billing_history cascade off subscription_id.
+  async hardDelete(customerId: string, sku: string): Promise<void> {
+    // Look up the internal UUID once — FK joins still use it. billing_history.project_id
+    // has no ON DELETE CASCADE, so we drop subscriptions first (their billing_history
+    // cascades off subscription_id), then the project row itself.
     await this.db.transaction(async (tx) => {
+      const [proj] = await tx
+        .select({ id: project.id })
+        .from(project)
+        .where(and(eq(project.sku, sku), eq(project.customerId, customerId)))
+        .limit(1);
+      if (!proj) return;
+
       await tx
         .delete(subscription)
-        .where(
-          and(eq(subscription.projectId, projectId), eq(subscription.customerId, customerId)),
-        );
+        .where(and(eq(subscription.projectId, proj.id), eq(subscription.customerId, customerId)));
       await tx
         .delete(project)
-        .where(and(eq(project.id, projectId), eq(project.customerId, customerId)));
+        .where(and(eq(project.id, proj.id), eq(project.customerId, customerId)));
     });
   }
 }

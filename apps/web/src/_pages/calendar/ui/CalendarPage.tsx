@@ -665,7 +665,7 @@ export function CalendarPage() {
             >
               {selected.its.map((s) => {
                 const meta = CATEGORIES.find((c) => c.id === s.cat);
-                const proj = projects.find((p) => p.id === s.project);
+                const proj = projects.find((p) => p.sku === s.project);
                 return (
                   <div
                     key={s.id}

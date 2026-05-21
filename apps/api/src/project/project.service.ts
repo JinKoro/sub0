@@ -31,7 +31,7 @@ export class ProjectService {
 
   async update(
     customerId: string,
-    projectId: string,
+    sku: string,
     patch: ProjectUpdate,
     version: number,
   ): Promise<ProjectDto> {
@@ -47,14 +47,14 @@ export class ProjectService {
       throw new BadRequestException('no fields to update');
     }
 
-    const existing = await this.repo.findActiveById(customerId, projectId);
+    const existing = await this.repo.findActiveBySku(customerId, sku);
     if (!existing) {
       throw new NotFoundException('project not found');
     }
 
     const applied = await this.repo.update({
       customerId,
-      projectId,
+      sku,
       version,
       patch: cleaned,
     });
@@ -62,7 +62,7 @@ export class ProjectService {
       throw new ConflictException('version mismatch');
     }
 
-    const after = await this.repo.findActiveById(customerId, projectId);
+    const after = await this.repo.findActiveBySku(customerId, sku);
     if (!after) {
       // Theoretically unreachable — we just updated it.
       throw new NotFoundException('project not found');
@@ -74,8 +74,8 @@ export class ProjectService {
    * Cascade hard-delete. Refuses if this would leave the customer with no
    * active project (UI needs at least one to scope subscriptions to).
    */
-  async delete(customerId: string, projectId: string): Promise<void> {
-    const existing = await this.repo.findActiveById(customerId, projectId);
+  async delete(customerId: string, sku: string): Promise<void> {
+    const existing = await this.repo.findActiveBySku(customerId, sku);
     if (!existing) {
       throw new NotFoundException('project not found');
     }
@@ -83,6 +83,6 @@ export class ProjectService {
     if (activeCount <= 1) {
       throw new UnprocessableEntityException('cannot delete the only active project');
     }
-    await this.repo.hardDelete(customerId, projectId);
+    await this.repo.hardDelete(customerId, sku);
   }
 }

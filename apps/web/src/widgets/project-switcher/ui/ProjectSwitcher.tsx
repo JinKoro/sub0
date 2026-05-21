@@ -34,12 +34,12 @@ export function ProjectSwitcher({ isMobile = false }: Props) {
   useEffect(() => {
     if (loading) return;
     if (project === 'all') return;
-    if (!projects.some((p) => p.id === project)) {
+    if (!projects.some((p) => p.sku === project)) {
       setProject('all');
     }
   }, [loading, projects, project, setProject]);
 
-  const currentReal = projects.find((p) => p.id === project);
+  const currentReal = projects.find((p) => p.sku === project);
   const isAll = project === 'all' || !currentReal;
   const currentName = isAll
     ? t('Все проекты', 'All projects')
@@ -136,10 +136,10 @@ export function ProjectSwitcher({ isMobile = false }: Props) {
           />
           {projects.map((p) => (
             <DropdownItem
-              key={p.id}
-              active={project === p.id}
+              key={p.sku}
+              active={project === p.sku}
               onClick={() => {
-                setProject(p.id);
+                setProject(p.sku);
                 setOpen(false);
               }}
               color={p.color}
@@ -148,7 +148,7 @@ export function ProjectSwitcher({ isMobile = false }: Props) {
           ))}
           <div style={{ borderTop: `1px solid ${SUB0.line}`, margin: '6px 0' }} />
           <Link
-            href="/account/projects?new=1"
+            href="/account/projects/new"
             onClick={() => setOpen(false)}
             style={{
               display: 'flex',

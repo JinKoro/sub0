@@ -8,11 +8,10 @@ import { pluralizeSubs } from '../lib/pluralize';
 
 interface Props {
   project: ProjectDto;
-  onOpen: () => void;
   last: boolean;
 }
 
-export function ProjectListRow({ project, onOpen, last }: Props) {
+export function ProjectListRow({ project, last }: Props) {
   const { lang } = useLang();
   const isMobile = useIsMobile();
   const label = project.name;
@@ -20,7 +19,6 @@ export function ProjectListRow({ project, onOpen, last }: Props) {
 
   return (
     <div
-      onClick={onOpen}
       style={{
         display: 'flex',
         gap: 12,
