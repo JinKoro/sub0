@@ -28,7 +28,7 @@ export function nextBillingDateAfter(
   period: BillingPeriod,
   now: Date,
 ): Date {
-  if (firstBillingDate >= now) return firstBillingDate;
+  if (firstBillingDate >= now) return new Date(firstBillingDate.getTime());
   let n = 1;
   while (addPeriod(firstBillingDate, period, n) < now) n += 1;
   return addPeriod(firstBillingDate, period, n);
