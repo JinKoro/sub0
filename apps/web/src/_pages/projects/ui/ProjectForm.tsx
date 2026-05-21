@@ -8,7 +8,6 @@ import { ApiError } from '@/shared/api/client';
 import type { ProjectDto } from '@/shared/api/project';
 import { ConfirmDialog } from '@/shared/components/ui/ConfirmDialog';
 import { randomProjectHex } from '../lib/random-color';
-import { pluralizeSubs } from '../lib/pluralize';
 
 interface Props {
   initial?: ProjectDto;
@@ -336,14 +335,10 @@ export function ProjectForm({ initial, onSave, onCancel, onDelete }: Props) {
             `Удалить проект «${initial.name}»?`,
             `Delete project “${initial.name}”?`,
           )}
-          description={
-            initial.subscriptionsCount > 0
-              ? t(
-                  `Проект и ${pluralizeSubs(initial.subscriptionsCount, 'ru')} будут удалены безвозвратно. Это действие нельзя отменить.`,
-                  `Project and ${pluralizeSubs(initial.subscriptionsCount, 'en')} will be permanently deleted. This can't be undone.`,
-                )
-              : t('Это действие нельзя отменить.', "This can't be undone.")
-          }
+          description={t(
+            'Все подписки проекта будут также безвозвратно удалены.',
+            'All subscriptions in the project will also be permanently deleted.',
+          )}
           confirmLabel={deleteBusy ? t('Удаляем…', 'Deleting…') : t('Удалить', 'Delete')}
           cancelLabel={t('Отмена', 'Cancel')}
           onCancel={() => setConfirming(false)}
