@@ -8,7 +8,7 @@ import { useCabinet } from '@/shared/contexts/cabinet-context';
 import { Card } from '@/shared/components/ui/Card';
 import { LogoPill } from '@/shared/components/ui/LogoPill';
 import { CAB_SUBS, CATEGORIES } from '@/entities/subscription/model/cabinet-mock';
-import { PROJECTS } from '@/entities/project/model/data';
+import { useProjects } from '@/shared/contexts/projects-context';
 import type { CabinetSubscription } from '@/entities/subscription/model/cabinet-types';
 import {
   toRub,
@@ -48,6 +48,7 @@ export function CalendarPage() {
   const { t, lang } = useLang();
   const isMobile = useIsMobile();
   const { currency, project } = useCabinet();
+  const { projects } = useProjects();
   const today = useMemo(() => new Date(), []);
   const [view, setView] = useState({ y: today.getFullYear(), m: today.getMonth() });
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
@@ -664,7 +665,7 @@ export function CalendarPage() {
             >
               {selected.its.map((s) => {
                 const meta = CATEGORIES.find((c) => c.id === s.cat);
-                const proj = PROJECTS.find((p) => p.id === s.project);
+                const proj = projects.find((p) => p.id === s.project);
                 return (
                   <div
                     key={s.id}
@@ -711,7 +712,7 @@ export function CalendarPage() {
                         />
                         {meta ? t(meta.name, meta.nameEn) : ''}
                         <span style={{ opacity: 0.5 }}>·</span>
-                        <span>{proj ? t(proj.name, proj.nameEn) : ''}</span>
+                        <span>{proj ? proj.name : ''}</span>
                       </div>
                     </div>
                     <div
