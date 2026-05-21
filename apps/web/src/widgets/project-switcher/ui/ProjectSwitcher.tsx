@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { SUB0, mono } from '@/shared/constants/tokens';
 import { useLang } from '@/shared/contexts/lang-context';
 import { useCabinet } from '@/shared/contexts/cabinet-context';
+import { ProjectMarker } from '@/shared/components/ui/ProjectMarker';
 import { PROJECTS } from '@/entities/project/model/data';
 
 interface Props {
@@ -43,15 +44,7 @@ export function ProjectSwitcher({ isMobile = false }: Props) {
           maxWidth: isMobile ? 160 : 'none',
         }}
       >
-        <span
-          style={{
-            width: 10,
-            height: 10,
-            borderRadius: 999,
-            background: current.color,
-            flexShrink: 0,
-          }}
-        />
+        <ProjectMarker color={current.color} aggregate={current.id === 'all'} size={20} />
         <span
           style={{
             fontSize: 13,
@@ -133,15 +126,7 @@ export function ProjectSwitcher({ isMobile = false }: Props) {
                 fontFamily: 'inherit',
               }}
             >
-              <span
-                style={{
-                  width: 10,
-                  height: 10,
-                  borderRadius: 999,
-                  background: p.color,
-                  flexShrink: 0,
-                }}
-              />
+              <ProjectMarker color={p.color} aggregate={p.id === 'all'} size={22} />
               <span style={{ flex: 1, fontSize: 14, fontWeight: 600, color: SUB0.ink }}>
                 {t(p.name, p.nameEn)}
               </span>
