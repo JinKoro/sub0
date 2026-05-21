@@ -142,3 +142,85 @@ describe('Subscriptions e2e', () => {
     expect(left.rows[0].n).toBe(0);
   });
 });
+
+describe('Bulk red-zone DELETE /customers/me/subscriptions', () => {
+  let app: INestApplication;
+  let http: ReturnType<typeof request>;
+  let cookies = '';
+  let projectSku = '';
+  let categorySku = '';
+
+  beforeAll(async () => {
+    await createTestDb();
+    const t = await createTestApp();
+    app = t.app;
+    http = request(app.getHttpServer());
+  });
+
+  afterAll(async () => {
+    await app.close();
+    await closeTestPool();
+    await dropTestDb();
+  });
+
+  beforeEach(async () => {
+    await truncateAll();
+    await seedCustomer({ email: 'purge@e.com', password: 'Passw0rd1' });
+    cookies = await login(http, 'purge@e.com', 'Passw0rd1');
+
+    await http.post(`${PFX}/projects`).set('Cookie', cookies).send({ name: 'Personal' });
+
+    const projects = await http.get(`${PFX}/projects`).set('Cookie', cookies);
+    projectSku = projects.body[0].sku;
+    const cats = await http.get(`${PFX}/categories`).set('Cookie', cookies);
+    categorySku = cats.body[0].sku;
+  });
+
+  it('purges subscription + billing_history for 2 subs (204)', async () => {
+    for (const name of ['Sub A', 'Sub B']) {
+      const res = await http
+        .post(`${PFX}/subscriptions`)
+        .set('Cookie', cookies)
+        .send({
+          projectSku,
+          categorySku,
+          nameCustom: name,
+          amount: '100.00',
+          currencyId: Currency.RUB,
+          billingPeriodId: BillingPeriod.MONTH,
+          firstBillingDate: new Date(Date.now() - 35 * 86400 * 1000).toISOString(),
+          isTrial: false,
+        });
+      expect(res.status).toBe(201);
+    }
+
+    const before = await testPool().query<{ subs: number; bh: number }>(
+      `SELECT (SELECT COUNT(*)::int FROM subscription
+              WHERE customer_id = (SELECT id FROM customer WHERE email='purge@e.com')) AS subs,
+             (SELECT COUNT(*)::int FROM billing_history
+              WHERE customer_id = (SELECT id FROM customer WHERE email='purge@e.com')) AS bh`,
+    );
+    expect(before.rows[0].subs).toBe(2);
+    expect(before.rows[0].bh).toBeGreaterThan(0);
+
+    const purge = await http.delete(`${PFX}/customers/me/subscriptions`).set('Cookie', cookies);
+    expect(purge.status).toBe(204);
+
+    const after = await testPool().query<{ subs: number; bh: number }>(
+      `SELECT (SELECT COUNT(*)::int FROM subscription
+              WHERE customer_id = (SELECT id FROM customer WHERE email='purge@e.com')) AS subs,
+             (SELECT COUNT(*)::int FROM billing_history
+              WHERE customer_id = (SELECT id FROM customer WHERE email='purge@e.com')) AS bh`,
+    );
+    expect(after.rows[0].subs).toBe(0);
+    expect(after.rows[0].bh).toBe(0);
+  });
+
+  it('returns 204 on second call (idempotent on empty)', async () => {
+    const first = await http.delete(`${PFX}/customers/me/subscriptions`).set('Cookie', cookies);
+    expect(first.status).toBe(204);
+
+    const second = await http.delete(`${PFX}/customers/me/subscriptions`).set('Cookie', cookies);
+    expect(second.status).toBe(204);
+  });
+});

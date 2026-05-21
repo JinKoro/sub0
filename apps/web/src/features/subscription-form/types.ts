@@ -42,7 +42,7 @@ export function fromDto(dto: SubscriptionDto): SubscriptionFormState {
     projectSku: dto.projectSku,
     serviceSku: dto.serviceSku,
     nameCustom: dto.name, // используется как видимое имя
-    iconCustom: dto.icon,
+    iconCustom: null,
     categorySku: dto.categorySku ?? '',
     amount: dto.amount,
     currencyId: dto.currencyId,

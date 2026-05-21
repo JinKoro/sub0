@@ -163,6 +163,38 @@ export class SubscriptionService {
     if (dto.comment !== undefined) patch.comment = (dto.comment ?? '').trim() || null;
     if (dto.stateId !== undefined) patch.stateId = dto.stateId;
 
+    if (dto.projectSku !== undefined) {
+      const projectId = await this.repo.findProjectIdBySku(customerId, dto.projectSku);
+      if (!projectId) throw new NotFoundException('project not found');
+      patch.projectId = projectId;
+    }
+
+    if (dto.categorySku !== undefined) {
+      const categoryId = await this.repo.findCategoryIdBySku(dto.categorySku);
+      if (!categoryId) throw new NotFoundException('category not found');
+      patch.categoryId = categoryId;
+    }
+
+    if (dto.serviceSku !== undefined) {
+      if (dto.serviceSku === null) {
+        patch.serviceId = null;
+      } else {
+        const svc = await this.repo.findServiceByCustomSku(dto.serviceSku);
+        if (!svc) throw new NotFoundException('service not found');
+        patch.serviceId = svc.id;
+      }
+    }
+
+    if (dto.firstBillingDate !== undefined || dto.billingPeriodId !== undefined) {
+      const existing = await this.repo.findBySku(customerId, sku);
+      if (!existing) throw new NotFoundException('subscription not found');
+      const firstBillingDate = dto.firstBillingDate
+        ? new Date(dto.firstBillingDate)
+        : new Date(existing.firstBillingDate);
+      const billingPeriodId = dto.billingPeriodId ?? existing.billingPeriodId;
+      patch.nextBillingDate = nextBillingDateAfter(firstBillingDate, billingPeriodId, this.now());
+    }
+
     if (Object.keys(patch).length === 0) {
       throw new BadRequestException('no fields to update');
     }
