@@ -3,7 +3,6 @@ import type {
   SubscriptionDto,
   SubscriptionListQuery,
   SubscriptionListResponse,
-  SubscriptionUpdateDto,
 } from '@subzero/shared';
 
 export interface SubscriptionRepository {
@@ -63,4 +62,3 @@ export interface SubscriptionServiceDeps {
 }
 
 export type SubscriptionCreateInput = SubscriptionCreateDto;
-export type SubscriptionUpdateInput = SubscriptionUpdateDto;

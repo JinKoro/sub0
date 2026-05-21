@@ -110,6 +110,13 @@ describe('SubscriptionService.create — validation', () => {
       ),
     ).rejects.toBeInstanceOf(UnprocessableEntityException);
   });
+
+  it('rejects isTrial=true without promoEndsAt (422)', async () => {
+    const { service } = makeService();
+    await expect(
+      service.create(CID, basePayload({ isTrial: true })),
+    ).rejects.toBeInstanceOf(UnprocessableEntityException);
+  });
 });
 
 describe('SubscriptionService.create — happy path', () => {

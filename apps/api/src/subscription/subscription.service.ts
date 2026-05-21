@@ -47,13 +47,13 @@ export class SubscriptionService {
   }
 
   async create(customerId: string, dto: SubscriptionCreateDto): Promise<SubscriptionDto> {
+    this.validateAmount(dto.amount);
     this.validatePromoTrial({
       amount: dto.amount,
       isTrial: dto.isTrial,
       promoAmount: dto.promoAmount ?? null,
       promoEndsAt: dto.promoEndsAt ?? null,
     });
-    this.validateAmount(dto.amount);
 
     const projectId = await this.repo.findProjectIdBySku(customerId, dto.projectSku);
     if (!projectId) throw new NotFoundException('project not found');
@@ -131,18 +131,23 @@ export class SubscriptionService {
       throw new BadRequestException('stateId=ARCHIVED is set via DELETE');
     }
     if (dto.amount !== undefined) this.validateAmount(dto.amount);
-    if (
+
+    const promoTouched =
       dto.promoAmount !== undefined ||
       dto.promoEndsAt !== undefined ||
-      dto.isTrial !== undefined
-    ) {
+      dto.isTrial !== undefined;
+
+    if (promoTouched) {
+      const existing = await this.repo.findBySku(customerId, sku);
+      if (!existing) throw new NotFoundException('subscription not found');
       this.validatePromoTrial({
-        amount: dto.amount ?? '0.01',
-        isTrial: dto.isTrial ?? false,
-        promoAmount: dto.promoAmount ?? null,
-        promoEndsAt: dto.promoEndsAt ?? null,
+        amount: dto.amount ?? existing.amount,
+        isTrial: dto.isTrial ?? existing.isTrial,
+        promoAmount: dto.promoAmount !== undefined ? dto.promoAmount : existing.promoAmount,
+        promoEndsAt: dto.promoEndsAt !== undefined ? dto.promoEndsAt : existing.promoEndsAt,
       });
     }
+
     const patch: Record<string, unknown> = {};
     if (dto.nameCustom !== undefined) patch.nameCustom = (dto.nameCustom ?? '').trim() || null;
     if (dto.iconCustom !== undefined) patch.iconCustom = (dto.iconCustom ?? '').trim() || null;
