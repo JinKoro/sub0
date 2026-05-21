@@ -283,8 +283,8 @@ export function ProjectsPage() {
             {t('«Все проекты»', '“All projects”')}
           </span>{' '}
           {t(
-            '— это общий вид в кабинете, который показывает подписки из всех ваших проектов одновременно. Это не отдельный проект, его нельзя удалить или переименовать.',
-            "is a combined view that shows subscriptions across all your projects at once. It's not a real project — it can't be deleted or renamed.",
+            '— это общий вид в кабинете, который показывает подписки из всех ваших проектов одновременно.',
+            'is a combined view that shows subscriptions across all your projects at once.',
           )}
         </div>
       </div>

@@ -6,6 +6,7 @@ import { useLang } from '@/shared/contexts/lang-context';
 import { useIsMobile } from '@/shared/hooks/use-is-mobile';
 import { ApiError } from '@/shared/api/client';
 import type { ProjectDto } from '@/shared/api/project';
+import { ConfirmDialog } from '@/shared/components/ui/ConfirmDialog';
 import { randomProjectHex } from '../lib/random-color';
 import { pluralizeSubs } from '../lib/pluralize';
 
@@ -281,64 +282,6 @@ export function ProjectForm({ initial, onSave, onCancel, onDelete }: Props) {
         </div>
       )}
 
-      {/* Confirm delete strip */}
-      {confirming && initial && (
-        <div
-          style={{
-            padding: isMobile ? '14px 16px' : '14px 24px',
-            background: '#fdf0eb',
-            borderTop: `1px solid #f3d6c2`,
-            display: 'flex',
-            flexWrap: 'wrap',
-            alignItems: 'center',
-            gap: 12,
-          }}
-        >
-          <div style={{ flex: 1, minWidth: 220 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: SUB0.danger }}>
-              {t(
-                `Удалить проект «${initial.name}»?`,
-                `Delete project “${initial.name}”?`,
-              )}
-            </div>
-            <div
-              style={{
-                fontSize: 12,
-                color: SUB0.muted,
-                marginTop: 3,
-                lineHeight: 1.45,
-              }}
-            >
-              {initial.subscriptionsCount > 0
-                ? t(
-                    `Проект и ${pluralizeSubs(initial.subscriptionsCount, 'ru')} будут удалены безвозвратно. Это действие нельзя отменить.`,
-                    `Project and ${pluralizeSubs(initial.subscriptionsCount, 'en')} will be permanently deleted. This can't be undone.`,
-                  )
-                : t(
-                    'Это действие нельзя отменить.',
-                    "This can't be undone.",
-                  )}
-            </div>
-          </div>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button
-              onClick={() => setConfirming(false)}
-              disabled={deleteBusy}
-              style={pBtnSec}
-            >
-              {t('Отмена', 'Cancel')}
-            </button>
-            <button
-              onClick={() => void doDelete()}
-              disabled={deleteBusy}
-              style={{ ...pBtnPri, background: SUB0.danger }}
-            >
-              {deleteBusy ? t('Удаляем…', 'Deleting…') : t('Удалить', 'Delete')}
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* Footer actions */}
       <div
         style={{
@@ -351,7 +294,7 @@ export function ProjectForm({ initial, onSave, onCancel, onDelete }: Props) {
           flexWrap: 'wrap',
         }}
       >
-        {initial && onDelete && !confirming ? (
+        {initial && onDelete ? (
           <button
             onClick={() => setConfirming(true)}
             disabled={busy}
@@ -383,6 +326,30 @@ export function ProjectForm({ initial, onSave, onCancel, onDelete }: Props) {
           </button>
         </div>
       </div>
+
+      {initial && onDelete && (
+        <ConfirmDialog
+          open={confirming}
+          busy={deleteBusy}
+          destructive
+          title={t(
+            `Удалить проект «${initial.name}»?`,
+            `Delete project “${initial.name}”?`,
+          )}
+          description={
+            initial.subscriptionsCount > 0
+              ? t(
+                  `Проект и ${pluralizeSubs(initial.subscriptionsCount, 'ru')} будут удалены безвозвратно. Это действие нельзя отменить.`,
+                  `Project and ${pluralizeSubs(initial.subscriptionsCount, 'en')} will be permanently deleted. This can't be undone.`,
+                )
+              : t('Это действие нельзя отменить.', "This can't be undone.")
+          }
+          confirmLabel={deleteBusy ? t('Удаляем…', 'Deleting…') : t('Удалить', 'Delete')}
+          cancelLabel={t('Отмена', 'Cancel')}
+          onCancel={() => setConfirming(false)}
+          onConfirm={() => void doDelete()}
+        />
+      )}
     </div>
   );
 }
