@@ -336,8 +336,8 @@ export function ProjectForm({ initial, onSave, onCancel, onDelete }: Props) {
             `Delete project “${initial.name}”?`,
           )}
           description={t(
-            'Все подписки проекта будут также безвозвратно удалены.',
-            'All subscriptions in the project will also be permanently deleted.',
+            'Все подписки проекта будут безвозвратно удалены.',
+            'All subscriptions in the project will be permanently deleted.',
           )}
           confirmLabel={deleteBusy ? t('Удаляем…', 'Deleting…') : t('Удалить', 'Delete')}
           cancelLabel={t('Отмена', 'Cancel')}
