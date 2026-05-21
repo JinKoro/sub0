@@ -9,7 +9,7 @@ import { Select, type SelectOption } from '@/shared/components/ui/Select';
 import { DatePicker } from '@/shared/components/ui/DatePicker';
 import { CATEGORIES } from '@/entities/subscription/model/cabinet-mock';
 import { serviceIcon } from '@/entities/service-catalog/lib/icon-map';
-import { PROJECTS } from '@/entities/project/model/data';
+import { useProjects } from '@/shared/contexts/projects-context';
 import { CURRENCY_OPTIONS } from '@/shared/constants/cabinet';
 import type {
   CabinetCurrency,
@@ -32,12 +32,14 @@ interface Props {
 export function SubscriptionForm({ initial, onClose, onBack, compact = false }: Props) {
   const { t } = useLang();
   const isMobile = useIsMobile();
+  const { projects } = useProjects();
 
   const [name, setName] = useState(initial?.name ?? '');
   const [char, setChar] = useState(initial?.char ?? '?');
   const [color, setColor] = useState(initial?.color ?? SUB0.blue);
   const [cat, setCat] = useState(initial?.cat ?? 'other');
-  const [project, setProject] = useState(initial?.project ?? 'personal');
+  // Default to the first available project so the field is never silently empty.
+  const [project, setProject] = useState(initial?.project ?? projects[0]?.id ?? '');
   const [price, setPrice] = useState(initial?.price?.toString() ?? '');
   const [cur, setCur] = useState<CabinetCurrency>(initial?.cur ?? 'RUB');
   const [cycle, setCycle] = useState<CabinetSubCycle>(initial?.cycle ?? 'monthly');
@@ -138,9 +140,9 @@ export function SubscriptionForm({ initial, onClose, onBack, compact = false }: 
     },
   ];
 
-  const projectOpts: SelectOption[] = PROJECTS.filter((p) => p.id !== 'all').map((p) => ({
+  const projectOpts: SelectOption[] = projects.map((p) => ({
     v: p.id,
-    l: t(p.name, p.nameEn),
+    l: p.name,
     leading: (
       <span style={{ width: 8, height: 8, borderRadius: 999, background: p.color, flexShrink: 0 }} />
     ),
@@ -154,7 +156,7 @@ export function SubscriptionForm({ initial, onClose, onBack, compact = false }: 
   };
 
   const catMeta = CATEGORIES.find((c) => c.id === cat);
-  const projMeta = PROJECTS.find((p) => p.id === project);
+  const projMeta = projects.find((p) => p.id === project);
   const btnPrimary = {
     padding: '10px 14px',
     borderRadius: 8,
@@ -196,7 +198,7 @@ export function SubscriptionForm({ initial, onClose, onBack, compact = false }: 
             </div>
             <div style={{ fontSize: 12, color: SUB0.muted, fontFamily: mono }}>
               {catMeta ? t(catMeta.name, catMeta.nameEn) : ''}
-              {projMeta ? ` · ${t(projMeta.name, projMeta.nameEn)}` : ''}
+              {projMeta ? ` · ${projMeta.name}` : ''}
             </div>
           </div>
         </div>

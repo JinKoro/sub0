@@ -4,17 +4,23 @@ import { useEffect, useRef, useState } from 'react';
 import { SUB0, mono } from '@/shared/constants/tokens';
 import { useLang } from '@/shared/contexts/lang-context';
 import { useCabinet } from '@/shared/contexts/cabinet-context';
+import { useProjects } from '@/shared/contexts/projects-context';
 import { ProjectMarker } from '@/shared/components/ui/ProjectMarker';
-import { PROJECTS } from '@/entities/project/model/data';
+import { ProjectsModal } from './ProjectsModal';
 
 interface Props {
   isMobile?: boolean;
 }
 
+const ALL_COLOR = '#0a0a0a';
+
 export function ProjectSwitcher({ isMobile = false }: Props) {
   const { t } = useLang();
   const { project, setProject } = useCabinet();
+  const { projects, loading } = useProjects();
   const [open, setOpen] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [focusCreate, setFocusCreate] = useState(false);
   const ref = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -25,7 +31,29 @@ export function ProjectSwitcher({ isMobile = false }: Props) {
     return () => document.removeEventListener('mousedown', close);
   }, []);
 
-  const current = PROJECTS.find((p) => p.id === project) ?? PROJECTS[0]!;
+  // If the selected project disappears (deleted in another tab / after delete here)
+  // fall back to the synthetic "all" filter so the UI stays consistent.
+  useEffect(() => {
+    if (loading) return;
+    if (project === 'all') return;
+    if (!projects.some((p) => p.id === project)) {
+      setProject('all');
+    }
+  }, [loading, projects, project, setProject]);
+
+  const currentReal = projects.find((p) => p.id === project);
+  const currentName =
+    project === 'all' || !currentReal
+      ? t('Все проекты', 'All projects')
+      : currentReal.name;
+  const currentColor = currentReal?.color ?? ALL_COLOR;
+  const isAll = project === 'all' || !currentReal;
+
+  const openModal = (focus: boolean) => {
+    setFocusCreate(focus);
+    setModalOpen(true);
+    setOpen(false);
+  };
 
   return (
     <div ref={ref} style={{ position: 'relative' }}>
@@ -44,7 +72,7 @@ export function ProjectSwitcher({ isMobile = false }: Props) {
           maxWidth: isMobile ? 160 : 'none',
         }}
       >
-        <ProjectMarker color={current.color} aggregate={current.id === 'all'} size={20} />
+        <ProjectMarker color={currentColor} aggregate={isAll} size={20} />
         <span
           style={{
             fontSize: 13,
@@ -55,7 +83,7 @@ export function ProjectSwitcher({ isMobile = false }: Props) {
             whiteSpace: 'nowrap',
           }}
         >
-          {t(current.name, current.nameEn)}
+          {currentName}
         </span>
         <svg
           width="10"
@@ -84,7 +112,7 @@ export function ProjectSwitcher({ isMobile = false }: Props) {
             position: 'absolute',
             top: 'calc(100% + 6px)',
             right: 0,
-            minWidth: 200,
+            minWidth: 220,
             background: SUB0.panel,
             border: `1px solid ${SUB0.line}`,
             borderRadius: 10,
@@ -105,67 +133,138 @@ export function ProjectSwitcher({ isMobile = false }: Props) {
           >
             {t('Проекты', 'Projects')}
           </div>
-          {PROJECTS.map((p) => (
-            <button
+          <DropdownItem
+            active={project === 'all'}
+            onClick={() => {
+              setProject('all');
+              setOpen(false);
+            }}
+            marker={<ProjectMarker color={ALL_COLOR} aggregate size={22} />}
+            label={t('Все проекты', 'All projects')}
+          />
+          {projects.map((p) => (
+            <DropdownItem
               key={p.id}
+              active={project === p.id}
               onClick={() => {
                 setProject(p.id);
                 setOpen(false);
               }}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 10,
-                width: '100%',
-                padding: '9px 10px',
-                borderRadius: 6,
-                background: project === p.id ? SUB0.soft : 'transparent',
-                border: 'none',
-                cursor: 'pointer',
-                textAlign: 'left',
-                fontFamily: 'inherit',
-              }}
-            >
-              <ProjectMarker color={p.color} aggregate={p.id === 'all'} size={22} />
-              <span style={{ flex: 1, fontSize: 14, fontWeight: 600, color: SUB0.ink }}>
-                {t(p.name, p.nameEn)}
-              </span>
-              {project === p.id && (
-                <span style={{ color: SUB0.blue, fontFamily: mono, fontWeight: 700 }}>✓</span>
-              )}
-            </button>
+              marker={<ProjectMarker color={p.color} size={22} />}
+              label={p.name}
+            />
           ))}
           <div style={{ borderTop: `1px solid ${SUB0.line}`, margin: '6px 0' }} />
           <button
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 10,
-              width: '100%',
-              padding: '9px 10px',
-              borderRadius: 6,
-              background: 'transparent',
-              border: 'none',
-              cursor: 'pointer',
-              textAlign: 'left',
-              fontFamily: 'inherit',
-              color: SUB0.muted,
-              fontSize: 13,
-            }}
+            onClick={() => openModal(true)}
+            style={ghostBtn}
           >
             <span
               style={{
-                width: 10,
-                height: 10,
-                borderRadius: 999,
+                width: 22,
+                height: 22,
+                borderRadius: 6,
                 border: `1px dashed ${SUB0.muted}`,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: SUB0.muted,
+                fontSize: 16,
+                lineHeight: 1,
                 flexShrink: 0,
               }}
-            />
+            >
+              +
+            </span>
             {t('Новый проект', 'New project')}
           </button>
+          {projects.length > 0 && (
+            <button onClick={() => openModal(false)} style={ghostBtn}>
+              <span
+                style={{
+                  width: 22,
+                  height: 22,
+                  borderRadius: 6,
+                  background: SUB0.soft,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: SUB0.muted,
+                  fontSize: 14,
+                  fontWeight: 700,
+                  flexShrink: 0,
+                }}
+              >
+                ⚙
+              </span>
+              {t('Управление проектами', 'Manage projects')}
+            </button>
+          )}
         </div>
       )}
+
+      <ProjectsModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        focusCreate={focusCreate}
+        onCreated={(p) => setProject(p.id)}
+        onDeleted={(id) => {
+          if (project === id) setProject('all');
+        }}
+      />
     </div>
+  );
+}
+
+const ghostBtn: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 10,
+  width: '100%',
+  padding: '9px 10px',
+  borderRadius: 6,
+  background: 'transparent',
+  border: 'none',
+  cursor: 'pointer',
+  textAlign: 'left',
+  fontFamily: 'inherit',
+  color: SUB0.muted,
+  fontSize: 13,
+};
+
+function DropdownItem({
+  active,
+  onClick,
+  marker,
+  label,
+}: {
+  active: boolean;
+  onClick: () => void;
+  marker: React.ReactNode;
+  label: string;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 10,
+        width: '100%',
+        padding: '9px 10px',
+        borderRadius: 6,
+        background: active ? SUB0.soft : 'transparent',
+        border: 'none',
+        cursor: 'pointer',
+        textAlign: 'left',
+        fontFamily: 'inherit',
+      }}
+    >
+      {marker}
+      <span style={{ flex: 1, fontSize: 14, fontWeight: 600, color: SUB0.ink }}>{label}</span>
+      {active && (
+        <span style={{ color: SUB0.blue, fontFamily: mono, fontWeight: 700 }}>✓</span>
+      )}
+    </button>
   );
 }
