@@ -6,7 +6,7 @@ import { SUB0, mono } from '@/shared/constants/tokens';
 import { useLang } from '@/shared/contexts/lang-context';
 import { useIsMobile } from '@/shared/hooks/use-is-mobile';
 import { LogoPill } from '@/shared/components/ui/LogoPill';
-import { SUBS } from '@/entities/subscription/model/data';
+import { SUBS } from '@/widgets/home-page/lib/demo-subs';
 import { fmtRub } from '@/shared/lib/format';
 
 export function Hero() {

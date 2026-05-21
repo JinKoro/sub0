@@ -1,0 +1,140 @@
+import { serviceIcon } from '@/entities/service-catalog/lib/icon-map';
+
+export type DemoSubStatus = 'active' | 'trial' | 'paused';
+
+export interface DemoSubscription {
+  name: string;
+  char: string;
+  cat: string;
+  catEn: string;
+  price: number;
+  cycle: string;
+  cycleEn: string;
+  next: string;
+  nextEn: string;
+  status: DemoSubStatus;
+  color: string;
+  icon?: string | null;
+}
+
+const RAW: DemoSubscription[] = [
+  {
+    name: 'Яндекс Плюс',
+    char: 'Я',
+    cat: 'Видео и музыка',
+    catEn: 'Video & music',
+    price: 399,
+    cycle: 'мес',
+    cycleEn: 'monthly',
+    next: '02 мая',
+    nextEn: 'May 02',
+    status: 'active',
+    color: '#ffcc00',
+  },
+  {
+    name: 'Netflix',
+    char: 'N',
+    cat: 'Видео',
+    catEn: 'Video',
+    price: 799,
+    cycle: 'мес',
+    cycleEn: 'monthly',
+    next: '28 апр',
+    nextEn: 'Apr 28',
+    status: 'active',
+    color: '#c94a1c',
+  },
+  {
+    name: 'Spotify',
+    char: 'S',
+    cat: 'Музыка',
+    catEn: 'Music',
+    price: 299,
+    cycle: 'мес',
+    cycleEn: 'monthly',
+    next: '11 мая',
+    nextEn: 'May 11',
+    status: 'active',
+    color: '#0a7a3f',
+  },
+  {
+    name: 'VK Музыка',
+    char: 'V',
+    cat: 'Музыка',
+    catEn: 'Music',
+    price: 199,
+    cycle: 'мес',
+    cycleEn: 'monthly',
+    next: '14 мая',
+    nextEn: 'May 14',
+    status: 'active',
+    color: '#1347ff',
+  },
+  {
+    name: 'СберПрайм',
+    char: 'С',
+    cat: 'Подписка-микс',
+    catEn: 'Bundle',
+    price: 299,
+    cycle: 'мес',
+    cycleEn: 'monthly',
+    next: '30 апр',
+    nextEn: 'Apr 30',
+    status: 'trial',
+    color: '#0a7a3f',
+  },
+  {
+    name: 'Okko',
+    char: 'O',
+    cat: 'Видео',
+    catEn: 'Video',
+    price: 499,
+    cycle: 'мес',
+    cycleEn: 'monthly',
+    next: '12 ноя',
+    nextEn: 'Nov 12',
+    status: 'active',
+    color: '#6b21d9',
+  },
+  {
+    name: 'Telegram Premium',
+    char: 'T',
+    cat: 'Связь',
+    catEn: 'Messaging',
+    price: 349,
+    cycle: 'мес',
+    cycleEn: 'monthly',
+    next: '03 мая',
+    nextEn: 'May 03',
+    status: 'active',
+    color: '#1347ff',
+  },
+  {
+    name: 'Selectel',
+    char: 'S',
+    cat: 'Хостинг',
+    catEn: 'Hosting',
+    price: 1290,
+    cycle: 'мес',
+    cycleEn: 'monthly',
+    next: '07 мая',
+    nextEn: 'May 07',
+    status: 'paused',
+    color: '#c94a1c',
+  },
+  {
+    name: 'Т‑Банк Pro',
+    char: 'Т',
+    cat: 'Банк',
+    catEn: 'Banking',
+    price: 299,
+    cycle: 'мес',
+    cycleEn: 'monthly',
+    next: '19 мая',
+    nextEn: 'May 19',
+    status: 'active',
+    color: '#b0851a',
+  },
+];
+
+export const SUBS: DemoSubscription[] = RAW.map((s) => ({ ...s, icon: serviceIcon(s.name) }));
