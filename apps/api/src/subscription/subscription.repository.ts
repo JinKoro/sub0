@@ -143,8 +143,16 @@ export class DrizzleSubscriptionRepository implements SubscriptionRepository {
     const pageSize = Math.min(100, Math.max(1, q.pageSize ?? 20));
     const offset = (page - 1) * pageSize;
 
-    const where: SQL[] = [eq(subscription.customerId, customerId), isNull(subscription.deletedAt)];
+    const where: SQL[] = [eq(subscription.customerId, customerId)];
     const states = q.status ? STATE_MAP[q.status] : DEFAULT_NON_ARCHIVED;
+    // ARCHIVED идёт рука об руку с soft-delete (см. ctx-business-logic.md):
+    // включать deleted-rows только если фильтр явно их запрашивает.
+    if (q.status === 'archived' || q.status === 'all') {
+      // archived → deleted_at IS NOT NULL и stateId=ARCHIVED;
+      // all → без фильтра по deletedAt (вернёт и активные, и архив).
+    } else {
+      where.push(isNull(subscription.deletedAt));
+    }
     where.push(inArray(subscription.stateId, states));
     if (q.projectSku && q.projectSku !== 'all') {
       where.push(eq(project.sku, q.projectSku));
