@@ -15,7 +15,7 @@ import { SubscriptionService } from './subscription.service';
         new SubscriptionService({
           repo,
           now: () => new Date(),
-          generateSku: (p) => generateSku(p),
+          generateSku,
         }),
       inject: [DrizzleSubscriptionRepository],
     },
