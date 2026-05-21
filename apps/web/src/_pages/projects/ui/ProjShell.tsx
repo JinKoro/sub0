@@ -18,8 +18,8 @@ export function ProjShell({ title, eyebrow, onBack, children }: Props) {
   return (
     <div
       style={{
-        padding: isMobile ? '20px 16px 60px' : '32px 28px 80px',
-        maxWidth: 1000,
+        padding: isMobile ? '20px 16px' : '32px 28px',
+        maxWidth: 1320,
         margin: '0 auto',
       }}
     >

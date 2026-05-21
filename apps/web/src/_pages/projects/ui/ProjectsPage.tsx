@@ -6,21 +6,10 @@ import { useLang } from '@/shared/contexts/lang-context';
 import { useIsMobile } from '@/shared/hooks/use-is-mobile';
 import { useProjects } from '@/shared/contexts/projects-context';
 import { Card } from '@/shared/components/ui/Card';
+import { CabinetCtaButton } from '@/shared/components/ui/CabinetCtaButton';
 import { ProjShell } from './ProjShell';
 import { ProjectForm } from './ProjectForm';
 import { ProjectListRow } from './ProjectListRow';
-
-const pBtnPri = {
-  padding: '10px 14px',
-  borderRadius: 8,
-  border: 'none',
-  background: SUB0.ink,
-  color: SUB0.bg,
-  fontSize: 13,
-  fontWeight: 600,
-  cursor: 'pointer',
-  fontFamily: 'inherit',
-} as const;
 
 export function ProjectsPage() {
   const { t } = useLang();
@@ -33,7 +22,6 @@ export function ProjectsPage() {
   const editId = params.get('id');
 
   const goList = () => router.push('/account/projects');
-  const goNew = () => router.push('/account/projects?new=1');
   const goEdit = (id: string) => router.push(`/account/projects?id=${id}`);
 
   // --- NEW ---
@@ -108,9 +96,9 @@ export function ProjectsPage() {
   return (
     <div
       style={{
-        maxWidth: 1000,
+        maxWidth: 1320,
         margin: '0 auto',
-        padding: isMobile ? '20px 16px 60px' : '32px 28px 80px',
+        padding: isMobile ? '20px 16px' : '32px 28px',
       }}
     >
       <div style={{ marginBottom: 20 }}>
@@ -146,9 +134,9 @@ export function ProjectsPage() {
             {t('Проекты', 'Projects')}
           </h1>
           {projects.length > 0 && (
-            <button onClick={goNew} style={pBtnPri}>
+            <CabinetCtaButton href="/account/projects?new=1">
               + {t('Новый проект', 'New project')}
-            </button>
+            </CabinetCtaButton>
           )}
         </div>
       </div>
@@ -218,9 +206,11 @@ export function ProjectsPage() {
                 'Create your first project to split subscriptions by context.',
               )}
             </div>
-            <button onClick={goNew} style={{ ...pBtnPri, marginTop: 16 }}>
-              + {t('Новый проект', 'New project')}
-            </button>
+            <div style={{ marginTop: 16, display: 'inline-flex' }}>
+              <CabinetCtaButton href="/account/projects?new=1">
+                + {t('Новый проект', 'New project')}
+              </CabinetCtaButton>
+            </div>
           </div>
         )}
 
