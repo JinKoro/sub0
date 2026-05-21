@@ -15,6 +15,7 @@ import {
   type SubscriptionDto,
   type SubscriptionListQuery,
   type SubscriptionListResponse,
+  type SubscriptionListStatus,
 } from '@subzero/shared';
 
 import { DRIZZLE, type DrizzleDB } from '../db/db.module';
@@ -26,7 +27,7 @@ import { service } from '../db/schema/service';
 import { subscription } from '../db/schema/subscription';
 import type { SubscriptionRepository } from './subscription.types';
 
-const STATE_MAP: Record<string, number[]> = {
+const STATE_MAP: Record<SubscriptionListStatus, number[]> = {
   active: [SubscriptionState.ACTIVE],
   paused: [SubscriptionState.PAUSED],
   cancelled: [SubscriptionState.CANCELLED],
@@ -207,6 +208,7 @@ export class DrizzleSubscriptionRepository implements SubscriptionRepository {
       .innerJoin(project, eq(subscription.projectId, project.id))
       .leftJoin(service, eq(subscription.serviceId, service.id))
       .leftJoin(category, eq(subscription.categoryId, category.id))
+      .leftJoin(categoryCustom, eq(subscription.categoryCustomId, categoryCustom.id))
       .where(whereExpr);
 
     return {
