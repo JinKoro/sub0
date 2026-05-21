@@ -146,14 +146,25 @@ Limits: backfill ограничен 24 месяцами назад от `now()` 
 
 ### Удаление
 
-- **Subscription** — soft-delete: `deleted_at = now()`,
-  `state_id = ARCHIVED`. Остаётся в фильтре «архив».
+- **Subscription** (одиночное удаление через UI) — soft-delete:
+  `deleted_at = now()`, `state_id = ARCHIVED`. Остаётся в фильтре
+  «архив».
 - **Billing_history** — soft-delete (для случая удаления
   ошибочно созданной записи импорта). Customer-facing UI обычно
   не предоставляет удаление истории; это чисто backend-операция.
-- **Project** — soft-delete каскадом soft-delete'ит подписки и
-  category_custom. Billing_history project'а **не** soft-deleтся
-  (история переживает удаление проекта).
+- **Project** — **hard-delete** каскадом через FK
+  (`subscription.project_id ON DELETE CASCADE`). Подписки и
+  `category_custom` проекта удаляются физически; `billing_history`
+  уходит каскадно через `subscription.id`. История проекта не
+  переживает удаление — это сознательный выбор: customer удаляет
+  «контейнер» вместе со всей его историей. Если в будущем
+  потребуется сохранять историю — заводим soft-delete отдельной
+  задачей.
+- **Bulk-операция «Удалить все подписки» (red zone settings)** —
+  hard-delete: `DELETE FROM subscription WHERE customer_id = ?`
+  (одной транзакцией с `DELETE FROM billing_history WHERE
+  customer_id = ?`). По всем проектам. Аккаунт остаётся жив, но
+  подписок и истории — ноль. Без soft.
 - **Customer** — soft-delete: `deleted_at = now()`,
   `state_id = ARCHIVED`. Через 30 дней (152-ФЗ grace period) —
   hard-delete по cron'у: каскад удаляет всё дочернее (project,
