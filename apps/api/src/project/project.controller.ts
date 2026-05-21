@@ -40,8 +40,10 @@ export class ProjectController {
   }
 
   // Same URL for update (name and/or color). Matches the project's
-  // POST-for-writes convention (no PATCH).
+  // POST-for-writes convention (no PATCH). 200 OK — the resource already
+  // existed; only POST /projects (create) is 201 Created.
   @Post(':id')
+  @HttpCode(200)
   update(
     @Req() req: Request,
     @Param('id', ParseUUIDPipe) id: string,

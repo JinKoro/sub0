@@ -55,7 +55,10 @@ export function ProjectForm({ initial, onSave, onCancel, onDelete }: Props) {
   }, []);
 
   const trimmed = name.trim();
-  const canSave = trimmed.length > 0 && !busy;
+  // Edit: disable Save when nothing actually changed (avoids a no-op POST that
+  // just bumps `version`). Create: any non-empty name is savable.
+  const dirty = !initial || trimmed !== initial.name || color !== initial.color;
+  const canSave = trimmed.length > 0 && dirty && !busy;
   const initialChar = (trimmed || '?').slice(0, 1).toUpperCase();
 
   const shuffle = () => setColor((c) => randomProjectHex(c));
