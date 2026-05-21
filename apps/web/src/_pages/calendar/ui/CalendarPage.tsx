@@ -7,7 +7,7 @@ import { useIsMobile } from '@/shared/hooks/use-is-mobile';
 import { useCabinet } from '@/shared/contexts/cabinet-context';
 import { Card } from '@/shared/components/ui/Card';
 import { LogoPill } from '@/shared/components/ui/LogoPill';
-import { CAB_SUBS, CATEGORIES } from '@/entities/subscription/model/cabinet-mock';
+import { CAB_SUBS, CATEGORIES } from '@/entities/subscription/model/cabinet-demo';
 import { useProjects } from '@/shared/contexts/projects-context';
 import type { CabinetSubscription } from '@/entities/subscription/model/cabinet-types';
 import {

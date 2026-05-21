@@ -5,7 +5,7 @@ import { useLang } from '@/shared/contexts/lang-context';
 import { useIsMobile } from '@/shared/hooks/use-is-mobile';
 import { useCabinet } from '@/shared/contexts/cabinet-context';
 import { CabinetCtaButton } from '@/shared/components/ui/CabinetCtaButton';
-import { CAB_SUBS } from '@/entities/subscription/model/cabinet-mock';
+import { CAB_SUBS } from '@/entities/subscription/model/cabinet-demo';
 import { KpiRow } from './KpiRow';
 import { UpcomingChargesCard } from './UpcomingChargesCard';
 import { TrialsPromosCard } from './TrialsPromosCard';

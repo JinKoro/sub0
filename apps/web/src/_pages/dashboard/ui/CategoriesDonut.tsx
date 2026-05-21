@@ -6,7 +6,7 @@ import { useIsMobile } from '@/shared/hooks/use-is-mobile';
 import { Card } from '@/shared/components/ui/Card';
 import { CardHeader } from '@/shared/components/ui/CardHeader';
 import { Pill } from '@/shared/components/ui/Pill';
-import { CATEGORIES } from '@/entities/subscription/model/cabinet-mock';
+import { CATEGORIES } from '@/entities/subscription/model/cabinet-demo';
 import type { CabinetSubscription } from '@/entities/subscription/model/cabinet-types';
 import { toRub } from '@/shared/constants/cabinet';
 import { useFormatRub } from '../lib/format';
