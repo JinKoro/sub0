@@ -53,6 +53,8 @@ export interface CreateAccountArgs {
   localeId: number;
   marketingConsent: boolean;
   sku: string;
+  /** Locale-aware default project name — «Личное» / «Personal». */
+  projectName: string;
   color: string;
   tokenHash: string;
   verifyPath: string;

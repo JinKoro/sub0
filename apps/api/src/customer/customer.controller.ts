@@ -30,13 +30,16 @@ export class CustomerController {
   }
 
   // Profile card → name (avatar is deferred until file infra #6).
+  // 200 OK — the customer already exists; only POST /auth/register/etc create.
   @Post('me/profile')
+  @HttpCode(200)
   saveProfile(@Req() req: Request, @Body() dto: ProfileDto): Promise<CustomerProfile> {
     return this.customers.saveProfile(uid(req), dto.version, { name: dto.name });
   }
 
   // Region & format card → locale / timezone / currency in one request.
   @Post('me/preferences')
+  @HttpCode(200)
   savePreferences(@Req() req: Request, @Body() dto: PreferencesDto): Promise<CustomerProfile> {
     return this.customers.saveProfile(uid(req), dto.version, {
       localeId: dto.localeId,

@@ -32,7 +32,7 @@ export class DrizzleRegistrationRepository implements RegistrationRepository {
       await tx.insert(project).values({
         sku: args.sku,
         customerId: c.id,
-        name: 'Personal',
+        name: args.projectName,
         color: args.color,
       });
 

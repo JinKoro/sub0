@@ -61,12 +61,26 @@ describe('AuthService.register', () => {
     expect(arg.localeId).toBe(Locale.RU); // default
     expect(arg.marketingConsent).toBe(true);
     expect(arg.sku).toMatch(/^prj-[0-9ABCDEFGHJKMNPQRSTVWXYZ]{8}$/);
+    expect(arg.projectName).toBe('Личное'); // RU default
     expect(arg.color).toMatch(/^#[0-9a-f]{6}$/);
     expect(arg.tokenHash).toMatch(/^[a-f0-9]{64}$/);
     expect(arg.verifyPath).toMatch(/^\/registration\/complete\?token=.+/);
     expect(arg.expiresAt.getTime()).toBeGreaterThan(Date.now());
     expect(arg.expiresAt.getTime()).toBeLessThanOrEqual(Date.now() + 24 * 3600_000 + 5000);
     expect(registration.reissueVerification).not.toHaveBeenCalled();
+  });
+
+  it('names the default project «Personal» on EN locale', async () => {
+    const { service, registration } = makeDeps();
+
+    await service.register(
+      { ...baseDto, localeId: Locale.EN },
+      { userAgent: null, ip: null },
+    );
+
+    const arg = (registration.createNewAccount as jest.Mock).mock.calls[0][0];
+    expect(arg.localeId).toBe(Locale.EN);
+    expect(arg.projectName).toBe('Personal');
   });
 
   it('rejects with 409 when an ACTIVE customer already uses the email', async () => {
