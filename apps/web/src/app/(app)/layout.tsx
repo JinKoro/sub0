@@ -3,6 +3,7 @@ import { Header } from '@/widgets/header/ui/Header';
 import { CabinetProvider } from '@/shared/contexts/cabinet-context';
 import { ProfileProvider } from '@/shared/contexts/profile-context';
 import { ProfileSync } from '@/shared/contexts/profile-sync';
+import { ProjectsProvider } from '@/shared/contexts/projects-context';
 import { CUR_COOKIE, parseCurrency } from '@/shared/lib/pref-cookies';
 
 export default async function CabinetLayout({ children }: { children: React.ReactNode }) {
@@ -10,9 +11,11 @@ export default async function CabinetLayout({ children }: { children: React.Reac
   return (
     <ProfileProvider>
       <CabinetProvider initialCurrency={currency}>
-        <ProfileSync />
-        <Header mode="cabinet" />
-        <main>{children}</main>
+        <ProjectsProvider>
+          <ProfileSync />
+          <Header mode="cabinet" />
+          <main>{children}</main>
+        </ProjectsProvider>
       </CabinetProvider>
     </ProfileProvider>
   );

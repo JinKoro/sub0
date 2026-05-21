@@ -78,6 +78,7 @@ export class AuthService {
       localeId,
       marketingConsent: input.marketingConsent ?? false,
       sku: generateSku('prj'),
+      projectName: localeId === Locale.EN ? 'Personal' : 'Личное',
       color: randomProjectColor(),
       tokenHash,
       verifyPath,

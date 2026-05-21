@@ -40,6 +40,7 @@ describe('createNewAccount transaction rollback', () => {
         localeId: 1,
         marketingConsent: false,
         sku: 'prj-ROLLBCK1',
+        projectName: 'Личное',
         color: '#abcdef',
         tokenHash: 'dup-token-hash',
         verifyPath: '/registration/complete?token=x',

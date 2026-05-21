@@ -23,18 +23,18 @@ interface Tab {
 }
 
 const TABS: Tab[] = [
-  { id: 'dashboard', label: 'Обзор', labelEn: 'Overview', href: '/dashboard' },
-  { id: 'subscriptions', label: 'Подписки', labelEn: 'Subscriptions', href: '/subscriptions' },
-  { id: 'calendar', label: 'Календарь', labelEn: 'Calendar', href: '/calendar' },
-  { id: 'notifications', label: 'Уведомления', labelEn: 'Notifications', href: '/settings#notifications' },
+  { id: 'dashboard', label: 'Обзор', labelEn: 'Overview', href: '/account/dashboard' },
+  { id: 'subscriptions', label: 'Подписки', labelEn: 'Subscriptions', href: '/account/subscriptions' },
+  { id: 'calendar', label: 'Календарь', labelEn: 'Calendar', href: '/account/calendar' },
+  { id: 'notifications', label: 'Уведомления', labelEn: 'Notifications', href: '/account/settings#notifications' },
 ];
 
 function activeTabId(pathname: string | null): string {
   if (!pathname) return '';
-  if (pathname.startsWith('/dashboard')) return 'dashboard';
-  if (pathname.startsWith('/subscriptions')) return 'subscriptions';
-  if (pathname.startsWith('/calendar')) return 'calendar';
-  if (pathname.startsWith('/settings')) return 'notifications';
+  if (pathname.startsWith('/account/dashboard')) return 'dashboard';
+  if (pathname.startsWith('/account/subscriptions')) return 'subscriptions';
+  if (pathname.startsWith('/account/calendar')) return 'calendar';
+  if (pathname.startsWith('/account/settings')) return 'notifications';
   return '';
 }
 
@@ -79,7 +79,7 @@ export function CabinetHeader() {
         WebkitBackdropFilter: 'blur(12px)',
       }}
     >
-      <HeaderLogo hideText={isMobile} href="/dashboard" />
+      <HeaderLogo hideText={isMobile} href="/account/dashboard" />
 
       {isMobile && (
         <div ref={burgerRef} style={{ position: 'relative' }}>
@@ -105,7 +105,7 @@ export function CabinetHeader() {
         <nav style={{ display: 'flex', gap: 4, marginLeft: 8 }}>
           {TABS.map((tb) => {
             const isActive = active === tb.id;
-            const goesToSettings = tb.href.startsWith('/settings');
+            const goesToSettings = tb.href.startsWith('/account/settings');
             return (
               <Link
                 key={tb.id}
@@ -233,7 +233,7 @@ function CabinetMobileDrawer({
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           {TABS.map((tb) => {
             const isActive = active === tb.id;
-            const goesToSettings = tb.href.startsWith('/settings');
+            const goesToSettings = tb.href.startsWith('/account/settings');
             return (
               <Link
                 key={tb.id}

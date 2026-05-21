@@ -1,19 +1,23 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import { SUB0, mono } from '@/shared/constants/tokens';
 import { useLang } from '@/shared/contexts/lang-context';
 import { useCabinet } from '@/shared/contexts/cabinet-context';
+import { useProjects } from '@/shared/contexts/projects-context';
 import { ProjectMarker } from '@/shared/components/ui/ProjectMarker';
-import { PROJECTS } from '@/entities/project/model/data';
 
 interface Props {
   isMobile?: boolean;
 }
 
+const ALL_COLOR = '#0a0a0a';
+
 export function ProjectSwitcher({ isMobile = false }: Props) {
   const { t } = useLang();
   const { project, setProject } = useCabinet();
+  const { projects, loading } = useProjects();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement | null>(null);
 
@@ -25,7 +29,22 @@ export function ProjectSwitcher({ isMobile = false }: Props) {
     return () => document.removeEventListener('mousedown', close);
   }, []);
 
-  const current = PROJECTS.find((p) => p.id === project) ?? PROJECTS[0]!;
+  // If the selected project disappears (deleted in another tab / after delete)
+  // fall back to 'all' so the cabinet stays consistent.
+  useEffect(() => {
+    if (loading) return;
+    if (project === 'all') return;
+    if (!projects.some((p) => p.sku === project)) {
+      setProject('all');
+    }
+  }, [loading, projects, project, setProject]);
+
+  const currentReal = projects.find((p) => p.sku === project);
+  const isAll = project === 'all' || !currentReal;
+  const currentName = isAll
+    ? t('Все проекты', 'All projects')
+    : (currentReal?.name ?? '');
+  const currentColor = isAll ? ALL_COLOR : (currentReal?.color ?? ALL_COLOR);
 
   return (
     <div ref={ref} style={{ position: 'relative' }}>
@@ -44,7 +63,7 @@ export function ProjectSwitcher({ isMobile = false }: Props) {
           maxWidth: isMobile ? 160 : 'none',
         }}
       >
-        <ProjectMarker color={current.color} aggregate={current.id === 'all'} size={20} />
+        <ProjectMarker color={currentColor} aggregate={isAll} size={20} />
         <span
           style={{
             fontSize: 13,
@@ -55,7 +74,7 @@ export function ProjectSwitcher({ isMobile = false }: Props) {
             whiteSpace: 'nowrap',
           }}
         >
-          {t(current.name, current.nameEn)}
+          {currentName}
         </span>
         <svg
           width="10"
@@ -105,38 +124,32 @@ export function ProjectSwitcher({ isMobile = false }: Props) {
           >
             {t('Проекты', 'Projects')}
           </div>
-          {PROJECTS.map((p) => (
-            <button
-              key={p.id}
+          <DropdownItem
+            active={project === 'all'}
+            onClick={() => {
+              setProject('all');
+              setOpen(false);
+            }}
+            color={ALL_COLOR}
+            aggregate
+            label={t('Все проекты', 'All projects')}
+          />
+          {projects.map((p) => (
+            <DropdownItem
+              key={p.sku}
+              active={project === p.sku}
               onClick={() => {
-                setProject(p.id);
+                setProject(p.sku);
                 setOpen(false);
               }}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 10,
-                width: '100%',
-                padding: '9px 10px',
-                borderRadius: 6,
-                background: project === p.id ? SUB0.soft : 'transparent',
-                border: 'none',
-                cursor: 'pointer',
-                textAlign: 'left',
-                fontFamily: 'inherit',
-              }}
-            >
-              <ProjectMarker color={p.color} aggregate={p.id === 'all'} size={22} />
-              <span style={{ flex: 1, fontSize: 14, fontWeight: 600, color: SUB0.ink }}>
-                {t(p.name, p.nameEn)}
-              </span>
-              {project === p.id && (
-                <span style={{ color: SUB0.blue, fontFamily: mono, fontWeight: 700 }}>✓</span>
-              )}
-            </button>
+              color={p.color}
+              label={p.name}
+            />
           ))}
           <div style={{ borderTop: `1px solid ${SUB0.line}`, margin: '6px 0' }} />
-          <button
+          <Link
+            href="/account/projects/new"
+            onClick={() => setOpen(false)}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -145,27 +158,113 @@ export function ProjectSwitcher({ isMobile = false }: Props) {
               padding: '9px 10px',
               borderRadius: 6,
               background: 'transparent',
-              border: 'none',
-              cursor: 'pointer',
               textAlign: 'left',
               fontFamily: 'inherit',
-              color: SUB0.muted,
+              color: SUB0.ink,
               fontSize: 13,
+              fontWeight: 600,
+              textDecoration: 'none',
             }}
           >
             <span
               style={{
-                width: 10,
-                height: 10,
-                borderRadius: 999,
+                width: 22,
+                height: 22,
+                borderRadius: 6,
                 border: `1px dashed ${SUB0.muted}`,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: SUB0.muted,
+                fontSize: 16,
+                lineHeight: 1,
                 flexShrink: 0,
               }}
-            />
+            >
+              +
+            </span>
             {t('Новый проект', 'New project')}
-          </button>
+          </Link>
+          <Link
+            href="/account/projects"
+            onClick={() => setOpen(false)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              width: '100%',
+              padding: '9px 10px',
+              borderRadius: 6,
+              background: 'transparent',
+              textAlign: 'left',
+              fontFamily: 'inherit',
+              color: SUB0.muted,
+              fontSize: 12,
+              textDecoration: 'none',
+            }}
+          >
+            <span
+              style={{
+                width: 22,
+                height: 22,
+                borderRadius: 6,
+                background: SUB0.soft,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: SUB0.muted,
+                fontSize: 14,
+                fontWeight: 700,
+                flexShrink: 0,
+              }}
+            >
+              ⚙
+            </span>
+            {t('Управлять проектами', 'Manage projects')}
+          </Link>
         </div>
       )}
     </div>
+  );
+}
+
+function DropdownItem({
+  active,
+  onClick,
+  color,
+  aggregate,
+  label,
+}: {
+  active: boolean;
+  onClick: () => void;
+  color: string;
+  aggregate?: boolean;
+  label: string;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 10,
+        width: '100%',
+        padding: '9px 10px',
+        borderRadius: 6,
+        background: active ? SUB0.soft : 'transparent',
+        border: 'none',
+        cursor: 'pointer',
+        textAlign: 'left',
+        fontFamily: 'inherit',
+      }}
+    >
+      <ProjectMarker color={color} aggregate={aggregate} size={22} />
+      <span style={{ flex: 1, fontSize: 14, fontWeight: 600, color: SUB0.ink }}>
+        {label}
+      </span>
+      {active && (
+        <span style={{ color: SUB0.blue, fontFamily: mono, fontWeight: 700 }}>✓</span>
+      )}
+    </button>
   );
 }
