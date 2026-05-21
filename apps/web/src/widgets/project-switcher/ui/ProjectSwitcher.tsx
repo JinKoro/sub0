@@ -6,6 +6,7 @@ import { SUB0, mono } from '@/shared/constants/tokens';
 import { useLang } from '@/shared/contexts/lang-context';
 import { useCabinet } from '@/shared/contexts/cabinet-context';
 import { useProjects } from '@/shared/contexts/projects-context';
+import { ProjectMarker } from '@/shared/components/ui/ProjectMarker';
 
 interface Props {
   isMobile?: boolean;
@@ -62,15 +63,7 @@ export function ProjectSwitcher({ isMobile = false }: Props) {
           maxWidth: isMobile ? 160 : 'none',
         }}
       >
-        <span
-          style={{
-            width: 10,
-            height: 10,
-            borderRadius: 999,
-            background: currentColor,
-            flexShrink: 0,
-          }}
-        />
+        <ProjectMarker color={currentColor} aggregate={isAll} size={20} />
         <span
           style={{
             fontSize: 13,
@@ -138,6 +131,7 @@ export function ProjectSwitcher({ isMobile = false }: Props) {
               setOpen(false);
             }}
             color={ALL_COLOR}
+            aggregate
             label={t('Все проекты', 'All projects')}
           />
           {projects.map((p) => (
@@ -174,13 +168,21 @@ export function ProjectSwitcher({ isMobile = false }: Props) {
           >
             <span
               style={{
-                width: 10,
-                height: 10,
-                borderRadius: 999,
+                width: 22,
+                height: 22,
+                borderRadius: 6,
                 border: `1px dashed ${SUB0.muted}`,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: SUB0.muted,
+                fontSize: 16,
+                lineHeight: 1,
                 flexShrink: 0,
               }}
-            />
+            >
+              +
+            </span>
             {t('Новый проект', 'New project')}
           </Link>
           <Link
@@ -203,12 +205,17 @@ export function ProjectSwitcher({ isMobile = false }: Props) {
           >
             <span
               style={{
-                width: 10,
-                fontFamily: mono,
-                fontWeight: 700,
+                width: 22,
+                height: 22,
+                borderRadius: 6,
+                background: SUB0.soft,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
                 color: SUB0.muted,
-                textAlign: 'center',
-                fontSize: 13,
+                fontSize: 14,
+                fontWeight: 700,
+                flexShrink: 0,
               }}
             >
               ⚙
@@ -225,11 +232,13 @@ function DropdownItem({
   active,
   onClick,
   color,
+  aggregate,
   label,
 }: {
   active: boolean;
   onClick: () => void;
   color: string;
+  aggregate?: boolean;
   label: string;
 }) {
   return (
@@ -249,15 +258,7 @@ function DropdownItem({
         fontFamily: 'inherit',
       }}
     >
-      <span
-        style={{
-          width: 10,
-          height: 10,
-          borderRadius: 999,
-          background: color,
-          flexShrink: 0,
-        }}
-      />
+      <ProjectMarker color={color} aggregate={aggregate} size={22} />
       <span style={{ flex: 1, fontSize: 14, fontWeight: 600, color: SUB0.ink }}>
         {label}
       </span>
