@@ -1,5 +1,7 @@
 import { BillingPeriod } from '@subzero/shared';
 
+import { resolveCurrentPrice, type PromoLike } from './promo-resolver';
+
 const MAX_BACKFILL_CYCLES = { [BillingPeriod.MONTH]: 24, [BillingPeriod.YEAR]: 2 } as const;
 
 export function addPeriod(from: Date, period: BillingPeriod, n: number): Date {
@@ -46,8 +48,7 @@ export function computeBackfill(args: {
   firstBillingDate: Date;
   billingPeriod: BillingPeriod;
   amount: string;
-  promoAmount: string | null;
-  promoEndsAt: Date | null;
+  promos: PromoLike[];
   now: Date;
 }): BackfillEntry[] {
   const cycles = countElapsedCycles(args.firstBillingDate, args.billingPeriod, args.now);
@@ -55,16 +56,14 @@ export function computeBackfill(args: {
   for (let i = 0; i < cycles; i += 1) {
     const periodStart = addPeriod(args.firstBillingDate, args.billingPeriod, i);
     const periodEnd = addPeriod(args.firstBillingDate, args.billingPeriod, i + 1);
-    const inPromo =
-      args.promoAmount !== null &&
-      args.promoEndsAt !== null &&
-      periodEnd <= args.promoEndsAt;
+    // Resolved price at the moment of billing (periodEnd).
+    const resolved = resolveCurrentPrice(args.amount, args.promos, periodEnd);
     out.push({
       periodStart,
       periodEnd,
       billedAt: periodEnd,
-      amount: inPromo ? (args.promoAmount as string) : args.amount,
-      isPromo: inPromo,
+      amount: resolved.amount,
+      isPromo: resolved.isPromo,
     });
   }
   return out;

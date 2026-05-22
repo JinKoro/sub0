@@ -65,38 +65,48 @@ describe('nextBillingDateAfter', () => {
 
 describe('computeBackfill', () => {
   const now = new Date('2026-05-21T00:00:00Z');
-  it('emits N period entries with promo applied while still active at periodEnd', () => {
+
+  it('promo применяется когда активен в момент billedAt (periodEnd)', () => {
     const out = computeBackfill({
       firstBillingDate: new Date('2026-02-21T00:00:00Z'),
       billingPeriod: BillingPeriod.MONTH,
       amount: '500.00',
-      promoAmount: '0.00',
-      promoEndsAt: new Date('2026-04-30T00:00:00Z'),
+      promos: [{ amount: '0.00', endsAt: new Date('2026-04-30T00:00:00Z') }],
       now,
     });
-    // 3 cycles billed at periodEnd: Mar 21 (≤ promo end), Apr 21 (≤ promo end), May 21 (after promo end).
     expect(out).toHaveLength(3);
-    expect(out[0].isPromo).toBe(true);
-    expect(out[1].isPromo).toBe(true);
-    expect(out[2].isPromo).toBe(false);
-    expect(out[0].amount).toBe('0.00');
-    expect(out[1].amount).toBe('0.00');
+    expect(out[0].isPromo).toBe(true);   // billedAt 2026-03-21 < 2026-04-30
+    expect(out[1].isPromo).toBe(true);   // billedAt 2026-04-21 < 2026-04-30
+    expect(out[2].isPromo).toBe(false);  // billedAt 2026-05-21 > 2026-04-30
     expect(out[2].amount).toBe('500.00');
   });
 
-  it('promo not applied when periodEnd falls past promoEndsAt', () => {
+  it('без промо — full price на все циклы', () => {
     const out = computeBackfill({
-      firstBillingDate: new Date('2026-02-21T00:00:00Z'),
+      firstBillingDate: new Date('2026-03-21T00:00:00Z'),
       billingPeriod: BillingPeriod.MONTH,
-      amount: '500.00',
-      promoAmount: '0.00',
-      promoEndsAt: new Date('2026-04-01T00:00:00Z'),
+      amount: '300.00',
+      promos: [],
       now,
     });
-    // Cycle 0 billedAt Mar 21 (≤ Apr 1, promo). Cycle 1 billedAt Apr 21 (> Apr 1, full).
-    expect(out).toHaveLength(3);
-    expect(out[0].isPromo).toBe(true);
-    expect(out[1].isPromo).toBe(false);
-    expect(out[2].isPromo).toBe(false);
+    expect(out).toHaveLength(2);
+    expect(out.every((e) => !e.isPromo)).toBe(true);
+    expect(out.every((e) => e.amount === '300.00')).toBe(true);
+  });
+
+  it('несколько промо — берётся минимальный активный', () => {
+    const out = computeBackfill({
+      firstBillingDate: new Date('2026-03-21T00:00:00Z'),
+      billingPeriod: BillingPeriod.MONTH,
+      amount: '500.00',
+      promos: [
+        { amount: '300.00', endsAt: new Date('2026-06-30T00:00:00Z') },
+        { amount: '100.00', endsAt: new Date('2026-06-30T00:00:00Z') },
+      ],
+      now,
+    });
+    expect(out).toHaveLength(2);
+    expect(out[0].amount).toBe('100.00');
+    expect(out[1].amount).toBe('100.00');
   });
 });
