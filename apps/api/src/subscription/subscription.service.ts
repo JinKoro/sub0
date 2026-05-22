@@ -6,11 +6,13 @@ import {
 } from '@nestjs/common';
 import {
   SubscriptionState,
+  type NewPromoDto,
   type SubscriptionCreateDto,
   type SubscriptionDto,
   type SubscriptionListQuery,
   type SubscriptionListResponse,
   type SubscriptionUpdateDto,
+  type UpdatePromoDto,
 } from '@subzero/shared';
 
 import { computeBackfill, nextBillingDateAfter } from './billing-cycle';
@@ -18,6 +20,7 @@ import type {
   SubscriptionRepository,
   SubscriptionServiceDeps,
 } from './subscription.types';
+import type { SubscriptionPromoRepository } from './subscription-promo.types';
 
 const ALLOWED_UPDATE_STATES = new Set<number>([
   SubscriptionState.ACTIVE,
@@ -27,11 +30,13 @@ const ALLOWED_UPDATE_STATES = new Set<number>([
 
 export class SubscriptionService {
   private readonly repo: SubscriptionRepository;
+  private readonly promoRepo: SubscriptionPromoRepository;
   private readonly now: () => Date;
-  private readonly generateSku: (p: 'sub' | 'bil') => string;
+  private readonly generateSku: (p: 'sub' | 'bil' | 'spm') => string;
 
   constructor(deps: SubscriptionServiceDeps) {
     this.repo = deps.repo;
+    this.promoRepo = deps.promoRepo;
     this.now = deps.now;
     this.generateSku = deps.generateSku;
   }
@@ -48,12 +53,8 @@ export class SubscriptionService {
 
   async create(customerId: string, dto: SubscriptionCreateDto): Promise<SubscriptionDto> {
     this.validateAmount(dto.amount);
-    this.validatePromoTrial({
-      amount: dto.amount,
-      isTrial: dto.isTrial,
-      promoAmount: dto.promoAmount ?? null,
-      promoEndsAt: dto.promoEndsAt ?? null,
-    });
+    this.validateTrial(dto.isTrial, dto.trialEndsAt ?? null);
+    const promos = (dto.promos ?? []).map((p) => this.validateAndNormalisePromo(p, dto.amount));
 
     const projectId = await this.repo.findProjectIdBySku(customerId, dto.projectSku);
     if (!projectId) throw new NotFoundException('project not found');
@@ -63,7 +64,7 @@ export class SubscriptionService {
 
     let serviceId: string | null = null;
     if (dto.serviceSku) {
-      const svc = await this.repo.findServiceByCustomSku(dto.serviceSku);
+      const svc = await this.repo.findServiceBySku(dto.serviceSku);
       if (!svc) throw new NotFoundException('service not found');
       serviceId = svc.id;
     }
@@ -78,16 +79,15 @@ export class SubscriptionService {
     if (Number.isNaN(firstBillingDate.getTime())) {
       throw new BadRequestException('invalid firstBillingDate');
     }
+    const trialEndsAt = dto.trialEndsAt ? new Date(dto.trialEndsAt) : null;
     const now = this.now();
-    const promoEndsAt = dto.promoEndsAt ? new Date(dto.promoEndsAt) : null;
     const nextBillingDate = nextBillingDateAfter(firstBillingDate, dto.billingPeriodId, now);
 
     const backfillEntries = computeBackfill({
       firstBillingDate,
       billingPeriod: dto.billingPeriodId,
       amount: dto.amount,
-      promoAmount: dto.promoAmount ?? null,
-      promoEndsAt,
+      promos: promos.map((p) => ({ amount: p.amount, endsAt: p.endsAt })),
       now,
     });
 
@@ -115,9 +115,13 @@ export class SubscriptionService {
       firstBillingDate,
       nextBillingDate,
       isTrial: dto.isTrial,
-      promoAmount: dto.promoAmount ?? null,
-      promoEndsAt,
+      trialEndsAt,
       comment: (dto.comment ?? '').trim() || null,
+      promos: promos.map((p) => ({
+        sku: this.generateSku('spm'),
+        amount: p.amount,
+        endsAt: p.endsAt,
+      })),
       backfill,
     });
   }
@@ -128,24 +132,27 @@ export class SubscriptionService {
     dto: SubscriptionUpdateDto,
   ): Promise<SubscriptionDto> {
     if (dto.stateId !== undefined && !ALLOWED_UPDATE_STATES.has(dto.stateId)) {
-      throw new BadRequestException('stateId=ARCHIVED is set via DELETE');
+      throw new BadRequestException('stateId=ARCHIVED is reserved');
     }
     if (dto.amount !== undefined) this.validateAmount(dto.amount);
 
-    const promoTouched =
-      dto.promoAmount !== undefined ||
-      dto.promoEndsAt !== undefined ||
-      dto.isTrial !== undefined;
-
-    if (promoTouched) {
-      const existing = await this.repo.findBySku(customerId, sku);
+    const needsExisting =
+      dto.isTrial !== undefined ||
+      dto.trialEndsAt !== undefined ||
+      dto.promos !== undefined ||
+      dto.firstBillingDate !== undefined ||
+      dto.billingPeriodId !== undefined;
+    let existing: SubscriptionDto | null = null;
+    if (needsExisting) {
+      existing = await this.repo.findBySku(customerId, sku);
       if (!existing) throw new NotFoundException('subscription not found');
-      this.validatePromoTrial({
-        amount: dto.amount ?? existing.amount,
-        isTrial: dto.isTrial ?? existing.isTrial,
-        promoAmount: dto.promoAmount !== undefined ? dto.promoAmount : existing.promoAmount,
-        promoEndsAt: dto.promoEndsAt !== undefined ? dto.promoEndsAt : existing.promoEndsAt,
-      });
+    }
+
+    if (dto.isTrial !== undefined || dto.trialEndsAt !== undefined) {
+      const isTrial = dto.isTrial ?? existing!.isTrial;
+      const trialEndsAt =
+        dto.trialEndsAt !== undefined ? dto.trialEndsAt : existing!.trialEndsAt;
+      this.validateTrial(isTrial, trialEndsAt);
     }
 
     const patch: Record<string, unknown> = {};
@@ -156,9 +163,8 @@ export class SubscriptionService {
     if (dto.billingPeriodId !== undefined) patch.billingPeriodId = dto.billingPeriodId;
     if (dto.firstBillingDate !== undefined) patch.firstBillingDate = new Date(dto.firstBillingDate);
     if (dto.isTrial !== undefined) patch.isTrial = dto.isTrial;
-    if (dto.promoAmount !== undefined) patch.promoAmount = dto.promoAmount;
-    if (dto.promoEndsAt !== undefined) {
-      patch.promoEndsAt = dto.promoEndsAt ? new Date(dto.promoEndsAt) : null;
+    if (dto.trialEndsAt !== undefined) {
+      patch.trialEndsAt = dto.trialEndsAt ? new Date(dto.trialEndsAt) : null;
     }
     if (dto.comment !== undefined) patch.comment = (dto.comment ?? '').trim() || null;
     if (dto.stateId !== undefined) patch.stateId = dto.stateId;
@@ -168,86 +174,139 @@ export class SubscriptionService {
       if (!projectId) throw new NotFoundException('project not found');
       patch.projectId = projectId;
     }
-
     if (dto.categorySku !== undefined) {
       const categoryId = await this.repo.findCategoryIdBySku(dto.categorySku);
       if (!categoryId) throw new NotFoundException('category not found');
       patch.categoryId = categoryId;
     }
-
     if (dto.serviceSku !== undefined) {
       if (dto.serviceSku === null) {
         patch.serviceId = null;
       } else {
-        const svc = await this.repo.findServiceByCustomSku(dto.serviceSku);
+        const svc = await this.repo.findServiceBySku(dto.serviceSku);
         if (!svc) throw new NotFoundException('service not found');
         patch.serviceId = svc.id;
       }
     }
 
     if (dto.firstBillingDate !== undefined || dto.billingPeriodId !== undefined) {
-      const existing = await this.repo.findBySku(customerId, sku);
-      if (!existing) throw new NotFoundException('subscription not found');
       const firstBillingDate = dto.firstBillingDate
         ? new Date(dto.firstBillingDate)
-        : new Date(existing.firstBillingDate);
-      const billingPeriodId = dto.billingPeriodId ?? existing.billingPeriodId;
+        : new Date(existing!.firstBillingDate);
+      const billingPeriodId = dto.billingPeriodId ?? existing!.billingPeriodId;
       patch.nextBillingDate = nextBillingDateAfter(firstBillingDate, billingPeriodId, this.now());
     }
 
-    if (Object.keys(patch).length === 0) {
+    const hasMainPatch = Object.keys(patch).length > 0;
+    const hasPromoPatch = dto.promos !== undefined;
+    if (!hasMainPatch && !hasPromoPatch) {
       throw new BadRequestException('no fields to update');
     }
 
-    const ok = await this.repo.update({
-      customerId,
-      sku,
-      version: dto.version,
-      patch,
-    });
-    if (!ok) {
-      const existing = await this.repo.findBySku(customerId, sku);
-      if (!existing) throw new NotFoundException('subscription not found');
-      throw new ConflictException('version mismatch');
+    if (hasMainPatch) {
+      const ok = await this.repo.update({ customerId, sku, version: dto.version, patch });
+      if (!ok) {
+        const after = existing ?? (await this.repo.findBySku(customerId, sku));
+        if (!after) throw new NotFoundException('subscription not found');
+        throw new ConflictException('version mismatch');
+      }
     }
+
+    if (hasPromoPatch) {
+      const fresh = (await this.repo.findBySku(customerId, sku))!;
+      const subId = await this.repo.findIdBySku(customerId, sku);
+      if (!subId) throw new NotFoundException('subscription not found');
+      const subscriptionAmount = (patch.amount as string | undefined) ?? fresh.amount;
+      await this.syncPromos(subId, fresh, dto.promos!, subscriptionAmount);
+    }
+
     const after = await this.repo.findBySku(customerId, sku);
     if (!after) throw new NotFoundException('subscription not found');
     return after;
   }
 
   async delete(customerId: string, sku: string): Promise<void> {
-    const ok = await this.repo.softDelete(customerId, sku);
+    const ok = await this.repo.hardDelete(customerId, sku);
     if (!ok) throw new NotFoundException('subscription not found');
   }
+
+  // ---- private helpers ----
 
   private validateAmount(amount: string): void {
     const n = Number(amount);
     if (!Number.isFinite(n) || n <= 0) throw new BadRequestException('amount must be > 0');
   }
 
-  private validatePromoTrial(args: {
-    amount: string;
-    isTrial: boolean;
-    promoAmount: string | null;
-    promoEndsAt: string | Date | null;
-  }): void {
-    const hasPromoAmount = args.promoAmount !== null;
-    const hasPromoEnd = args.promoEndsAt !== null;
-    if (hasPromoAmount !== hasPromoEnd) {
-      throw new UnprocessableEntityException('promoAmount/promoEndsAt must be set together');
+  private validateTrial(isTrial: boolean, trialEndsAt: string | null): void {
+    if (isTrial && !trialEndsAt) {
+      throw new UnprocessableEntityException('trial requires trialEndsAt');
     }
-    if (args.isTrial) {
-      if (!hasPromoAmount || !hasPromoEnd) {
-        throw new UnprocessableEntityException('trial requires promoAmount=0 + promoEndsAt');
+    if (!isTrial && trialEndsAt) {
+      throw new UnprocessableEntityException('trialEndsAt must be null when isTrial=false');
+    }
+  }
+
+  private validateAndNormalisePromo(
+    p: NewPromoDto,
+    subscriptionAmount: string,
+  ): { amount: string; endsAt: Date } {
+    const amount = Number(p.amount);
+    const subAmount = Number(subscriptionAmount);
+    if (!Number.isFinite(amount) || amount <= 0 || amount >= subAmount) {
+      throw new UnprocessableEntityException('promo amount must be > 0 and < subscription amount');
+    }
+    const endsAt = new Date(p.endsAt);
+    if (Number.isNaN(endsAt.getTime())) {
+      throw new BadRequestException('promo endsAt is invalid');
+    }
+    return { amount: p.amount, endsAt };
+  }
+
+  private async syncPromos(
+    subId: string,
+    sub: SubscriptionDto,
+    next: Array<NewPromoDto | UpdatePromoDto>,
+    subscriptionAmount: string,
+  ): Promise<void> {
+    const existingBySku = new Map(sub.promos.map((p) => [p.sku, p]));
+    const incomingSkus = new Set<string>();
+
+    for (const item of next) {
+      if ('sku' in item) {
+        // Update path.
+        incomingSkus.add(item.sku);
+        const ex = existingBySku.get(item.sku);
+        if (!ex) throw new NotFoundException('promo not found');
+        if (item.amount !== undefined || item.endsAt !== undefined) {
+          this.validateAndNormalisePromo(
+            { amount: item.amount ?? ex.amount, endsAt: item.endsAt ?? ex.endsAt },
+            subscriptionAmount,
+          );
+          const ok = await this.promoRepo.update({
+            sku: item.sku,
+            subscriptionId: subId,
+            version: item.version,
+            patch: {
+              amount: item.amount,
+              endsAt: item.endsAt ? new Date(item.endsAt) : undefined,
+            },
+          });
+          if (!ok) throw new ConflictException('promo version mismatch');
+        }
+      } else {
+        // Insert path.
+        const norm = this.validateAndNormalisePromo(item, subscriptionAmount);
+        await this.promoRepo.bulkInsert({
+          subscriptionId: subId,
+          rows: [{ sku: this.generateSku('spm'), amount: norm.amount, endsAt: norm.endsAt }],
+        });
       }
-      if (Number(args.promoAmount) !== 0) {
-        throw new UnprocessableEntityException('trial requires promoAmount=0');
-      }
-    } else if (hasPromoAmount) {
-      const p = Number(args.promoAmount);
-      const a = Number(args.amount);
-      if (!Number.isFinite(p) || p <= 0 || p >= a) {
-        throw new UnprocessableEntityException('promoAmount must be > 0 and < amount');
+    }
+
+    // Delete any existing promo not present in incoming list.
+    for (const ex of sub.promos) {
+      if (!incomingSkus.has(ex.sku)) {
+        await this.promoRepo.softDelete(ex.sku, subId);
       }
     }
   }
