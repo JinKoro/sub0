@@ -1,22 +1,23 @@
 import type {
-  SubscriptionCreateDto,
   SubscriptionDto,
   SubscriptionListQuery,
   SubscriptionListResponse,
 } from '@subzero/shared';
 
+import type { SubscriptionPromoRepository } from './subscription-promo.types';
+
 export interface SubscriptionRepository {
   findProjectIdBySku(customerId: string, projectSku: string): Promise<string | null>;
-  findServiceByCustomSku(
+  findServiceBySku(
     sku: string,
   ): Promise<{ id: string; name: string; icon: string | null; categoryId: string } | null>;
   findCategoryIdBySku(sku: string): Promise<string | null>;
-  list(
-    customerId: string,
-    q: SubscriptionListQuery,
-  ): Promise<SubscriptionListResponse>;
+  findIdBySku(customerId: string, sku: string): Promise<string | null>;
+
+  list(customerId: string, q: SubscriptionListQuery): Promise<SubscriptionListResponse>;
   findBySku(customerId: string, sku: string): Promise<SubscriptionDto | null>;
-  /** INSERT subscription + backfill billing_history в одной транзакции. */
+
+  /** INSERT subscription + promo (если есть) + backfill billing_history в одной транзакции. */
   createWithBackfill(args: {
     customerId: string;
     projectId: string;
@@ -31,9 +32,9 @@ export interface SubscriptionRepository {
     firstBillingDate: Date;
     nextBillingDate: Date;
     isTrial: boolean;
-    promoAmount: string | null;
-    promoEndsAt: Date | null;
+    trialEndsAt: Date | null;
     comment: string | null;
+    promos: Array<{ sku: string; amount: string; endsAt: Date }>;
     backfill: Array<{
       sku: string;
       periodStart: Date;
@@ -44,21 +45,21 @@ export interface SubscriptionRepository {
       currencyId: number;
     }>;
   }): Promise<SubscriptionDto>;
-  /** Optimistic update — returns false on version mismatch. */
+
   update(args: {
     customerId: string;
     sku: string;
     version: number;
     patch: Record<string, unknown>;
   }): Promise<boolean>;
-  /** Soft-delete (state=ARCHIVED, deleted_at=now). Returns false if не найдена / уже архив. */
-  softDelete(customerId: string, sku: string): Promise<boolean>;
+
+  /** HARD delete — DELETE FROM subscription (promos и billing_history каскадно). */
+  hardDelete(customerId: string, sku: string): Promise<boolean>;
 }
 
 export interface SubscriptionServiceDeps {
   repo: SubscriptionRepository;
+  promoRepo: SubscriptionPromoRepository;
   now: () => Date;
-  generateSku: (prefix: 'sub' | 'bil') => string;
+  generateSku: (prefix: 'sub' | 'bil' | 'spm') => string;
 }
-
-export type SubscriptionCreateInput = SubscriptionCreateDto;

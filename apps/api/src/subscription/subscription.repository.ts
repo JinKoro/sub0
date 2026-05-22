@@ -25,18 +25,17 @@ import { categoryCustom } from '../db/schema/category-custom';
 import { project } from '../db/schema/project';
 import { service } from '../db/schema/service';
 import { subscription } from '../db/schema/subscription';
+import { subscriptionPromo } from '../db/schema/subscription-promo';
 import type { SubscriptionRepository } from './subscription.types';
 
 const STATE_MAP: Record<SubscriptionListStatus, number[]> = {
   active: [SubscriptionState.ACTIVE],
   paused: [SubscriptionState.PAUSED],
   cancelled: [SubscriptionState.CANCELLED],
-  archived: [SubscriptionState.ARCHIVED],
   all: [
     SubscriptionState.ACTIVE,
     SubscriptionState.PAUSED,
     SubscriptionState.CANCELLED,
-    SubscriptionState.ARCHIVED,
   ],
 };
 
@@ -46,7 +45,8 @@ const DEFAULT_NON_ARCHIVED = [
   SubscriptionState.CANCELLED,
 ];
 
-function toDto(row: {
+interface SubscriptionRow {
+  id: string;
   sku: string;
   projectSku: string;
   serviceSku: string | null;
@@ -62,22 +62,21 @@ function toDto(row: {
   firstBillingDate: Date;
   nextBillingDate: Date;
   isTrial: boolean;
-  promoAmount: string | null;
-  promoEndsAt: Date | null;
+  trialEndsAt: Date | null;
   comment: string | null;
   stateId: number;
   version: number;
   createdAt: Date;
   updatedAt: Date;
-}): SubscriptionDto {
-  const resolvedName = row.nameCustom ?? row.serviceName ?? '';
-  const resolvedIcon = row.iconCustom ?? row.serviceIcon ?? null;
+}
+
+function toDto(row: SubscriptionRow, promos: SubscriptionDto['promos']): SubscriptionDto {
   return {
     sku: row.sku,
     projectSku: row.projectSku,
     serviceSku: row.serviceSku,
-    name: resolvedName,
-    icon: resolvedIcon,
+    name: row.nameCustom ?? row.serviceName ?? '',
+    icon: row.iconCustom ?? row.serviceIcon ?? null,
     categorySku: row.categorySku,
     categoryCustomSku: row.categoryCustomSku,
     amount: row.amount,
@@ -86,15 +85,40 @@ function toDto(row: {
     firstBillingDate: row.firstBillingDate.toISOString(),
     nextBillingDate: row.nextBillingDate.toISOString(),
     isTrial: row.isTrial,
-    promoAmount: row.promoAmount,
-    promoEndsAt: row.promoEndsAt ? row.promoEndsAt.toISOString() : null,
+    trialEndsAt: row.trialEndsAt ? row.trialEndsAt.toISOString() : null,
     comment: row.comment,
     stateId: row.stateId,
     version: row.version,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
+    promos,
   };
 }
+
+const SUBSCRIPTION_SELECT = {
+  id: subscription.id,
+  sku: subscription.sku,
+  projectSku: project.sku,
+  serviceSku: service.sku,
+  serviceName: service.name,
+  serviceIcon: service.icon,
+  nameCustom: subscription.nameCustom,
+  iconCustom: subscription.iconCustom,
+  categorySku: category.sku,
+  categoryCustomSku: categoryCustom.sku,
+  amount: subscription.amount,
+  currencyId: subscription.currencyId,
+  billingPeriodId: subscription.billingPeriodId,
+  firstBillingDate: subscription.firstBillingDate,
+  nextBillingDate: subscription.nextBillingDate,
+  isTrial: subscription.isTrial,
+  trialEndsAt: subscription.trialEndsAt,
+  comment: subscription.comment,
+  stateId: subscription.stateId,
+  version: subscription.version,
+  createdAt: subscription.createdAt,
+  updatedAt: subscription.updatedAt,
+} as const;
 
 @Injectable()
 export class DrizzleSubscriptionRepository implements SubscriptionRepository {
@@ -111,7 +135,7 @@ export class DrizzleSubscriptionRepository implements SubscriptionRepository {
     return row?.id ?? null;
   }
 
-  async findServiceByCustomSku(sku: string) {
+  async findServiceBySku(sku: string) {
     const [row] = await this.db
       .select({
         id: service.id,
@@ -122,8 +146,7 @@ export class DrizzleSubscriptionRepository implements SubscriptionRepository {
       .from(service)
       .where(and(eq(service.sku, sku), eq(service.isActive, true)))
       .limit(1);
-    if (!row) return null;
-    return { id: row.id, name: row.name, icon: row.icon, categoryId: row.categoryId };
+    return row ?? null;
   }
 
   async findCategoryIdBySku(sku: string): Promise<string | null> {
@@ -131,6 +154,21 @@ export class DrizzleSubscriptionRepository implements SubscriptionRepository {
       .select({ id: category.id })
       .from(category)
       .where(eq(category.sku, sku))
+      .limit(1);
+    return row?.id ?? null;
+  }
+
+  async findIdBySku(customerId: string, sku: string): Promise<string | null> {
+    const [row] = await this.db
+      .select({ id: subscription.id })
+      .from(subscription)
+      .where(
+        and(
+          eq(subscription.sku, sku),
+          eq(subscription.customerId, customerId),
+          isNull(subscription.deletedAt),
+        ),
+      )
       .limit(1);
     return row?.id ?? null;
   }
@@ -143,13 +181,11 @@ export class DrizzleSubscriptionRepository implements SubscriptionRepository {
     const pageSize = Math.min(100, Math.max(1, q.pageSize ?? 20));
     const offset = (page - 1) * pageSize;
 
-    const where: SQL[] = [eq(subscription.customerId, customerId)];
+    const where: SQL[] = [
+      eq(subscription.customerId, customerId),
+      isNull(subscription.deletedAt),
+    ];
     const states = q.status ? STATE_MAP[q.status] : DEFAULT_NON_ARCHIVED;
-    // ARCHIVED идёт рука об руку с soft-delete: фильтр по deletedAt включаем
-    // только когда архив явно не запрошен (см. ctx-business-logic.md §«Удаление»).
-    if (q.status !== 'archived' && q.status !== 'all') {
-      where.push(isNull(subscription.deletedAt));
-    }
     where.push(inArray(subscription.stateId, states));
     if (q.projectSku && q.projectSku !== 'all') {
       where.push(eq(project.sku, q.projectSku));
@@ -173,30 +209,7 @@ export class DrizzleSubscriptionRepository implements SubscriptionRepository {
           : asc(subscription.nextBillingDate);
 
     const rows = await this.db
-      .select({
-        sku: subscription.sku,
-        projectSku: project.sku,
-        serviceSku: service.sku,
-        serviceName: service.name,
-        serviceIcon: service.icon,
-        nameCustom: subscription.nameCustom,
-        iconCustom: subscription.iconCustom,
-        categorySku: category.sku,
-        categoryCustomSku: categoryCustom.sku,
-        amount: subscription.amount,
-        currencyId: subscription.currencyId,
-        billingPeriodId: subscription.billingPeriodId,
-        firstBillingDate: subscription.firstBillingDate,
-        nextBillingDate: subscription.nextBillingDate,
-        isTrial: subscription.isTrial,
-        promoAmount: subscription.promoAmount,
-        promoEndsAt: subscription.promoEndsAt,
-        comment: subscription.comment,
-        stateId: subscription.stateId,
-        version: subscription.version,
-        createdAt: subscription.createdAt,
-        updatedAt: subscription.updatedAt,
-      })
+      .select(SUBSCRIPTION_SELECT)
       .from(subscription)
       .innerJoin(project, eq(subscription.projectId, project.id))
       .leftJoin(service, eq(subscription.serviceId, service.id))
@@ -216,40 +229,16 @@ export class DrizzleSubscriptionRepository implements SubscriptionRepository {
       .leftJoin(categoryCustom, eq(subscription.categoryCustomId, categoryCustom.id))
       .where(whereExpr);
 
-    return {
-      items: rows.map(toDto),
-      total: count,
-      page,
-      pageSize,
-    };
+    // Промо для списка — пустой массив для производительности; UI на странице
+    // списка не показывает promo-badge. Полные промо доступны через findBySku.
+    const items = rows.map((r) => toDto(r as SubscriptionRow, []));
+
+    return { items, total: count, page, pageSize };
   }
 
   async findBySku(customerId: string, sku: string): Promise<SubscriptionDto | null> {
     const [row] = await this.db
-      .select({
-        sku: subscription.sku,
-        projectSku: project.sku,
-        serviceSku: service.sku,
-        serviceName: service.name,
-        serviceIcon: service.icon,
-        nameCustom: subscription.nameCustom,
-        iconCustom: subscription.iconCustom,
-        categorySku: category.sku,
-        categoryCustomSku: categoryCustom.sku,
-        amount: subscription.amount,
-        currencyId: subscription.currencyId,
-        billingPeriodId: subscription.billingPeriodId,
-        firstBillingDate: subscription.firstBillingDate,
-        nextBillingDate: subscription.nextBillingDate,
-        isTrial: subscription.isTrial,
-        promoAmount: subscription.promoAmount,
-        promoEndsAt: subscription.promoEndsAt,
-        comment: subscription.comment,
-        stateId: subscription.stateId,
-        version: subscription.version,
-        createdAt: subscription.createdAt,
-        updatedAt: subscription.updatedAt,
-      })
+      .select(SUBSCRIPTION_SELECT)
       .from(subscription)
       .innerJoin(project, eq(subscription.projectId, project.id))
       .leftJoin(service, eq(subscription.serviceId, service.id))
@@ -263,7 +252,29 @@ export class DrizzleSubscriptionRepository implements SubscriptionRepository {
         ),
       )
       .limit(1);
-    return row ? toDto(row) : null;
+    if (!row) return null;
+    const promoRows = await this.db
+      .select({
+        sku: subscriptionPromo.sku,
+        amount: subscriptionPromo.amount,
+        endsAt: subscriptionPromo.endsAt,
+        version: subscriptionPromo.version,
+      })
+      .from(subscriptionPromo)
+      .where(
+        and(
+          eq(subscriptionPromo.subscriptionId, row.id),
+          isNull(subscriptionPromo.deletedAt),
+        ),
+      )
+      .orderBy(asc(subscriptionPromo.endsAt));
+    const promos = promoRows.map((p) => ({
+      sku: p.sku,
+      amount: p.amount,
+      endsAt: p.endsAt.toISOString(),
+      version: p.version,
+    }));
+    return toDto(row as SubscriptionRow, promos);
   }
 
   async createWithBackfill(args: Parameters<SubscriptionRepository['createWithBackfill']>[0]) {
@@ -285,11 +296,21 @@ export class DrizzleSubscriptionRepository implements SubscriptionRepository {
           firstBillingDate: args.firstBillingDate,
           nextBillingDate: args.nextBillingDate,
           isTrial: args.isTrial,
-          promoAmount: args.promoAmount,
-          promoEndsAt: args.promoEndsAt,
+          trialEndsAt: args.trialEndsAt,
           comment: args.comment,
         })
         .returning({ id: subscription.id });
+
+      if (args.promos.length > 0) {
+        await tx.insert(subscriptionPromo).values(
+          args.promos.map((p) => ({
+            sku: p.sku,
+            subscriptionId: inserted.id,
+            amount: p.amount,
+            endsAt: p.endsAt,
+          })),
+        );
+      }
 
       if (args.backfill.length > 0) {
         await tx.insert(billingHistory).values(
@@ -308,59 +329,41 @@ export class DrizzleSubscriptionRepository implements SubscriptionRepository {
         );
       }
 
-      const created = await this.findBySkuInTx(tx, args.customerId, args.sku);
-      if (!created) throw new Error('subscription disappeared after insert');
-      return created;
-    });
-  }
+      // Read back inside the same tx so callers see the freshly-committed row.
+      const [row] = await tx
+        .select(SUBSCRIPTION_SELECT)
+        .from(subscription)
+        .innerJoin(project, eq(subscription.projectId, project.id))
+        .leftJoin(service, eq(subscription.serviceId, service.id))
+        .leftJoin(category, eq(subscription.categoryId, category.id))
+        .leftJoin(categoryCustom, eq(subscription.categoryCustomId, categoryCustom.id))
+        .where(eq(subscription.id, inserted.id))
+        .limit(1);
+      if (!row) throw new Error('subscription disappeared after insert');
 
-  // IMPORTANT: This in-transaction lookup uses the same `select` shape as findBySku,
-  // so changes there must be reflected here. Kept as a private method to avoid
-  // recursion via `this.db` while still inside the open transaction.
-  private async findBySkuInTx(
-    tx: DrizzleDB,
-    customerId: string,
-    sku: string,
-  ): Promise<SubscriptionDto | null> {
-    const [row] = await tx
-      .select({
-        sku: subscription.sku,
-        projectSku: project.sku,
-        serviceSku: service.sku,
-        serviceName: service.name,
-        serviceIcon: service.icon,
-        nameCustom: subscription.nameCustom,
-        iconCustom: subscription.iconCustom,
-        categorySku: category.sku,
-        categoryCustomSku: categoryCustom.sku,
-        amount: subscription.amount,
-        currencyId: subscription.currencyId,
-        billingPeriodId: subscription.billingPeriodId,
-        firstBillingDate: subscription.firstBillingDate,
-        nextBillingDate: subscription.nextBillingDate,
-        isTrial: subscription.isTrial,
-        promoAmount: subscription.promoAmount,
-        promoEndsAt: subscription.promoEndsAt,
-        comment: subscription.comment,
-        stateId: subscription.stateId,
-        version: subscription.version,
-        createdAt: subscription.createdAt,
-        updatedAt: subscription.updatedAt,
-      })
-      .from(subscription)
-      .innerJoin(project, eq(subscription.projectId, project.id))
-      .leftJoin(service, eq(subscription.serviceId, service.id))
-      .leftJoin(category, eq(subscription.categoryId, category.id))
-      .leftJoin(categoryCustom, eq(subscription.categoryCustomId, categoryCustom.id))
-      .where(
-        and(
-          eq(subscription.sku, sku),
-          eq(subscription.customerId, customerId),
-          isNull(subscription.deletedAt),
-        ),
-      )
-      .limit(1);
-    return row ? toDto(row) : null;
+      const promoRows = await tx
+        .select({
+          sku: subscriptionPromo.sku,
+          amount: subscriptionPromo.amount,
+          endsAt: subscriptionPromo.endsAt,
+          version: subscriptionPromo.version,
+        })
+        .from(subscriptionPromo)
+        .where(
+          and(
+            eq(subscriptionPromo.subscriptionId, inserted.id),
+            isNull(subscriptionPromo.deletedAt),
+          ),
+        )
+        .orderBy(asc(subscriptionPromo.endsAt));
+      const promos = promoRows.map((p) => ({
+        sku: p.sku,
+        amount: p.amount,
+        endsAt: p.endsAt.toISOString(),
+        version: p.version,
+      }));
+      return toDto(row as SubscriptionRow, promos);
+    });
   }
 
   async update(args: {
@@ -388,15 +391,13 @@ export class DrizzleSubscriptionRepository implements SubscriptionRepository {
     return (res.rowCount ?? 0) > 0;
   }
 
-  async softDelete(customerId: string, sku: string): Promise<boolean> {
+  async hardDelete(customerId: string, sku: string): Promise<boolean> {
     const res = await this.db
-      .update(subscription)
-      .set({ deletedAt: new Date(), stateId: SubscriptionState.ARCHIVED })
+      .delete(subscription)
       .where(
         and(
           eq(subscription.sku, sku),
           eq(subscription.customerId, customerId),
-          isNull(subscription.deletedAt),
         ),
       );
     return (res.rowCount ?? 0) > 0;
