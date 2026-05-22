@@ -1,30 +1,48 @@
 import type { BillingPeriod, Currency, SubscriptionState } from '../enums';
 
-/** Public response shape — see ctx-business-logic.md «имя и иконка». */
+/** Active promo: `endsAt > now()` AND deleted_at IS NULL. */
+export interface PromoDto {
+  sku: string;
+  amount: string;
+  endsAt: string;
+  version: number;
+}
+
+/** Promo input on create — no sku, server generates. */
+export interface NewPromoDto {
+  amount: string;
+  endsAt: string;
+}
+
+/** Promo update — references existing by sku, requires version. */
+export interface UpdatePromoDto {
+  sku: string;
+  version: number;
+  amount?: string;
+  endsAt?: string;
+}
+
 export interface SubscriptionDto {
   sku: string;
   projectSku: string;
   serviceSku: string | null;
-  /** Resolved (service.name OR name_custom). */
   name: string;
-  /** Resolved (service.icon OR icon_custom). */
   icon: string | null;
   categorySku: string | null;
   categoryCustomSku: string | null;
-  /** Numeric (12,2) → string (avoid JS float drift). */
   amount: string;
   currencyId: Currency;
   billingPeriodId: BillingPeriod;
   firstBillingDate: string;
   nextBillingDate: string;
   isTrial: boolean;
-  promoAmount: string | null;
-  promoEndsAt: string | null;
+  trialEndsAt: string | null;
   comment: string | null;
   stateId: SubscriptionState;
   version: number;
   createdAt: string;
   updatedAt: string;
+  promos: PromoDto[];
 }
 
 export interface SubscriptionCreateDto {
@@ -38,23 +56,20 @@ export interface SubscriptionCreateDto {
   billingPeriodId: BillingPeriod;
   firstBillingDate: string;
   isTrial: boolean;
-  promoAmount?: string | null;
-  promoEndsAt?: string | null;
+  trialEndsAt?: string | null;
   comment?: string | null;
+  promos?: NewPromoDto[];
 }
 
-export type SubscriptionUpdateDto = Partial<SubscriptionCreateDto> & {
+export type SubscriptionUpdateDto = Partial<Omit<SubscriptionCreateDto, 'promos'>> & {
   version: number;
-  /** Only ACTIVE | PAUSED | CANCELLED; ARCHIVED ставится только через DELETE. */
   stateId?: SubscriptionState;
+  /** Replace-all семантика: что прислали — то и есть. Сервер удалит то, чего нет. */
+  promos?: Array<NewPromoDto | UpdatePromoDto>;
 };
 
-export type SubscriptionListStatus =
-  | 'active'
-  | 'paused'
-  | 'cancelled'
-  | 'archived'
-  | 'all';
+/** Status filter — archive больше не отображается; ARCHIVED только через cascade customer-delete. */
+export type SubscriptionListStatus = 'active' | 'paused' | 'cancelled' | 'all';
 
 export type SubscriptionListSort = 'next' | 'name' | 'price';
 
