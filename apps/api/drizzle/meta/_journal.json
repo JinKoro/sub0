@@ -134,6 +134,13 @@
       "when": 1779452252759,
       "tag": "0018_add_subscription_trial_ends_at",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1779452574482,
+      "tag": "0019_backfill_subscription_promo",
+      "breakpoints": true
     }
   ]
 }
