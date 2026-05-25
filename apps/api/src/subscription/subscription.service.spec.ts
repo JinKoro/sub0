@@ -126,6 +126,7 @@ describe('SubscriptionService.create — happy path', () => {
       serviceSku: null,
       name: 'My Subscription',
       icon: null,
+      color: '#1347ff',
       categorySku: 'cat-video',
       categoryCustomSku: null,
       amount: '500.00',
@@ -175,7 +176,7 @@ describe('SubscriptionService.update — promos sync', () => {
   it('добавляет, обновляет и удаляет промо по replace-all семантике', async () => {
     const { service, repo, promoRepo } = makeService();
     const existing = {
-      sku: 'sub-1', projectSku: 'prj-1', serviceSku: null, name: 'X', icon: null,
+      sku: 'sub-1', projectSku: 'prj-1', serviceSku: null, name: 'X', icon: null, color: '#1347ff',
       categorySku: 'cat-video', categoryCustomSku: null, amount: '500.00',
       currencyId: Currency.RUB, billingPeriodId: BillingPeriod.MONTH,
       firstBillingDate: '', nextBillingDate: '',
@@ -212,7 +213,7 @@ describe('SubscriptionService.update — promos sync', () => {
     const { service, repo } = makeService();
     repo.update.mockResolvedValue(false);
     repo.findBySku.mockResolvedValue({
-      sku: 'sub-1', projectSku: 'prj-1', serviceSku: null, name: 'X', icon: null,
+      sku: 'sub-1', projectSku: 'prj-1', serviceSku: null, name: 'X', icon: null, color: '#1347ff',
       categorySku: null, categoryCustomSku: null, amount: '500.00',
       currencyId: Currency.RUB, billingPeriodId: BillingPeriod.MONTH,
       firstBillingDate: '', nextBillingDate: '',
@@ -230,7 +231,7 @@ describe('SubscriptionService.update — firstBillingDate immutability', () => {
   it('rejects change with 422 (UnprocessableEntity)', async () => {
     const { service, repo } = makeService();
     repo.findBySku.mockResolvedValue({
-      sku: 'sub-1', projectSku: 'prj-1', serviceSku: null, name: 'X', icon: null,
+      sku: 'sub-1', projectSku: 'prj-1', serviceSku: null, name: 'X', icon: null, color: '#1347ff',
       categorySku: null, categoryCustomSku: null, amount: '500.00',
       currencyId: Currency.RUB, billingPeriodId: BillingPeriod.MONTH,
       firstBillingDate: '2026-01-15T00:00:00.000Z',
@@ -250,7 +251,7 @@ describe('SubscriptionService.update — firstBillingDate immutability', () => {
   it('allows passing the same firstBillingDate (FE может прислать без изменений)', async () => {
     const { service, repo } = makeService();
     const subscription = {
-      sku: 'sub-1', projectSku: 'prj-1', serviceSku: null, name: 'X', icon: null,
+      sku: 'sub-1', projectSku: 'prj-1', serviceSku: null, name: 'X', icon: null, color: '#1347ff',
       categorySku: null, categoryCustomSku: null, amount: '500.00',
       currencyId: Currency.RUB, billingPeriodId: BillingPeriod.MONTH,
       firstBillingDate: '2026-01-15T00:00:00.000Z',
@@ -268,5 +269,125 @@ describe('SubscriptionService.update — firstBillingDate immutability', () => {
         comment: 'edited',
       }),
     ).resolves.toBeTruthy();
+  });
+});
+
+describe('SubscriptionService — color auto-gen', () => {
+  const PALETTE = new Set([
+    '#1347ff',
+    '#0a7a3f',
+    '#c94a1c',
+    '#6b21d9',
+    '#b0851a',
+    '#0a0a0a',
+    '#6b6b66',
+  ]);
+
+  it('create без сервиса → color из палитры', async () => {
+    const { service, repo } = makeService();
+    repo.createWithBackfill.mockImplementation(async (args) => ({
+      sku: 'sub-X', projectSku: 'prj-1', serviceSku: null, name: 'X', icon: null,
+      color: args.color, categorySku: 'cat-video', categoryCustomSku: null,
+      amount: '500.00', currencyId: Currency.RUB, billingPeriodId: BillingPeriod.MONTH,
+      firstBillingDate: '', nextBillingDate: '',
+      isTrial: false, trialEndsAt: null, comment: null,
+      stateId: SubscriptionState.ACTIVE, version: 1, createdAt: '', updatedAt: '', promos: [],
+    }));
+    await service.create(CID, basePayload());
+    const { color } = repo.createWithBackfill.mock.calls[0]![0];
+    expect(typeof color).toBe('string');
+    expect(PALETTE.has(color!)).toBe(true);
+  });
+
+  it('create с сервисом без иконки → color из палитры', async () => {
+    const { service, repo } = makeService();
+    repo.findServiceBySku.mockResolvedValue({
+      id: 'svc-1', name: 'Plain', icon: null, categoryId: CAT_ID,
+    });
+    repo.createWithBackfill.mockImplementation(async (args) => ({
+      sku: 'sub-X', projectSku: 'prj-1', serviceSku: 'srv-1', name: 'Plain', icon: null,
+      color: args.color, categorySku: 'cat-video', categoryCustomSku: null,
+      amount: '500.00', currencyId: Currency.RUB, billingPeriodId: BillingPeriod.MONTH,
+      firstBillingDate: '', nextBillingDate: '',
+      isTrial: false, trialEndsAt: null, comment: null,
+      stateId: SubscriptionState.ACTIVE, version: 1, createdAt: '', updatedAt: '', promos: [],
+    }));
+    await service.create(CID, basePayload({ serviceSku: 'srv-1', nameCustom: null }));
+    const { color } = repo.createWithBackfill.mock.calls[0]![0];
+    expect(PALETTE.has(color!)).toBe(true);
+  });
+
+  it('create с сервисом с иконкой → color = null', async () => {
+    const { service, repo } = makeService();
+    repo.findServiceBySku.mockResolvedValue({
+      id: 'svc-1', name: 'Netflix', icon: 'data:image/svg+xml;…', categoryId: CAT_ID,
+    });
+    repo.createWithBackfill.mockImplementation(async (args) => ({
+      sku: 'sub-X', projectSku: 'prj-1', serviceSku: 'srv-1', name: 'Netflix',
+      icon: 'data:image/svg+xml;…', color: args.color,
+      categorySku: 'cat-video', categoryCustomSku: null,
+      amount: '500.00', currencyId: Currency.RUB, billingPeriodId: BillingPeriod.MONTH,
+      firstBillingDate: '', nextBillingDate: '',
+      isTrial: false, trialEndsAt: null, comment: null,
+      stateId: SubscriptionState.ACTIVE, version: 1, createdAt: '', updatedAt: '', promos: [],
+    }));
+    await service.create(CID, basePayload({ serviceSku: 'srv-1', nameCustom: null }));
+    expect(repo.createWithBackfill.mock.calls[0]![0].color).toBeNull();
+  });
+
+  it('update: смена на сервис с иконкой обнуляет color', async () => {
+    const { service, repo } = makeService();
+    repo.findBySku.mockResolvedValue({
+      sku: 'sub-1', projectSku: 'prj-1', serviceSku: null, name: 'X', icon: null,
+      color: '#1347ff', categorySku: null, categoryCustomSku: null,
+      amount: '500.00', currencyId: Currency.RUB, billingPeriodId: BillingPeriod.MONTH,
+      firstBillingDate: '', nextBillingDate: '',
+      isTrial: false, trialEndsAt: null, comment: null,
+      stateId: SubscriptionState.ACTIVE, version: 5, createdAt: '', updatedAt: '', promos: [],
+    });
+    repo.findServiceBySku.mockResolvedValue({
+      id: 'svc-1', name: 'Netflix', icon: 'data:image/svg+xml;…', categoryId: CAT_ID,
+    });
+    await service.update(CID, 'sub-1', { version: 5, serviceSku: 'srv-1' });
+    const { patch } = repo.update.mock.calls[0]![0];
+    expect(patch.color).toBeNull();
+  });
+
+  it('update: смена на сервис без иконки сохраняет существующий color', async () => {
+    const { service, repo } = makeService();
+    repo.findBySku.mockResolvedValue({
+      sku: 'sub-1', projectSku: 'prj-1', serviceSku: null, name: 'X', icon: null,
+      color: '#1347ff', categorySku: null, categoryCustomSku: null,
+      amount: '500.00', currencyId: Currency.RUB, billingPeriodId: BillingPeriod.MONTH,
+      firstBillingDate: '', nextBillingDate: '',
+      isTrial: false, trialEndsAt: null, comment: null,
+      stateId: SubscriptionState.ACTIVE, version: 5, createdAt: '', updatedAt: '', promos: [],
+    });
+    repo.findServiceBySku.mockResolvedValue({
+      id: 'svc-1', name: 'Plain', icon: null, categoryId: CAT_ID,
+    });
+    await service.update(CID, 'sub-1', { version: 5, serviceSku: 'srv-1' });
+    const { patch } = repo.update.mock.calls[0]![0];
+    // color остался — патчем его не трогаем.
+    expect(patch.color).toBeUndefined();
+  });
+
+  it('update: смена на сервис без иконки + ранее color=null → генерация', async () => {
+    const { service, repo } = makeService();
+    repo.findBySku.mockResolvedValue({
+      sku: 'sub-1', projectSku: 'prj-1', serviceSku: 'srv-old', name: 'Old', icon: 'i',
+      color: null, categorySku: null, categoryCustomSku: null,
+      amount: '500.00', currencyId: Currency.RUB, billingPeriodId: BillingPeriod.MONTH,
+      firstBillingDate: '', nextBillingDate: '',
+      isTrial: false, trialEndsAt: null, comment: null,
+      stateId: SubscriptionState.ACTIVE, version: 5, createdAt: '', updatedAt: '', promos: [],
+    });
+    repo.findServiceBySku.mockResolvedValue({
+      id: 'svc-1', name: 'Plain', icon: null, categoryId: CAT_ID,
+    });
+    await service.update(CID, 'sub-1', { version: 5, serviceSku: 'srv-1' });
+    const { patch } = repo.update.mock.calls[0]![0];
+    expect(typeof patch.color).toBe('string');
+    expect(PALETTE.has(patch.color as string)).toBe(true);
   });
 });

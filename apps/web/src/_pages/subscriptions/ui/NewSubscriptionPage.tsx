@@ -21,6 +21,7 @@ function newInitial(projectSku: string): SubscriptionFormState {
     serviceSku: null,
     nameCustom: '',
     iconCustom: null,
+    color: null,
     categorySku: '',
     amount: '',
     currencyId: Currency.RUB,

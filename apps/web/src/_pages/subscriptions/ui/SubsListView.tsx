@@ -583,7 +583,12 @@ function SubsList({ rows, onEdit, categoryBySku }: RowsProps) {
                 gap: 12,
               }}
             >
-              <LogoPill char={char} color={cat?.color ?? SUB0.muted} icon={r.icon} size={32} />
+              <LogoPill
+                char={char}
+                color={r.color ?? cat?.color ?? SUB0.muted}
+                icon={r.icon}
+                size={32}
+              />
               <div style={{ minWidth: 0 }}>
                 <div
                   style={{
@@ -772,7 +777,12 @@ function SubsGrid({ rows, onEdit, categoryBySku }: RowsProps) {
                   marginBottom: 14,
                 }}
               >
-                <LogoPill char={char} color={cat?.color ?? SUB0.muted} icon={r.icon} size={40} />
+                <LogoPill
+                  char={char}
+                  color={r.color ?? cat?.color ?? SUB0.muted}
+                  icon={r.icon}
+                  size={40}
+                />
                 <Pill color={statusMeta.color} bg={`${statusMeta.color}12`} dot>
                   {t(statusMeta.ru, statusMeta.en)}
                 </Pill>

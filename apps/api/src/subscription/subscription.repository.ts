@@ -54,6 +54,7 @@ interface SubscriptionRow {
   serviceIcon: string | null;
   nameCustom: string | null;
   iconCustom: string | null;
+  color: string | null;
   categorySku: string | null;
   categoryCustomSku: string | null;
   amount: string;
@@ -77,6 +78,7 @@ function toDto(row: SubscriptionRow, promos: SubscriptionDto['promos']): Subscri
     serviceSku: row.serviceSku,
     name: row.nameCustom ?? row.serviceName ?? '',
     icon: row.iconCustom ?? row.serviceIcon ?? null,
+    color: row.color,
     categorySku: row.categorySku,
     categoryCustomSku: row.categoryCustomSku,
     amount: row.amount,
@@ -104,6 +106,7 @@ const SUBSCRIPTION_SELECT = {
   serviceIcon: service.icon,
   nameCustom: subscription.nameCustom,
   iconCustom: subscription.iconCustom,
+  color: subscription.color,
   categorySku: category.sku,
   categoryCustomSku: categoryCustom.sku,
   amount: subscription.amount,
@@ -290,6 +293,7 @@ export class DrizzleSubscriptionRepository implements SubscriptionRepository {
           categoryCustomId: null,
           nameCustom: args.nameCustom,
           iconCustom: args.iconCustom,
+          color: args.color,
           amount: args.amount,
           currencyId: args.currencyId,
           billingPeriodId: args.billingPeriodId,

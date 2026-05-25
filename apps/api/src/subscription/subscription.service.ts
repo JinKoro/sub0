@@ -15,6 +15,7 @@ import {
   type UpdatePromoDto,
 } from '@subzero/shared';
 
+import { randomSubscriptionColor } from '../shared/subscription-color';
 import { computeBackfill, nextBillingDateAfter } from './billing-cycle';
 import type {
   SubscriptionRepository,
@@ -63,10 +64,12 @@ export class SubscriptionService {
     if (!categoryId) throw new NotFoundException('category not found');
 
     let serviceId: string | null = null;
+    let serviceIcon: string | null = null;
     if (dto.serviceSku) {
       const svc = await this.repo.findServiceBySku(dto.serviceSku);
       if (!svc) throw new NotFoundException('service not found');
       serviceId = svc.id;
+      serviceIcon = svc.icon;
     }
 
     const nameCustom = (dto.nameCustom ?? '').trim() || null;
@@ -74,6 +77,10 @@ export class SubscriptionService {
     if (!serviceId && !nameCustom) {
       throw new UnprocessableEntityException('nameCustom required when serviceSku is empty');
     }
+
+    // Если выбран сервис с собственной иконкой — её хватит как визуала, фон не нужен.
+    // В остальных кейсах подписке нужен стабильный цвет фона LogoPill.
+    const color = serviceIcon ? null : randomSubscriptionColor();
 
     const firstBillingDate = new Date(dto.firstBillingDate);
     if (Number.isNaN(firstBillingDate.getTime())) {
@@ -123,6 +130,7 @@ export class SubscriptionService {
       serviceId,
       nameCustom,
       iconCustom,
+      color,
       categoryId,
       amount: dto.amount,
       currencyId: dto.currencyId,
@@ -157,7 +165,9 @@ export class SubscriptionService {
       dto.promos !== undefined ||
       dto.firstBillingDate !== undefined ||
       dto.nextBillingDate !== undefined ||
-      dto.billingPeriodId !== undefined;
+      dto.billingPeriodId !== undefined ||
+      // serviceSku смена требует знать existing.color для пересчёта.
+      dto.serviceSku !== undefined;
     let existing: SubscriptionDto | null = null;
     if (needsExisting) {
       existing = await this.repo.findBySku(customerId, sku);
@@ -211,12 +221,22 @@ export class SubscriptionService {
       patch.categoryId = categoryId;
     }
     if (dto.serviceSku !== undefined) {
+      let newServiceIcon: string | null = null;
       if (dto.serviceSku === null) {
         patch.serviceId = null;
       } else {
         const svc = await this.repo.findServiceBySku(dto.serviceSku);
         if (!svc) throw new NotFoundException('service not found');
         patch.serviceId = svc.id;
+        newServiceIcon = svc.icon;
+      }
+      // Пересчёт color: если новый сервис с иконкой → фон не нужен (NULL);
+      // если иконки нет, а existing.color пустой — генерируем; иначе сохраняем
+      // существующий, чтобы цвет подписки оставался стабильным.
+      if (newServiceIcon) {
+        patch.color = null;
+      } else if (!existing!.color) {
+        patch.color = randomSubscriptionColor();
       }
     }
 

@@ -7,6 +7,8 @@ export interface CabinetSubscription {
   sku: string;
   name: string;
   icon: string | null;
+  /** Стабильный HEX-цвет фона LogoPill; NULL — иконка перекрывает фон. */
+  color: string | null;
   projectSku: string;
   categorySku: string | null;
   amount: string;
@@ -27,6 +29,7 @@ export function toCabinetSubscription(dto: SubscriptionDto): CabinetSubscription
     sku: dto.sku,
     name: dto.name,
     icon: dto.icon,
+    color: dto.color,
     projectSku: dto.projectSku,
     categorySku: dto.categorySku,
     amount: dto.amount,

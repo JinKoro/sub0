@@ -24,6 +24,7 @@ export const subscription = pgTable(
     categoryCustomId: uuid('category_custom_id').references(() => categoryCustom.id),
     nameCustom: varchar('name_custom', { length: 255 }),
     iconCustom: text('icon_custom'),
+    color: varchar('color', { length: 7 }),
     amount: numeric('amount', { precision: 12, scale: 2 }).notNull(),
     currencyId: integer('currency_id').notNull().default(Currency.RUB),
     billingPeriodId: integer('billing_period_id').notNull().default(BillingPeriod.MONTH),

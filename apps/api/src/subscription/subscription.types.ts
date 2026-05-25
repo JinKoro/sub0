@@ -25,6 +25,7 @@ export interface SubscriptionRepository {
     serviceId: string | null;
     nameCustom: string | null;
     iconCustom: string | null;
+    color: string | null;
     categoryId: string;
     amount: string;
     currencyId: number;
