@@ -33,6 +33,8 @@ export interface SubscriptionFormState {
   /** При выборе сервиса берётся из service.name; кастомное имя override. */
   nameCustom: string;
   iconCustom: string | null;
+  /** Read-only preview: цвет LogoPill подписки. Генерируется бэком, на FE только показывается. */
+  color: string | null;
 
   categorySku: string;
 
@@ -71,6 +73,7 @@ export function fromDto(dto: SubscriptionDto): SubscriptionFormState {
     serviceSku: dto.serviceSku,
     nameCustom: dto.name,
     iconCustom: null,
+    color: dto.color,
     categorySku: dto.categorySku ?? '',
     amount: dto.amount,
     currencyId: dto.currencyId,

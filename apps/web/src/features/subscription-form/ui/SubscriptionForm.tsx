@@ -209,7 +209,8 @@ export function SubscriptionForm({ initial, onClose, onSaved }: Props) {
   const headerChar = (headerName.charAt(0) || '?').toUpperCase();
   const catMeta = categories.find((c) => c.sku === state.categorySku);
   const projMeta = projects.find((p) => p.sku === state.projectSku);
-  const headerColor = catMeta?.color ?? SUB0.blue;
+  // Приоритет: цвет подписки (стабилен на бэке) > цвет категории как preview на новой форме.
+  const headerColor = state.color ?? catMeta?.color ?? SUB0.blue;
 
   // ───────── validation ─────────
   function validate(): string | null {

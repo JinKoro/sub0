@@ -28,6 +28,8 @@ export interface SubscriptionDto {
   serviceSku: string | null;
   name: string;
   icon: string | null;
+  /** Стабильный HEX-цвет LogoPill когда нет иконки сервиса. NULL — иконка перекрывает фон. */
+  color: string | null;
   categorySku: string | null;
   categoryCustomSku: string | null;
   amount: string;
