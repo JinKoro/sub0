@@ -81,6 +81,11 @@ export class CustomerService {
     await this.refreshTokens.revokeAllForCustomer(id);
   }
 
+  async purgeSubscriptions(id: string): Promise<void> {
+    await this.require(id);
+    await this.repo.purgeSubscriptions(id);
+  }
+
   /** Cron tail (152-ФЗ): drop ARCHIVED customers past the grace period. */
   runHardDeleteRetention(): Promise<void> {
     return this.repo.hardDeleteArchivedBefore(new Date(Date.now() - HARD_DELETE_GRACE_MS));

@@ -3,7 +3,9 @@ import { CustomerState } from '@subzero/shared';
 import { and, eq, isNull, lt, sql } from 'drizzle-orm';
 
 import { DRIZZLE, type DrizzleDB } from '../db/db.module';
+import { billingHistory } from '../db/schema/billing-history';
 import { customer } from '../db/schema/customer';
+import { subscription } from '../db/schema/subscription';
 import type { CustomerRepository, CustomerRow, ProfilePatch } from './customer.types';
 
 @Injectable()
@@ -69,5 +71,12 @@ export class DrizzleCustomerProfileRepository implements CustomerRepository {
     await this.db
       .delete(customer)
       .where(and(eq(customer.stateId, CustomerState.ARCHIVED), lt(customer.deletedAt, cutoff)));
+  }
+
+  async purgeSubscriptions(customerId: string): Promise<void> {
+    await this.db.transaction(async (tx) => {
+      await tx.delete(billingHistory).where(eq(billingHistory.customerId, customerId));
+      await tx.delete(subscription).where(eq(subscription.customerId, customerId));
+    });
   }
 }

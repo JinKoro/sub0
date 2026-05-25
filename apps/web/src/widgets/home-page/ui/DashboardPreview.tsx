@@ -7,7 +7,7 @@ import { Section } from '@/shared/components/ui/Section';
 import { SectionEyebrow } from '@/shared/components/ui/SectionEyebrow';
 import { H2 } from '@/shared/components/ui/H2';
 import { LogoPill } from '@/shared/components/ui/LogoPill';
-import { SUBS } from '@/entities/subscription/model/data';
+import { SUBS } from '@/widgets/home-page/lib/demo-subs';
 import { fmtRub } from '@/shared/lib/format';
 
 const MONTHS = ['ноя', 'дек', 'янв', 'фев', 'мар', 'апр'];

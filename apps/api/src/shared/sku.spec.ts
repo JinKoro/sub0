@@ -19,4 +19,9 @@ describe('generateSku', () => {
     const set = new Set(Array.from({ length: 1000 }, () => generateSku('prj')));
     expect(set.size).toBe(1000);
   });
+
+  it('генерит spm-префикс корректно', () => {
+    const v = generateSku('spm');
+    expect(v).toMatch(/^spm-[0-9A-HJ-NP-TV-Z]{8}$/);
+  });
 });

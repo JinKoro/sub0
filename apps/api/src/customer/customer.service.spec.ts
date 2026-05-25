@@ -30,6 +30,7 @@ function makeDeps() {
     updatePassword: jest.fn().mockResolvedValue(undefined),
     softDelete: jest.fn().mockResolvedValue(undefined),
     hardDeleteArchivedBefore: jest.fn().mockResolvedValue(undefined),
+    purgeSubscriptions: jest.fn().mockResolvedValue(undefined),
   };
   const refreshTokens: jest.Mocked<RefreshTokenRevoker> = {
     revokeAllForCustomer: jest.fn().mockResolvedValue(undefined),
@@ -143,6 +144,21 @@ describe('CustomerService.deleteMe', () => {
 
     expect(repo.softDelete).toHaveBeenCalledWith(ID);
     expect(refreshTokens.revokeAllForCustomer).toHaveBeenCalledWith(ID);
+  });
+});
+
+describe('CustomerService.purgeSubscriptions', () => {
+  it('делегирует в repo.purgeSubscriptions', async () => {
+    const { service, repo } = makeDeps();
+    repo.findActiveById.mockResolvedValue(makeRow());
+    await service.purgeSubscriptions(ID);
+    expect(repo.purgeSubscriptions).toHaveBeenCalledWith(ID);
+  });
+
+  it('бросает 401 если customer не найден / архивирован', async () => {
+    const { service, repo } = makeDeps();
+    repo.findActiveById.mockResolvedValue(null);
+    await expect(service.purgeSubscriptions(ID)).rejects.toThrow(UnauthorizedException);
   });
 });
 

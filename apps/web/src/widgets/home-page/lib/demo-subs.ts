@@ -1,7 +1,23 @@
-import type { Subscription } from './types';
 import { serviceIcon } from '@/entities/service-catalog/lib/icon-map';
 
-const RAW: Subscription[] = [
+export type DemoSubStatus = 'active' | 'trial' | 'paused';
+
+export interface DemoSubscription {
+  name: string;
+  char: string;
+  cat: string;
+  catEn: string;
+  price: number;
+  cycle: string;
+  cycleEn: string;
+  next: string;
+  nextEn: string;
+  status: DemoSubStatus;
+  color: string;
+  icon?: string | null;
+}
+
+const RAW: DemoSubscription[] = [
   {
     name: 'Яндекс Плюс',
     char: 'Я',
@@ -121,4 +137,4 @@ const RAW: Subscription[] = [
   },
 ];
 
-export const SUBS: Subscription[] = RAW.map((s) => ({ ...s, icon: serviceIcon(s.name) }));
+export const SUBS: DemoSubscription[] = RAW.map((s) => ({ ...s, icon: serviceIcon(s.name) }));

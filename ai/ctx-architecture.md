@@ -88,10 +88,14 @@ Hard-delete — только спецзадачей (например, hard-dele
 
 - `customer.id` каскадится на всё дочернее (project, subscription,
   category_custom, billing_history, refresh_token).
-- `project.id` каскадится на subscription и category_custom.
-  Для `billing_history.project_id` — без каскада (история
-  переживает удаление проекта; project_id остаётся как
-  историческая денормализация).
+- `project.id` каскадится на subscription и category_custom
+  через `ON DELETE CASCADE`. Удаление проекта — hard, физически
+  чистит подписки и кастомные категории.
+- `billing_history.project_id` — без каскада (NO ACTION). При
+  hard-delete project'а история уходит каскадно через
+  `subscription_id ON DELETE CASCADE`, поэтому commit-цепочка
+  не падает на FK. Денормализованное поле `project_id` нужно
+  для аналитики по проекту (history-by-project query без JOIN'а).
 - `service.id` — без каскада на subscription. Удаление service'а
   → `service_id = NULL`, имя берётся из `name_custom` (см.
   `ctx-business-logic.md`).

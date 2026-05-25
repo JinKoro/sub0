@@ -17,6 +17,7 @@ import { Input } from './parts/Input';
 import { SegControl } from './parts/SegControl';
 import { TimezoneDropdown } from './parts/TimezoneDropdown';
 import { sBtnGhost, sBtnPrimary, sBtnDanger } from './parts/styles';
+import { DeleteAllSubscriptionsAction } from '@/features/delete-all-subscriptions/ui/DeleteAllSubscriptionsAction';
 
 // shared enums (Locale RU=1/EN=2, Currency RUB=1/USD=2/EUR=3/BYN=4).
 const LOCALE_ID: Record<'ru' | 'en', number> = { ru: 1, en: 2 };
@@ -348,7 +349,7 @@ export function SettingsAccount() {
             'Removes subscriptions, charge history, and calendar. Account stays active.',
           )}
         >
-          <button style={sBtnDanger}>{t('Удалить подписки', 'Delete subscriptions')}</button>
+          <DeleteAllSubscriptionsAction />
         </Row>
         <Row
           label={t('Удалить аккаунт', 'Delete account')}

@@ -30,6 +30,7 @@ export const subscription = pgTable(
     firstBillingDate: timestamp('first_billing_date', { withTimezone: true }).notNull(),
     nextBillingDate: timestamp('next_billing_date', { withTimezone: true }).notNull(),
     isTrial: boolean('is_trial').notNull().default(false),
+    trialEndsAt: timestamp('trial_ends_at', { withTimezone: true }),
     promoAmount: numeric('promo_amount', { precision: 12, scale: 2 }),
     promoEndsAt: timestamp('promo_ends_at', { withTimezone: true }),
     comment: varchar('comment', { length: 255 }),

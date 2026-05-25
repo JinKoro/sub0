@@ -42,6 +42,12 @@ export interface CustomerRepository {
   softDelete(id: string): Promise<void>;
   /** 152-ФЗ grace tail: physically drop ARCHIVED customers past the cutoff. */
   hardDeleteArchivedBefore(cutoff: Date): Promise<void>;
+  /**
+   * Hard-delete всех subscription/billing_history customer'а в одной
+   * транзакции. Red-zone операция; soft не используем сознательно
+   * (см. ctx-business-logic.md §«Удаление»).
+   */
+  purgeSubscriptions(customerId: string): Promise<void>;
 }
 
 /** Subset of the auth refresh-token adapter reused for force-logout. */

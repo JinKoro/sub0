@@ -9,3 +9,4 @@ export * from './billing-history';
 export * from './verification-token';
 export * from './mail-outbox';
 export * from './login-attempt';
+export * from './subscription-promo';
