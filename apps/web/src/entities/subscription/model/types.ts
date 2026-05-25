@@ -1,6 +1,6 @@
-import type { SubscriptionDto } from '@subzero/shared';
+import type { PromoDto, SubscriptionDto } from '@subzero/shared';
 
-export type { SubscriptionDto };
+export type { SubscriptionDto, PromoDto };
 
 /** UI-форматированная подписка для существующих компонентов кабинета. */
 export interface CabinetSubscription {
@@ -12,9 +12,11 @@ export interface CabinetSubscription {
   amount: string;
   currencyId: number;
   billingPeriodId: number;
+  firstBillingDate: string;
   nextBillingDate: string;
   isTrial: boolean;
-  promoEndsAt: string | null;
+  trialEndsAt: string | null;
+  promos: PromoDto[];
   stateId: number;
   comment: string | null;
   version: number;
@@ -30,9 +32,11 @@ export function toCabinetSubscription(dto: SubscriptionDto): CabinetSubscription
     amount: dto.amount,
     currencyId: dto.currencyId,
     billingPeriodId: dto.billingPeriodId,
+    firstBillingDate: dto.firstBillingDate,
     nextBillingDate: dto.nextBillingDate,
     isTrial: dto.isTrial,
-    promoEndsAt: dto.promoEndsAt,
+    trialEndsAt: dto.trialEndsAt,
+    promos: dto.promos,
     stateId: dto.stateId,
     comment: dto.comment,
     version: dto.version,

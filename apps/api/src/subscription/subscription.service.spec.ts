@@ -225,3 +225,48 @@ describe('SubscriptionService.update — promos sync', () => {
     ).rejects.toBeInstanceOf(ConflictException);
   });
 });
+
+describe('SubscriptionService.update — firstBillingDate immutability', () => {
+  it('rejects change with 422 (UnprocessableEntity)', async () => {
+    const { service, repo } = makeService();
+    repo.findBySku.mockResolvedValue({
+      sku: 'sub-1', projectSku: 'prj-1', serviceSku: null, name: 'X', icon: null,
+      categorySku: null, categoryCustomSku: null, amount: '500.00',
+      currencyId: Currency.RUB, billingPeriodId: BillingPeriod.MONTH,
+      firstBillingDate: '2026-01-15T00:00:00.000Z',
+      nextBillingDate: '2026-05-15T00:00:00.000Z',
+      isTrial: false, trialEndsAt: null, comment: null,
+      stateId: SubscriptionState.ACTIVE, version: 5,
+      createdAt: '', updatedAt: '', promos: [],
+    });
+    await expect(
+      service.update(CID, 'sub-1', {
+        version: 5,
+        firstBillingDate: '2025-09-01T00:00:00.000Z',
+      }),
+    ).rejects.toBeInstanceOf(UnprocessableEntityException);
+  });
+
+  it('allows passing the same firstBillingDate (FE может прислать без изменений)', async () => {
+    const { service, repo } = makeService();
+    const subscription = {
+      sku: 'sub-1', projectSku: 'prj-1', serviceSku: null, name: 'X', icon: null,
+      categorySku: null, categoryCustomSku: null, amount: '500.00',
+      currencyId: Currency.RUB, billingPeriodId: BillingPeriod.MONTH,
+      firstBillingDate: '2026-01-15T00:00:00.000Z',
+      nextBillingDate: '2026-05-15T00:00:00.000Z',
+      isTrial: false, trialEndsAt: null, comment: null,
+      stateId: SubscriptionState.ACTIVE, version: 5,
+      createdAt: '', updatedAt: '', promos: [],
+    };
+    repo.findBySku.mockResolvedValue(subscription);
+    repo.update.mockResolvedValue(true);
+    await expect(
+      service.update(CID, 'sub-1', {
+        version: 5,
+        firstBillingDate: '2026-01-15T00:00:00.000Z',
+        comment: 'edited',
+      }),
+    ).resolves.toBeTruthy();
+  });
+});

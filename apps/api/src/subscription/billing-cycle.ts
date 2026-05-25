@@ -14,14 +14,20 @@ export function addPeriod(from: Date, period: BillingPeriod, n: number): Date {
   return d;
 }
 
+function startOfUtcDay(d: Date): number {
+  return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+}
+
 export function countElapsedCycles(
   firstBillingDate: Date,
   period: BillingPeriod,
   now: Date,
 ): number {
-  if (firstBillingDate >= now) return 0;
+  // День биллинга считается ещё не списанным: backfill не делаем для дат >= today (UTC).
+  const todayStart = startOfUtcDay(now);
+  if (firstBillingDate.getTime() >= todayStart) return 0;
   let n = 0;
-  while (addPeriod(firstBillingDate, period, n + 1) <= now) n += 1;
+  while (addPeriod(firstBillingDate, period, n + 1).getTime() < todayStart) n += 1;
   return Math.min(n, MAX_BACKFILL_CYCLES[period]);
 }
 
@@ -30,9 +36,12 @@ export function nextBillingDateAfter(
   period: BillingPeriod,
   now: Date,
 ): Date {
-  if (firstBillingDate >= now) return new Date(firstBillingDate.getTime());
+  // "Сегодня" = валидный день биллинга весь день: если firstBillingDate ≥ начало сегодняшних UTC-суток,
+  // возвращаем как есть. Cron сдвинет nextBillingDate в следующий цикл, когда наступит следующий UTC-день.
+  const todayStart = startOfUtcDay(now);
+  if (firstBillingDate.getTime() >= todayStart) return new Date(firstBillingDate.getTime());
   let n = 1;
-  while (addPeriod(firstBillingDate, period, n) < now) n += 1;
+  while (addPeriod(firstBillingDate, period, n).getTime() < todayStart) n += 1;
   return addPeriod(firstBillingDate, period, n);
 }
 

@@ -1,5 +1,5 @@
 import type { INestApplication } from '@nestjs/common';
-import { BillingPeriod, Currency, SubscriptionState } from '@subzero/shared';
+import { BillingPeriod, Currency } from '@subzero/shared';
 import request from 'supertest';
 
 import { closeTestPool, createTestDb, dropTestDb, testPool, truncateAll } from '../test-utils/db';
@@ -106,11 +106,57 @@ describe('Subscriptions e2e', () => {
     const afterDelete = await http.get(`${PFX}/subscriptions`).set('Cookie', cookies);
     expect(afterDelete.body.items).toHaveLength(0);
 
-    const archived = await http
-      .get(`${PFX}/subscriptions?status=archived`)
-      .set('Cookie', cookies);
-    expect(archived.body.items).toHaveLength(1);
-    expect(archived.body.items[0].stateId).toBe(SubscriptionState.ARCHIVED);
+    // Hard-delete: подписки в БД физически нет (нет архивной строки).
+    const rows = await testPool().query(
+      'SELECT id FROM subscription WHERE sku = $1',
+      [sku],
+    );
+    expect(rows.rowCount).toBe(0);
+  });
+
+  it('adds a promo via update with full FE payload (no version drift)', async () => {
+    // Repro: FE-форма редактирования всегда шлёт весь state, версия = текущая,
+    // promos = [{amount, endsAt}] для нового промо.
+    const created = await http
+      .post(`${PFX}/subscriptions`)
+      .set('Cookie', cookies)
+      .send({
+        projectSku,
+        categorySku,
+        nameCustom: 'PromoSub',
+        amount: '100.00',
+        currencyId: Currency.RUB,
+        billingPeriodId: BillingPeriod.MONTH,
+        firstBillingDate: '2026-06-09T00:00:00.000Z',
+        isTrial: false,
+      });
+    expect(created.status).toBe(201);
+    const sku = created.body.sku as string;
+    const v = created.body.version as number;
+
+    const updated = await http
+      .post(`${PFX}/subscriptions/${sku}`)
+      .set('Cookie', cookies)
+      .send({
+        version: v,
+        projectSku,
+        serviceSku: null,
+        nameCustom: 'PromoSub',
+        iconCustom: null,
+        categorySku,
+        amount: '100.00',
+        currencyId: Currency.RUB,
+        billingPeriodId: BillingPeriod.MONTH,
+        nextBillingDate: '2026-06-09T00:00:00.000Z',
+        isTrial: false,
+        trialEndsAt: null,
+        comment: null,
+        stateId: 1,
+        promos: [{ amount: '50.00', endsAt: '2026-08-01T00:00:00.000Z' }],
+      });
+    expect(updated.status).toBe(200);
+    expect(updated.body.promos).toHaveLength(1);
+    expect(updated.body.promos[0].amount).toBe('50.00');
   });
 
   it('hard-deletes subscriptions when project is deleted', async () => {

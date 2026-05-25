@@ -43,7 +43,8 @@ interface Props {
 type StatusFilter = SubscriptionListStatus;
 type SortKey = SubscriptionListSort;
 
-const STATUS_VALUES: StatusFilter[] = ['all', 'active', 'paused', 'cancelled', 'archived'];
+// ARCHIVED не показываем в обычном UI — он используется только при удалении аккаунта.
+const STATUS_VALUES: StatusFilter[] = ['all', 'active', 'paused', 'cancelled'];
 const SORT_VALUES: SortKey[] = ['next', 'name', 'price'];
 
 function parseStatus(raw: string | null): StatusFilter {
@@ -64,6 +65,20 @@ function statusToKey(state: number): StatusKey {
   if (state === SubscriptionState.CANCELLED) return 'cancel';
   if (state === SubscriptionState.ARCHIVED) return 'archive';
   return 'active';
+}
+
+function todayLocalIso(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function isBilledToday(nextBillingDate: string, todayIso: string): boolean {
+  // nextBillingDate приходит как ISO; берём первые 10 символов (YYYY-MM-DD).
+  return nextBillingDate.slice(0, 10) === todayIso;
+}
+
+function hasActivePromo(promos: { endsAt: string }[], nowMs: number): boolean {
+  return promos.some((p) => new Date(p.endsAt).getTime() > nowMs);
 }
 
 function currencySymbol(currencyId: number): string {
@@ -214,7 +229,6 @@ export function SubsListView({ onEdit }: Props) {
     { v: 'active', l: t('Активные', 'Active') },
     { v: 'paused', l: t('На паузе', 'Paused') },
     { v: 'cancelled', l: t('Отменены', 'Cancelled') },
-    { v: 'archived', l: t('В архиве', 'Archived') },
   ];
   const sortOptions: SelectOption[] = [
     { v: 'next', l: t('По дате списания', 'By next charge') },
@@ -274,7 +288,7 @@ export function SubsListView({ onEdit }: Props) {
           </h1>
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <CabinetCtaButton href="/account/subscriptions?new=1">
+          <CabinetCtaButton href="/account/subscriptions/new">
             + {t('Новая подписка', 'New subscription')}
           </CabinetCtaButton>
         </div>
@@ -379,7 +393,7 @@ export function SubsListView({ onEdit }: Props) {
                 : t('Ничего не найдено', 'Nothing found')}
             </div>
             {noFilters && (
-              <CabinetCtaButton href="/account/subscriptions?new=1">
+              <CabinetCtaButton href="/account/subscriptions/new">
                 + {t('Новая подписка', 'New subscription')}
               </CabinetCtaButton>
             )}
@@ -504,6 +518,8 @@ interface RowsProps {
 
 function SubsList({ rows, onEdit, categoryBySku }: RowsProps) {
   const { t, lang } = useLang();
+  const todayIso = todayLocalIso();
+  const nowMs = Date.now();
   return (
     <Card padding={0}>
       <div
@@ -533,8 +549,8 @@ function SubsList({ rows, onEdit, categoryBySku }: RowsProps) {
         const statusMeta = STATUS_MAP[statusToKey(r.stateId)];
         const next = parseNextDate(r.nextBillingDate);
         const char = r.name.charAt(0).toUpperCase() || '?';
-        const isPromoActive =
-          !!r.promoEndsAt && new Date(r.promoEndsAt).getTime() > Date.now();
+        const isPromoActive = hasActivePromo(r.promos, nowMs);
+        const billedToday = isBilledToday(r.nextBillingDate, todayIso);
         return (
           <div
             key={r.sku}
@@ -544,13 +560,19 @@ function SubsList({ rows, onEdit, categoryBySku }: RowsProps) {
               gap: 12,
               padding: '14px 20px',
               borderBottom: `1px solid ${SUB0.line2}`,
+              borderLeft: billedToday ? `3px solid ${SUB0.blue}` : '3px solid transparent',
+              background: billedToday ? `${SUB0.blue}08` : 'transparent',
               alignItems: 'center',
               fontSize: 14,
               cursor: 'pointer',
               transition: 'background .12s',
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = SUB0.bg)}
-            onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.background = billedToday ? `${SUB0.blue}14` : SUB0.bg)
+            }
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.background = billedToday ? `${SUB0.blue}08` : 'transparent')
+            }
           >
             <div
               style={{
@@ -642,12 +664,15 @@ function SubsList({ rows, onEdit, categoryBySku }: RowsProps) {
               style={{
                 flex: 0.9,
                 minWidth: 0,
-                color: SUB0.muted,
+                color: billedToday ? SUB0.blue : SUB0.muted,
                 fontSize: 13,
                 fontFamily: mono,
+                fontWeight: billedToday ? 700 : 500,
               }}
             >
-              {next.day} {monthShort(next.month - 1, lang).toLowerCase()}
+              {billedToday
+                ? t('Сегодня', 'Today')
+                : `${next.day} ${monthShort(next.month - 1, lang).toLowerCase()}`}
             </div>
             <div
               style={{
@@ -711,6 +736,7 @@ function SubsList({ rows, onEdit, categoryBySku }: RowsProps) {
 
 function SubsGrid({ rows, onEdit, categoryBySku }: RowsProps) {
   const { t, lang } = useLang();
+  const todayIso = todayLocalIso();
   return (
     <div
       style={{
@@ -724,8 +750,19 @@ function SubsGrid({ rows, onEdit, categoryBySku }: RowsProps) {
         const statusMeta = STATUS_MAP[statusToKey(r.stateId)];
         const next = parseNextDate(r.nextBillingDate);
         const char = r.name.charAt(0).toUpperCase() || '?';
+        const billedToday = isBilledToday(r.nextBillingDate, todayIso);
         return (
-          <Card key={r.sku} padding={18} className="s-card" style={{ cursor: 'pointer' }}>
+          <Card
+            key={r.sku}
+            padding={18}
+            className="s-card"
+            style={{
+              cursor: 'pointer',
+              borderColor: billedToday ? SUB0.blue : undefined,
+              boxShadow: billedToday ? `inset 3px 0 0 ${SUB0.blue}` : undefined,
+              background: billedToday ? `${SUB0.blue}08` : undefined,
+            }}
+          >
             <div onClick={() => onEdit(r)}>
               <div
                 style={{
@@ -798,8 +835,17 @@ function SubsGrid({ rows, onEdit, categoryBySku }: RowsProps) {
                   >
                     {t('Списание', 'Renews')}
                   </div>
-                  <div style={{ fontSize: 13, fontWeight: 600, fontFamily: mono }}>
-                    {next.day} {monthShort(next.month - 1, lang).toLowerCase()}
+                  <div
+                    style={{
+                      fontSize: 13,
+                      fontWeight: billedToday ? 700 : 600,
+                      fontFamily: mono,
+                      color: billedToday ? SUB0.blue : SUB0.ink,
+                    }}
+                  >
+                    {billedToday
+                      ? t('Сегодня', 'Today')
+                      : `${next.day} ${monthShort(next.month - 1, lang).toLowerCase()}`}
                   </div>
                 </div>
               </div>

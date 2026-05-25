@@ -54,7 +54,11 @@ export interface SubscriptionCreateDto {
   amount: string;
   currencyId: Currency;
   billingPeriodId: BillingPeriod;
+  /** Дата первого исторического списания. Используется для backfill billing_history. */
   firstBillingDate: string;
+  /** Опционально: дата следующего планируемого списания. Если не задана — BE считает
+   *  её из firstBillingDate + cycle. Если задана — должна быть >= firstBillingDate. */
+  nextBillingDate?: string | null;
   isTrial: boolean;
   trialEndsAt?: string | null;
   comment?: string | null;

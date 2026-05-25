@@ -14,6 +14,7 @@ import type { Request } from 'express';
 import type {
   SubscriptionDto,
   SubscriptionListResponse,
+  SubscriptionUpdateDto,
 } from '@subzero/shared';
 
 import type { AuthUser } from '../auth/jwt.strategy';
@@ -57,7 +58,10 @@ export class SubscriptionController {
     @Param('sku') sku: string,
     @Body() dto: UpdateSubscriptionDto,
   ): Promise<SubscriptionDto> {
-    return this.subs.update(uid(req), sku, dto);
+    // UpdateSubscriptionDto.promos — гибрид (sku опционален); class-validator уже проверил,
+    // что присутствуют либо sku+version (update-путь), либо amount+endsAt (insert-путь).
+    // Сервис различает по наличию sku — приводим к union-типу.
+    return this.subs.update(uid(req), sku, dto as unknown as SubscriptionUpdateDto);
   }
 
   @Delete(':sku')

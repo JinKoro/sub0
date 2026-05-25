@@ -1,4 +1,6 @@
+import { Type } from 'class-transformer';
 import {
+  IsArray,
   IsBoolean,
   IsIn,
   IsInt,
@@ -8,6 +10,7 @@ import {
   Matches,
   MaxLength,
   Min,
+  ValidateNested,
 } from 'class-validator';
 import { BillingPeriod, Currency, SubscriptionState } from '@subzero/shared';
 
@@ -17,6 +20,28 @@ const STATES = [
   SubscriptionState.PAUSED,
   SubscriptionState.CANCELLED,
 ];
+
+// Один тип promo — поля опциональны; сервис различает create/update пути по наличию sku.
+class PromoInDto {
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  sku?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  version?: number;
+
+  @IsOptional()
+  @IsString()
+  @Matches(AMOUNT_RE)
+  amount?: string;
+
+  @IsOptional()
+  @IsISO8601()
+  endsAt?: string;
+}
 
 export class UpdateSubscriptionDto {
   @IsInt()
@@ -68,17 +93,16 @@ export class UpdateSubscriptionDto {
   firstBillingDate?: string;
 
   @IsOptional()
+  @IsISO8601()
+  nextBillingDate?: string | null;
+
+  @IsOptional()
   @IsBoolean()
   isTrial?: boolean;
 
   @IsOptional()
-  @IsString()
-  @Matches(AMOUNT_RE)
-  promoAmount?: string | null;
-
-  @IsOptional()
   @IsISO8601()
-  promoEndsAt?: string | null;
+  trialEndsAt?: string | null;
 
   @IsOptional()
   @IsString()
@@ -89,4 +113,10 @@ export class UpdateSubscriptionDto {
   @IsInt()
   @IsIn(STATES)
   stateId?: SubscriptionState;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => PromoInDto)
+  promos?: PromoInDto[];
 }

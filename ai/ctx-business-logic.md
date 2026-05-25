@@ -36,7 +36,9 @@ categories, customer state) — читать обязательно.
 - `PAUSED` — исключена из totals, остаётся в списке.
 - `CANCELLED` — работает до `next_billing_date`, потом cron
   переводит в `ARCHIVED`. До архивации — в календаре с маркером.
-- `ARCHIVED` — не учитывается, видна только в фильтре «архив».
+- `ARCHIVED` — используется ТОЛЬКО при cascade-удалении кастомера
+  (152-ФЗ grace period). В обычном UI/фильтре подписок не показывается.
+  Одиночное удаление подписки = hard-delete, без перехода в ARCHIVED.
 
 ### Subscription — категория
 
@@ -71,31 +73,35 @@ Resolved icon: ровно та же логика для `service.icon` /
 
 ### Subscription — promo / trial
 
-Поля: `is_trial bool`, `promo_amount numeric(12,2)`,
-`promo_ends_at timestamptz`.
+**Trial** и **promo** — два независимых механизма. Любая комбинация
+валидна: триал без промо, промо без триала, оба одновременно, ничего.
 
-Валидные состояния:
-- Без промо: `is_trial = false`, `promo_amount IS NULL`,
-  `promo_ends_at IS NULL`.
-- Триал: `is_trial = true`, `promo_amount = 0`,
-  `promo_ends_at IS NOT NULL`. UI показывает плашку «Триал».
-- Скидочное промо: `is_trial = false`, `promo_amount > 0` и
-  `< amount`, `promo_ends_at IS NOT NULL`. UI показывает плашку
-  «Промо до DD.MM.YYYY».
+Поля subscription: `is_trial bool`, `trial_ends_at timestamptz`.
+Промо лежит в отдельной таблице `subscription_promo` —
+строк может быть много на одну подписку.
 
-Невалидные состояния (сервис обязан отклонять):
-- `promo_amount IS NOT NULL` и `promo_ends_at IS NULL`.
-- `promo_ends_at IS NOT NULL` и `promo_amount IS NULL`.
-- `is_trial = true` и `promo_amount != 0`.
-- `is_trial = true` и `promo_ends_at IS NULL`.
+**Trial**:
+- `is_trial = false` → `trial_ends_at IS NULL`.
+- `is_trial = true`  → `trial_ends_at IS NOT NULL`.
+- UI показывает плашку «Пробный» пока `trial_ends_at > now()`.
+- На цену не влияет.
 
-Resolved current price (для дашборда / списания):
-- `promo_ends_at IS NULL` или `promo_ends_at <= now()` → `amount`.
-- Иначе → `promo_amount`.
+**Promo** (`subscription_promo`):
+- Поля: `sku`, `subscription_id`, `amount numeric(12,2)`,
+  `ends_at timestamptz`, `version`, `deleted_at`.
+- Каждая строка: `amount > 0` и `amount < subscription.amount`.
+- Активный промо — `ends_at > now()` и `deleted_at IS NULL`.
+- Можно добавить новый промо в любой момент, можно удалить
+  старый (soft-delete по `subscription_promo.sku`).
 
-`is_trial` сохраняется как UX-семантика (UI показывает разные
-плашки и считает «триалы на отмену» отдельным виджетом). На
-расчёт суммы он не влияет — влияет только `promo_amount`.
+Resolved current price (для дашборда / биллинга):
+- Если есть активные промо → берётся **минимальный** `amount` среди
+  активных (`min(amount) WHERE ends_at > now() AND deleted_at IS NULL`).
+- Иначе → `subscription.amount`.
+
+Backfill (`computeBackfill`) при создании подписки с прошлым
+`first_billing_date` использует ту же резолюцию: для каждого цикла
+смотрит, какие промо были активны в момент `period_end`, берёт минимум.
 
 ### Billing history — генерация
 
@@ -122,6 +128,26 @@ Resolved current price (для дашборда / списания):
 параллельно защищён `SELECT ... FOR UPDATE SKIP LOCKED` или
 advisory-lock на customer_id (см. `AGENTS.md`).
 
+**«Сегодня» — день биллинга на весь UTC-день.** Если customer
+указал `next_billing_date = today` (по UTC), запись считается
+ещё не списанной до конца UTC-суток. UI показывает «Сегодня»
+вместо даты. Cron на следующих сутках находит `next_billing_date
+< startOfUtcDay(now)`, создаёт запись в `billing_history` и
+сдвигает `next_billing_date` на следующий цикл. См.
+`apps/api/src/subscription/billing-cycle.ts`
+(`startOfUtcDay`, `nextBillingDateAfter`, `countElapsedCycles`).
+
+**`first_billing_date` иммутабельно после создания.** В MVP при
+создании подписки выполняется backfill в `billing_history`, и
+дальше дата старта подписки не редактируется через `POST
+/subscriptions/:sku` — сервис отвечает 422, если прислать
+изменённый `firstBillingDate`. FE на edit-форме показывает
+поле read-only с пометкой «меняется через редактор истории
+(скоро)». Снимется ограничение в v1.1 вместе с редактором
+`billing_history` (см. `docs/sub0-roadmap.md`).
+`next_billing_date` редактируется свободно — это только сдвиг
+таймера cron, без ретро-эффектов на историю.
+
 ### Billing history — backfill при создании
 
 Customer создаёт подписку с `first_billing_date < now()` (например,
@@ -146,9 +172,10 @@ Limits: backfill ограничен 24 месяцами назад от `now()` 
 
 ### Удаление
 
-- **Subscription** (одиночное удаление через UI) — soft-delete:
-  `deleted_at = now()`, `state_id = ARCHIVED`. Остаётся в фильтре
-  «архив».
+- **Subscription** (одиночное удаление через UI) — **hard-delete**:
+  `DELETE FROM subscription WHERE id = ?` + каскад на
+  `billing_history` и `subscription_promo` через FK. Восстановить
+  нельзя — UI явно предупреждает «удалится безвозвратно».
 - **Billing_history** — soft-delete (для случая удаления
   ошибочно созданной записи импорта). Customer-facing UI обычно
   не предоставляет удаление истории; это чисто backend-операция.

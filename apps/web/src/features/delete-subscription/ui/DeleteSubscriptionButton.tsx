@@ -65,11 +65,11 @@ export function DeleteSubscriptionButton({ sku, name, onDeleted }: Props) {
         description={
           error ??
           t(
-            `«${name}» уйдёт в архив. Можно вернуть через фильтр «Архив».`,
-            `«${name}» will move to archive. You can find it under the Archive filter.`,
+            `«${name}» и вся история списаний удалятся безвозвратно. Это действие нельзя отменить.`,
+            `«${name}» and all its billing history will be permanently deleted. This action cannot be undone.`,
           )
         }
-        confirmLabel={t('Удалить', 'Delete')}
+        confirmLabel={t('Удалить навсегда', 'Delete permanently')}
         cancelLabel={t('Отмена', 'Cancel')}
         destructive
         busy={busy}

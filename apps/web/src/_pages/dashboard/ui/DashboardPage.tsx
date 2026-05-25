@@ -61,7 +61,7 @@ export function DashboardPage() {
             {t('Обзор', 'Overview')}
           </h1>
         </div>
-        <CabinetCtaButton href="/account/subscriptions?new=1">
+        <CabinetCtaButton href="/account/subscriptions/new">
           + {t('Новая подписка', 'New subscription')}
         </CabinetCtaButton>
       </div>

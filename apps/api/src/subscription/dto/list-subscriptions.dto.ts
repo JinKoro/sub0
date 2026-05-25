@@ -1,7 +1,7 @@
 import { Type } from 'class-transformer';
 import { IsIn, IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
 
-const STATUSES = ['active', 'paused', 'cancelled', 'archived', 'all'] as const;
+const STATUSES = ['active', 'paused', 'cancelled', 'all'] as const;
 const SORTS = ['next', 'name', 'price'] as const;
 
 export class ListSubscriptionsDto {

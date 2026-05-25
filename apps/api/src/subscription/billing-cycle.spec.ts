@@ -26,7 +26,8 @@ describe('addPeriod', () => {
 });
 
 describe('countElapsedCycles', () => {
-  const now = new Date('2026-05-21T00:00:00Z');
+  // Берём now после полуночи следующего дня, чтобы 2026-05-21 уже было «вчера» по UTC.
+  const now = new Date('2026-05-22T00:00:00Z');
   it('0 cycles for future first date', () => {
     expect(
       countElapsedCycles(new Date('2026-06-01T00:00:00Z'), BillingPeriod.MONTH, now),
@@ -61,10 +62,26 @@ describe('nextBillingDateAfter', () => {
       nextBillingDateAfter(new Date('2026-01-15T00:00:00Z'), BillingPeriod.MONTH, now),
     ).toEqual(new Date('2026-06-15T00:00:00Z'));
   });
+  it('today (date-level) — keeps the date for the whole UTC day', () => {
+    const noon = new Date('2026-05-21T12:34:56Z');
+    expect(
+      nextBillingDateAfter(new Date('2026-05-21T00:00:00Z'), BillingPeriod.MONTH, noon),
+    ).toEqual(new Date('2026-05-21T00:00:00Z'));
+  });
+});
+
+describe('countElapsedCycles — today edge', () => {
+  it('today (date-level) — 0 циклов даже если now > полуночи', () => {
+    const noon = new Date('2026-05-21T15:00:00Z');
+    expect(
+      countElapsedCycles(new Date('2026-05-21T00:00:00Z'), BillingPeriod.MONTH, noon),
+    ).toBe(0);
+  });
 });
 
 describe('computeBackfill', () => {
-  const now = new Date('2026-05-21T00:00:00Z');
+  // Следующий UTC-день, чтобы цикл, заканчивающийся 2026-05-21, считался уже списанным.
+  const now = new Date('2026-05-22T00:00:00Z');
 
   it('promo применяется когда активен в момент billedAt (periodEnd)', () => {
     const out = computeBackfill({

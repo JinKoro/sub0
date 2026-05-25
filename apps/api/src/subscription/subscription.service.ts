@@ -81,7 +81,22 @@ export class SubscriptionService {
     }
     const trialEndsAt = dto.trialEndsAt ? new Date(dto.trialEndsAt) : null;
     const now = this.now();
-    const nextBillingDate = nextBillingDateAfter(firstBillingDate, dto.billingPeriodId, now);
+
+    let nextBillingDate: Date;
+    if (dto.nextBillingDate) {
+      const parsed = new Date(dto.nextBillingDate);
+      if (Number.isNaN(parsed.getTime())) {
+        throw new BadRequestException('invalid nextBillingDate');
+      }
+      if (parsed.getTime() < firstBillingDate.getTime()) {
+        throw new UnprocessableEntityException(
+          'nextBillingDate must be >= firstBillingDate',
+        );
+      }
+      nextBillingDate = parsed;
+    } else {
+      nextBillingDate = nextBillingDateAfter(firstBillingDate, dto.billingPeriodId, now);
+    }
 
     const backfillEntries = computeBackfill({
       firstBillingDate,
@@ -141,11 +156,27 @@ export class SubscriptionService {
       dto.trialEndsAt !== undefined ||
       dto.promos !== undefined ||
       dto.firstBillingDate !== undefined ||
+      dto.nextBillingDate !== undefined ||
       dto.billingPeriodId !== undefined;
     let existing: SubscriptionDto | null = null;
     if (needsExisting) {
       existing = await this.repo.findBySku(customerId, sku);
       if (!existing) throw new NotFoundException('subscription not found');
+    }
+
+    // firstBillingDate иммутабельно до появления редактора billing_history.
+    // Разрешаем только если совпадает с существующим (FE может прислать его «как есть»).
+    if (dto.firstBillingDate !== undefined && existing) {
+      const incoming = new Date(dto.firstBillingDate).getTime();
+      const current = new Date(existing.firstBillingDate).getTime();
+      if (Number.isNaN(incoming)) {
+        throw new BadRequestException('invalid firstBillingDate');
+      }
+      if (incoming !== current) {
+        throw new UnprocessableEntityException(
+          'firstBillingDate is immutable — edit billing_history records via the history editor (coming soon)',
+        );
+      }
     }
 
     if (dto.isTrial !== undefined || dto.trialEndsAt !== undefined) {
@@ -189,7 +220,36 @@ export class SubscriptionService {
       }
     }
 
-    if (dto.firstBillingDate !== undefined || dto.billingPeriodId !== undefined) {
+    if (dto.nextBillingDate !== undefined) {
+      // Явный override: используем как есть, валидация >= firstBillingDate.
+      if (dto.nextBillingDate === null) {
+        // null = «пересчитать автоматически» (редкий путь, для интеграций).
+        const firstBillingDate = dto.firstBillingDate
+          ? new Date(dto.firstBillingDate)
+          : new Date(existing!.firstBillingDate);
+        const billingPeriodId = dto.billingPeriodId ?? existing!.billingPeriodId;
+        patch.nextBillingDate = nextBillingDateAfter(
+          firstBillingDate,
+          billingPeriodId,
+          this.now(),
+        );
+      } else {
+        const parsed = new Date(dto.nextBillingDate);
+        if (Number.isNaN(parsed.getTime())) {
+          throw new BadRequestException('invalid nextBillingDate');
+        }
+        const firstBillingDate = dto.firstBillingDate
+          ? new Date(dto.firstBillingDate)
+          : new Date(existing!.firstBillingDate);
+        if (parsed.getTime() < firstBillingDate.getTime()) {
+          throw new UnprocessableEntityException(
+            'nextBillingDate must be >= firstBillingDate',
+          );
+        }
+        patch.nextBillingDate = parsed;
+      }
+    } else if (dto.firstBillingDate !== undefined || dto.billingPeriodId !== undefined) {
+      // firstBillingDate или cycle поменялись, nextBillingDate не задан явно — пересчитываем.
       const firstBillingDate = dto.firstBillingDate
         ? new Date(dto.firstBillingDate)
         : new Date(existing!.firstBillingDate);
@@ -272,30 +332,37 @@ export class SubscriptionService {
     const incomingSkus = new Set<string>();
 
     for (const item of next) {
-      if ('sku' in item) {
-        // Update path.
-        incomingSkus.add(item.sku);
-        const ex = existingBySku.get(item.sku);
+      // ВАЖНО: используем typeof, а не `'sku' in item`. class-transformer материализует
+      // все объявленные поля класса PromoInDto, поэтому `'sku' in item` истинно даже
+      // когда sku фактически не передан (item.sku === undefined).
+      const isUpdate =
+        typeof (item as { sku?: unknown }).sku === 'string' &&
+        typeof (item as { version?: unknown }).version === 'number';
+      if (isUpdate) {
+        const upd = item as { sku: string; version: number; amount?: string; endsAt?: string };
+        incomingSkus.add(upd.sku);
+        const ex = existingBySku.get(upd.sku);
         if (!ex) throw new NotFoundException('promo not found');
-        if (item.amount !== undefined || item.endsAt !== undefined) {
+        if (upd.amount !== undefined || upd.endsAt !== undefined) {
           this.validateAndNormalisePromo(
-            { amount: item.amount ?? ex.amount, endsAt: item.endsAt ?? ex.endsAt },
+            { amount: upd.amount ?? ex.amount, endsAt: upd.endsAt ?? ex.endsAt },
             subscriptionAmount,
           );
           const ok = await this.promoRepo.update({
-            sku: item.sku,
+            sku: upd.sku,
             subscriptionId: subId,
-            version: item.version,
+            version: upd.version,
             patch: {
-              amount: item.amount,
-              endsAt: item.endsAt ? new Date(item.endsAt) : undefined,
+              amount: upd.amount,
+              endsAt: upd.endsAt ? new Date(upd.endsAt) : undefined,
             },
           });
           if (!ok) throw new ConflictException('promo version mismatch');
         }
       } else {
-        // Insert path.
-        const norm = this.validateAndNormalisePromo(item, subscriptionAmount);
+        // Insert path: нет sku/version → новый промо.
+        const ins = item as NewPromoDto;
+        const norm = this.validateAndNormalisePromo(ins, subscriptionAmount);
         await this.promoRepo.bulkInsert({
           subscriptionId: subId,
           rows: [{ sku: this.generateSku('spm'), amount: norm.amount, endsAt: norm.endsAt }],

@@ -30,12 +30,12 @@ export function PageShell({ title, eyebrow, onClose, children }: Props) {
           alignItems: 'center',
           gap: 6,
           flexWrap: 'wrap',
-          fontSize: 12,
+          fontSize: 11,
           fontFamily: mono,
           color: SUB0.muted,
-          marginBottom: 14,
+          marginBottom: 6,
           textTransform: 'uppercase',
-          letterSpacing: '0.06em',
+          letterSpacing: '0.08em',
         }}
       >
         <button
