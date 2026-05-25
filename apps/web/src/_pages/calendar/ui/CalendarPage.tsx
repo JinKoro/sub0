@@ -10,12 +10,9 @@ import { LogoPill } from '@/shared/components/ui/LogoPill';
 import { CAB_SUBS, CATEGORIES } from '@/entities/subscription/model/cabinet-demo';
 import { useProjects } from '@/shared/contexts/projects-context';
 import type { CabinetSubscription } from '@/entities/subscription/model/cabinet-types';
-import {
-  toRub,
-  fromRub,
-  curSymbol,
-  monthLong,
-} from '@/shared/constants/cabinet';
+import { curSymbol, monthLong } from '@/shared/constants/cabinet';
+import { Currency } from '@subzero/shared';
+import { useExchangeRates, useToRub } from '@/shared/contexts/exchange-rates-context';
 import { YearJump } from './YearJump';
 
 interface Cell {
@@ -49,6 +46,15 @@ export function CalendarPage() {
   const isMobile = useIsMobile();
   const { currency, project } = useCabinet();
   const { projects } = useProjects();
+  const toRub = useToRub();
+  const { rates } = useExchangeRates();
+  const CAB_CUR_TO_ENUM: Record<string, number> = {
+    RUB: Currency.RUB,
+    USD: Currency.USD,
+    EUR: Currency.EUR,
+    BYN: Currency.BYN,
+  };
+  const targetRate = rates[CAB_CUR_TO_ENUM[currency] ?? Currency.RUB] ?? 1;
   const today = useMemo(() => new Date(), []);
   const [view, setView] = useState({ y: today.getFullYear(), m: today.getMonth() });
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
@@ -130,7 +136,7 @@ export function CalendarPage() {
       : ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
 
   const fmtTotal = (rub: number) =>
-    `${Math.round(fromRub(rub, currency)).toLocaleString('ru-RU')} ${curSymbol(currency)}`;
+    `${Math.round(rub / targetRate).toLocaleString('ru-RU')} ${curSymbol(currency)}`;
 
   const selected = selectedKey
     ? (() => {

@@ -4,8 +4,11 @@ import { ReactNode } from 'react';
 import { SUB0, mono } from '@/shared/constants/tokens';
 import { useLang } from '@/shared/contexts/lang-context';
 import { useIsMobile } from '@/shared/hooks/use-is-mobile';
+import {
+  useExchangeRates,
+  useToRub,
+} from '@/shared/contexts/exchange-rates-context';
 import type { CabinetSubscription } from '@/entities/subscription/model/cabinet-types';
-import { toRub } from '@/shared/constants/cabinet';
 import { useFormatRub } from '../lib/format';
 
 interface KpiProps {
@@ -66,6 +69,8 @@ export function KpiRow({ subs }: Props) {
   const { t } = useLang();
   const fmt = useFormatRub();
   const isMobile = useIsMobile();
+  const toRub = useToRub();
+  const { stale: ratesStale } = useExchangeRates();
 
   const active = subs.filter((s) => s.status !== 'archive');
   const monthly = active.reduce((acc, x) => {
@@ -87,7 +92,15 @@ export function KpiRow({ subs }: Props) {
       }}
     >
       <Kpi label={t('Всего подписок', 'Total subs')} value={active.length} />
-      <Kpi label={t('В месяц', 'Per month')} value={fmt(monthly)} highlight />
+      <Kpi
+        label={
+          ratesStale
+            ? `${t('В месяц', 'Per month')} · ${t('курс устарел', 'rate stale')}`
+            : t('В месяц', 'Per month')
+        }
+        value={fmt(monthly)}
+        highlight
+      />
       <Kpi label={t('Прогноз в год', 'Yearly forecast')} value={fmt(yearly)} />
       <Kpi
         label={t('Под контроль', 'Watch out')}

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<ValCurs Date="01.06.2026" name="Foreign Currency Market">
+  <Valute ID="R01010">
+    <NumCode>036</NumCode>
+    <CharCode>AUD</CharCode>
+    <Nominal>1</Nominal>
+    <Name>Avstraliyskiy dollar</Name>
+    <Value>52,3145</Value>
+    <VunitRate>52,3145</VunitRate>
+  </Valute>
+  <Valute ID="R01235">
+    <NumCode>840</NumCode>
+    <CharCode>USD</CharCode>
+    <Nominal>1</Nominal>
+    <Name>Dollar SShA</Name>
+    <Value>78,5031</Value>
+    <VunitRate>78,5031</VunitRate>
+  </Valute>
+  <Valute ID="R01239">
+    <NumCode>978</NumCode>
+    <CharCode>EUR</CharCode>
+    <Nominal>1</Nominal>
+    <Name>Evro</Name>
+    <Value>91,1234</Value>
+    <VunitRate>91,1234</VunitRate>
+  </Valute>
+  <Valute ID="R01335">
+    <NumCode>974</NumCode>
+    <CharCode>BYN</CharCode>
+    <Nominal>1</Nominal>
+    <Name>Belorusskiy rubl</Name>
+    <Value>27,8500</Value>
+    <VunitRate>27,8500</VunitRate>
+  </Valute>
+  <Valute ID="R01820">
+    <NumCode>392</NumCode>
+    <CharCode>JPY</CharCode>
+    <Nominal>100</Nominal>
+    <Name>Yen</Name>
+    <Value>50,4321</Value>
+    <VunitRate>0,504321</VunitRate>
+  </Valute>
+</ValCurs>
