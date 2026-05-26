@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { SUB0 } from '@/shared/constants/tokens';
 import { useLang } from '@/shared/contexts/lang-context';
 import { useProjects } from '@/shared/contexts/projects-context';
+import { useSubscriptions } from '@/shared/contexts/subscriptions-context';
 import { useCabinet } from '@/shared/contexts/cabinet-context';
 import { Card } from '@/shared/components/ui/Card';
 import { ProjShell } from './ProjShell';
@@ -18,6 +19,7 @@ export function ProjectEditView({ sku }: Props) {
   const { t } = useLang();
   const router = useRouter();
   const { projects, loading, update, remove } = useProjects();
+  const { refresh: refreshSubscriptions } = useSubscriptions();
   const { project: currentSku, setProject } = useCabinet();
   const goList = () => router.push('/account/projects');
 
@@ -62,6 +64,7 @@ export function ProjectEditView({ sku }: Props) {
           onCancel={goList}
           onDelete={async () => {
             await remove(editing.sku);
+            void refreshSubscriptions();
             // If the deleted project was selected in the cabinet, fall back to 'all'.
             if (currentSku === editing.sku) setProject('all');
             goList();

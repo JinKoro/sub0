@@ -5,12 +5,14 @@ import { purgeSubscriptions } from '@/entities/subscription/api/purge';
 import { ApiError } from '@/shared/api/client';
 import { ConfirmDialog } from '@/shared/components/ui/ConfirmDialog';
 import { useLang } from '@/shared/contexts/lang-context';
+import { useSubscriptions } from '@/shared/contexts/subscriptions-context';
 import { sBtnDanger } from '@/_pages/settings/ui/parts/styles';
 
 const FLASH_MS = 2000;
 
 export function DeleteAllSubscriptionsAction() {
   const { t } = useLang();
+  const { refresh: refreshSubscriptions } = useSubscriptions();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
@@ -21,6 +23,7 @@ export function DeleteAllSubscriptionsAction() {
     setError(null);
     try {
       await purgeSubscriptions();
+      void refreshSubscriptions();
       setOpen(false);
       setDone(true);
       setTimeout(() => setDone(false), FLASH_MS);
