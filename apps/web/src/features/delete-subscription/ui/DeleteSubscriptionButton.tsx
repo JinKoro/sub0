@@ -5,6 +5,7 @@ import { deleteSubscription } from '@/entities/subscription/api/remove';
 import { ApiError } from '@/shared/api/client';
 import { ConfirmDialog } from '@/shared/components/ui/ConfirmDialog';
 import { useLang } from '@/shared/contexts/lang-context';
+import { useSubscriptions } from '@/shared/contexts/subscriptions-context';
 import { SUB0 } from '@/shared/constants/tokens';
 
 interface Props {
@@ -15,6 +16,7 @@ interface Props {
 
 export function DeleteSubscriptionButton({ sku, name, onDeleted }: Props) {
   const { t } = useLang();
+  const { refresh: refreshSubscriptions } = useSubscriptions();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -24,6 +26,7 @@ export function DeleteSubscriptionButton({ sku, name, onDeleted }: Props) {
     setError(null);
     try {
       await deleteSubscription(sku);
+      void refreshSubscriptions();
       setOpen(false);
       onDeleted();
     } catch (err) {

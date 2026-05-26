@@ -11,6 +11,7 @@ import { useProjects } from '@/shared/contexts/projects-context';
 import { listCategories } from '@/shared/api/category';
 import { createSubscription } from '@/entities/subscription/api/create';
 import { updateSubscription } from '@/entities/subscription/api/update';
+import { useSubscriptions } from '@/shared/contexts/subscriptions-context';
 import { ApiError } from '@/shared/api/client';
 import {
   BillingPeriod,
@@ -47,6 +48,7 @@ export function SubscriptionForm({ initial, onClose, onSaved }: Props) {
   const { t, lang } = useLang();
   const isMobile = useIsMobile();
   const { projects } = useProjects();
+  const { refresh: refreshSubscriptions } = useSubscriptions();
   const isEdit = Boolean(initial.sku);
 
   const [state, setState] = useState<SubscriptionFormState>(initial);
@@ -283,6 +285,7 @@ export function SubscriptionForm({ initial, onClose, onSaved }: Props) {
       } else {
         await createSubscription(toCreateDto(state));
       }
+      void refreshSubscriptions();
       onSaved?.();
       onClose();
     } catch (e) {

@@ -550,6 +550,8 @@ function SubsList({ rows, onEdit, categoryBySku }: RowsProps) {
         const next = parseNextDate(r.nextBillingDate);
         const char = r.name.charAt(0).toUpperCase() || '?';
         const isPromoActive = hasActivePromo(r.promos, nowMs);
+        const isTrialActive =
+          r.isTrial && (!r.trialEndsAt || new Date(r.trialEndsAt).getTime() > nowMs);
         const billedToday = isBilledToday(r.nextBillingDate, todayIso);
         return (
           <div
@@ -600,7 +602,7 @@ function SubsList({ rows, onEdit, categoryBySku }: RowsProps) {
                   }}
                 >
                   {r.name}
-                  {r.isTrial && (
+                  {isTrialActive && (
                     <span
                       style={{
                         fontFamily: mono,
@@ -616,7 +618,7 @@ function SubsList({ rows, onEdit, categoryBySku }: RowsProps) {
                       {t('ПРОБНЫЙ', 'TRIAL')}
                     </span>
                   )}
-                  {isPromoActive && !r.isTrial && (
+                  {isPromoActive && !isTrialActive && (
                     <span
                       style={{
                         fontFamily: mono,

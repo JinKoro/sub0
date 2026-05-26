@@ -5,6 +5,8 @@ import { ExchangeRatesProvider } from '@/shared/contexts/exchange-rates-context'
 import { ProfileProvider } from '@/shared/contexts/profile-context';
 import { ProfileSync } from '@/shared/contexts/profile-sync';
 import { ProjectsProvider } from '@/shared/contexts/projects-context';
+import { SubscriptionsProvider } from '@/shared/contexts/subscriptions-context';
+import { CategoriesProvider } from '@/shared/contexts/categories-context';
 import { CUR_COOKIE, parseCurrency } from '@/shared/lib/pref-cookies';
 
 export default async function CabinetLayout({ children }: { children: React.ReactNode }) {
@@ -14,9 +16,13 @@ export default async function CabinetLayout({ children }: { children: React.Reac
       <CabinetProvider initialCurrency={currency}>
         <ProjectsProvider>
           <ExchangeRatesProvider>
-            <ProfileSync />
-            <Header mode="cabinet" />
-            <main>{children}</main>
+            <CategoriesProvider>
+              <SubscriptionsProvider>
+                <ProfileSync />
+                <Header mode="cabinet" />
+                <main>{children}</main>
+              </SubscriptionsProvider>
+            </CategoriesProvider>
           </ExchangeRatesProvider>
         </ProjectsProvider>
       </CabinetProvider>
