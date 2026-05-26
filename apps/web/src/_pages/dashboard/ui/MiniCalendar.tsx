@@ -1,23 +1,24 @@
 'use client';
 
-import { useState } from 'react';
+import Link from 'next/link';
+import { useMemo, useState } from 'react';
+import type { SubscriptionDto } from '@subzero/shared';
+import { Currency } from '@subzero/shared';
+
 import { SUB0, mono } from '@/shared/constants/tokens';
 import { useLang } from '@/shared/contexts/lang-context';
 import { Card } from '@/shared/components/ui/Card';
 import { CardHeader } from '@/shared/components/ui/CardHeader';
 import { Pill } from '@/shared/components/ui/Pill';
-import type { CabinetSubscription } from '@/entities/subscription/model/cabinet-types';
-import { Currency } from '@subzero/shared';
 import { monthShort, monthLong, curSymbol } from '@/shared/constants/cabinet';
 import { useCabinet } from '@/shared/contexts/cabinet-context';
-import { useExchangeRates, useToRub } from '@/shared/contexts/exchange-rates-context';
-
-const CAB_CUR_TO_ENUM: Record<string, number> = {
-  RUB: Currency.RUB,
-  USD: Currency.USD,
-  EUR: Currency.EUR,
-  BYN: Currency.BYN,
-};
+import { useExchangeRates } from '@/shared/contexts/exchange-rates-context';
+import {
+  chargeRub,
+  curToEnum,
+  occurrencesInRange,
+  subChar,
+} from '@/shared/contexts/subscriptions-context';
 
 interface Cell {
   day: number;
@@ -27,41 +28,75 @@ interface Cell {
 }
 
 interface Props {
-  subs: CabinetSubscription[];
+  subs: SubscriptionDto[];
+}
+
+interface DayHit {
+  sub: SubscriptionDto;
+  amountRub: number;
 }
 
 export function MiniCalendar({ subs }: Props) {
   const { t, lang } = useLang();
   const { currency } = useCabinet();
   const { rates } = useExchangeRates();
-  const toRub = useToRub();
-  const targetRate = rates[CAB_CUR_TO_ENUM[currency] ?? Currency.RUB] ?? 1;
+  const targetRate = rates[curToEnum(currency) ?? Currency.RUB] ?? 1;
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
 
-  const today = new Date();
-  const days: Cell[] = [];
-  for (let i = 0; i < 30; i += 1) {
-    const d = new Date(today);
-    d.setDate(today.getDate() + i);
-    days.push({
-      day: d.getDate(),
-      month: d.getMonth(),
-      year: d.getFullYear(),
-      key: `${d.getMonth()}-${d.getDate()}`,
-    });
-  }
+  const today = useMemo(() => {
+    const t = new Date();
+    t.setHours(0, 0, 0, 0);
+    return t;
+  }, []);
+
+  const days = useMemo<Cell[]>(() => {
+    const out: Cell[] = [];
+    for (let i = 0; i < 30; i += 1) {
+      const d = new Date(today);
+      d.setDate(today.getDate() + i);
+      out.push({
+        day: d.getDate(),
+        month: d.getMonth(),
+        year: d.getFullYear(),
+        key: `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`,
+      });
+    }
+    return out;
+  }, [today]);
+
+  const horizon = useMemo(() => {
+    const h = new Date(today);
+    h.setDate(today.getDate() + 29);
+    h.setHours(23, 59, 59, 999);
+    return h;
+  }, [today]);
+
+  // Карта day-key → подписки которые имеют там occurrence
+  const byDay = useMemo<Record<string, DayHit[]>>(() => {
+    const now = new Date();
+    const map: Record<string, DayHit[]> = {};
+    for (const s of subs) {
+      const occ = occurrencesInRange(s, today, horizon);
+      if (occ.length === 0) continue;
+      const amountRub = chargeRub(s, rates, now);
+      for (const d of occ) {
+        const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+        (map[key] ??= []).push({ sub: s, amountRub });
+      }
+    }
+    return map;
+  }, [subs, rates, today, horizon]);
 
   const firstWeekday = today.getDay() || 7;
   const cells: (Cell | null)[] = [];
   for (let i = 1; i < firstWeekday; i += 1) cells.push(null);
   cells.push(...days);
 
-  const dayItems = (cell: Cell) =>
-    subs.filter((s) => s.nextMonth === cell.month + 1 && s.nextDay === cell.day);
-  const totalSum = days.reduce(
-    (acc, c) => acc + dayItems(c).reduce((s, x) => s + toRub(x.price, x.cur), 0),
-    0,
-  );
+  const totalSum = useMemo(() => {
+    let s = 0;
+    for (const c of days) for (const hit of byDay[c.key] ?? []) s += hit.amountRub;
+    return s;
+  }, [days, byDay]);
 
   const fmtLocale = (rub: number) =>
     `${Math.round(rub / targetRate).toLocaleString('ru-RU')} ${curSymbol(currency)}`;
@@ -72,8 +107,8 @@ export function MiniCalendar({ subs }: Props) {
       : ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
 
   const selectedCell = selectedKey ? days.find((c) => c.key === selectedKey) ?? null : null;
-  const selectedItems = selectedCell ? dayItems(selectedCell) : [];
-  const selectedTotal = selectedItems.reduce((s, x) => s + toRub(x.price, x.cur), 0);
+  const selectedItems = selectedCell ? byDay[selectedCell.key] ?? [] : [];
+  const selectedTotal = selectedItems.reduce((s, x) => s + x.amountRub, 0);
 
   return (
     <Card padding={20}>
@@ -104,7 +139,7 @@ export function MiniCalendar({ subs }: Props) {
         {cells.map((cell, i) => {
           if (cell === null) return <div key={`pad-${i}`} />;
           const d = cell.day;
-          const its = dayItems(cell);
+          const its = byDay[cell.key] ?? [];
           const has = its.length > 0;
           const isToday = i === firstWeekday - 1;
           const isSelected = selectedKey === cell.key;
@@ -155,15 +190,15 @@ export function MiniCalendar({ subs }: Props) {
               </span>
               {has && (
                 <div style={{ display: 'flex', alignItems: 'center', marginTop: 'auto' }}>
-                  {its.slice(0, 3).map((s, idx) => (
+                  {its.slice(0, 3).map((hit, idx) => (
                     <span
-                      key={s.id}
-                      title={s.name}
+                      key={hit.sub.sku}
+                      title={hit.sub.name}
                       style={{
                         width: 14,
                         height: 14,
                         borderRadius: 999,
-                        background: s.color ?? SUB0.muted,
+                        background: hit.sub.color ?? SUB0.muted,
                         color: '#fff',
                         fontSize: 8,
                         fontWeight: 800,
@@ -174,7 +209,7 @@ export function MiniCalendar({ subs }: Props) {
                         marginLeft: idx === 0 ? 0 : -5,
                       }}
                     >
-                      {s.color ? s.char : '·'}
+                      {hit.sub.icon ? '·' : subChar(hit.sub)}
                     </span>
                   ))}
                   {its.length > 3 && (
@@ -243,14 +278,17 @@ export function MiniCalendar({ subs }: Props) {
               overflowY: 'auto',
             }}
           >
-            {selectedItems.map((s) => (
-              <div
-                key={s.id}
+            {selectedItems.map((hit) => (
+              <Link
+                key={hit.sub.sku}
+                href={`/account/subscriptions/${hit.sub.sku}`}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
                   gap: 10,
                   padding: '6px 0',
+                  textDecoration: 'none',
+                  color: SUB0.ink,
                 }}
               >
                 <span
@@ -258,7 +296,7 @@ export function MiniCalendar({ subs }: Props) {
                     width: 24,
                     height: 24,
                     borderRadius: 6,
-                    background: s.color ?? SUB0.muted,
+                    background: hit.sub.color ?? SUB0.muted,
                     color: '#fff',
                     fontSize: 11,
                     fontWeight: 700,
@@ -268,7 +306,7 @@ export function MiniCalendar({ subs }: Props) {
                     flexShrink: 0,
                   }}
                 >
-                  {s.char || '·'}
+                  {subChar(hit.sub)}
                 </span>
                 <div
                   style={{
@@ -281,7 +319,7 @@ export function MiniCalendar({ subs }: Props) {
                     textOverflow: 'ellipsis',
                   }}
                 >
-                  {s.name}
+                  {hit.sub.name}
                 </div>
                 <div
                   style={{
@@ -292,9 +330,9 @@ export function MiniCalendar({ subs }: Props) {
                     flexShrink: 0,
                   }}
                 >
-                  {fmtLocale(toRub(s.price, s.cur))}
+                  {fmtLocale(hit.amountRub)}
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         </div>

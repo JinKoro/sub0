@@ -1,14 +1,17 @@
 'use client';
 
-import { ReactNode } from 'react';
+import { ReactNode, useMemo } from 'react';
+import type { SubscriptionDto } from '@subzero/shared';
+
 import { SUB0, mono } from '@/shared/constants/tokens';
 import { useLang } from '@/shared/contexts/lang-context';
 import { useIsMobile } from '@/shared/hooks/use-is-mobile';
+import { useExchangeRates } from '@/shared/contexts/exchange-rates-context';
 import {
-  useExchangeRates,
-  useToRub,
-} from '@/shared/contexts/exchange-rates-context';
-import type { CabinetSubscription } from '@/entities/subscription/model/cabinet-types';
+  activePromoAmount,
+  isLive,
+  monthlyRub,
+} from '@/shared/contexts/subscriptions-context';
 import { useFormatRub } from '../lib/format';
 
 interface KpiProps {
@@ -62,25 +65,34 @@ function Kpi({ label, value, highlight }: KpiProps) {
 }
 
 interface Props {
-  subs: CabinetSubscription[];
+  subs: SubscriptionDto[];
 }
 
 export function KpiRow({ subs }: Props) {
   const { t } = useLang();
   const fmt = useFormatRub();
   const isMobile = useIsMobile();
-  const toRub = useToRub();
-  const { stale: ratesStale } = useExchangeRates();
+  const { rates, stale: ratesStale } = useExchangeRates();
 
-  const active = subs.filter((s) => s.status !== 'archive');
-  const monthly = active.reduce((acc, x) => {
-    if (x.status === 'paused') return acc;
-    const v = toRub(x.price, x.cur);
-    return acc + (x.cycle === 'yearly' ? v / 12 : v);
-  }, 0);
-  const yearly = monthly * 12;
-  const trials = active.filter((s) => s.trial);
-  const promos = active.filter((s) => s.promo && !s.trial);
+  const { monthly, yearly, activeCount, trialCount, promoCount } = useMemo(() => {
+    const now = new Date();
+    const live = subs.filter(isLive);
+    let m = 0;
+    let trials = 0;
+    let promos = 0;
+    for (const s of live) {
+      m += monthlyRub(s, rates, now);
+      if (s.isTrial && s.trialEndsAt && new Date(s.trialEndsAt) > now) trials += 1;
+      if (activePromoAmount(s, now) !== null && !s.isTrial) promos += 1;
+    }
+    return {
+      monthly: m,
+      yearly: m * 12,
+      activeCount: live.length,
+      trialCount: trials,
+      promoCount: promos,
+    };
+  }, [subs, rates]);
 
   return (
     <div
@@ -91,7 +103,7 @@ export function KpiRow({ subs }: Props) {
         marginBottom: 16,
       }}
     >
-      <Kpi label={t('Всего подписок', 'Total subs')} value={active.length} />
+      <Kpi label={t('Всего подписок', 'Total subs')} value={activeCount} />
       <Kpi
         label={
           ratesStale
@@ -115,14 +127,14 @@ export function KpiRow({ subs }: Props) {
             }}
           >
             <span style={{ display: 'inline-flex', alignItems: 'baseline', gap: 6 }}>
-              <span style={{ color: SUB0.danger }}>{trials.length}</span>
+              <span style={{ color: SUB0.danger }}>{trialCount}</span>
               <span style={{ fontSize: 12, color: SUB0.muted, fontFamily: mono, fontWeight: 500 }}>
                 {t('пробных', 'trial')}
               </span>
             </span>
             <span style={{ display: 'inline-flex', alignItems: 'baseline', gap: 6 }}>
               <span style={{ width: 1, height: 16, background: SUB0.line, alignSelf: 'center' }} />
-              <span style={{ color: SUB0.warn }}>{promos.length}</span>
+              <span style={{ color: SUB0.warn }}>{promoCount}</span>
               <span style={{ fontSize: 12, color: SUB0.muted, fontFamily: mono, fontWeight: 500 }}>
                 {t('промо', 'promo')}
               </span>
