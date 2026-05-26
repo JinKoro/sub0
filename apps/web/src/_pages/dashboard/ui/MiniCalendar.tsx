@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import type { SubscriptionDto } from '@subzero/shared';
@@ -190,28 +191,43 @@ export function MiniCalendar({ subs }: Props) {
               </span>
               {has && (
                 <div style={{ display: 'flex', alignItems: 'center', marginTop: 'auto' }}>
-                  {its.slice(0, 3).map((hit, idx) => (
-                    <span
-                      key={hit.sub.sku}
-                      title={hit.sub.name}
-                      style={{
-                        width: 14,
-                        height: 14,
-                        borderRadius: 999,
-                        background: hit.sub.color ?? SUB0.muted,
-                        color: '#fff',
-                        fontSize: 8,
-                        fontWeight: 800,
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        border: `1.5px solid ${isSelected ? SUB0.ink : SUB0.panel}`,
-                        marginLeft: idx === 0 ? 0 : -5,
-                      }}
-                    >
-                      {hit.sub.icon ? '·' : subChar(hit.sub)}
-                    </span>
-                  ))}
+                  {its.slice(0, 3).map((hit, idx) => {
+                    const hasIcon = Boolean(hit.sub.icon);
+                    return (
+                      <span
+                        key={hit.sub.sku}
+                        title={hit.sub.name}
+                        style={{
+                          width: 14,
+                          height: 14,
+                          borderRadius: 999,
+                          background: hasIcon ? '#fff' : hit.sub.color ?? SUB0.muted,
+                          color: '#fff',
+                          fontSize: 8,
+                          fontWeight: 800,
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          border: `1.5px solid ${isSelected ? SUB0.ink : SUB0.panel}`,
+                          marginLeft: idx === 0 ? 0 : -5,
+                          overflow: 'hidden',
+                        }}
+                      >
+                        {hasIcon ? (
+                          <Image
+                            src={hit.sub.icon as string}
+                            alt={hit.sub.name}
+                            width={10}
+                            height={10}
+                            unoptimized
+                            style={{ objectFit: 'contain', display: 'block' }}
+                          />
+                        ) : (
+                          subChar(hit.sub)
+                        )}
+                      </span>
+                    );
+                  })}
                   {its.length > 3 && (
                     <span
                       style={{

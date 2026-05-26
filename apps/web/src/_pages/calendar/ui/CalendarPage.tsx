@@ -1,18 +1,30 @@
 'use client';
 
+import Image from 'next/image';
+import Link from 'next/link';
 import { useCallback, useMemo, useState } from 'react';
+import { Currency } from '@subzero/shared';
+import type { SubscriptionDto } from '@subzero/shared';
+
 import { SUB0, mono } from '@/shared/constants/tokens';
 import { useLang } from '@/shared/contexts/lang-context';
 import { useIsMobile } from '@/shared/hooks/use-is-mobile';
 import { useCabinet } from '@/shared/contexts/cabinet-context';
+import { useProjects } from '@/shared/contexts/projects-context';
+import { useCategories } from '@/shared/contexts/categories-context';
+import {
+  chargeRub,
+  curToEnum,
+  isLive,
+  occurrencesInRange,
+  subChar,
+  useSubscriptions,
+} from '@/shared/contexts/subscriptions-context';
+import { useExchangeRates, convertToRub } from '@/shared/contexts/exchange-rates-context';
+import { useBillingHistoryRange } from '@/entities/billing-history/model/use-billing-history-range';
 import { Card } from '@/shared/components/ui/Card';
 import { LogoPill } from '@/shared/components/ui/LogoPill';
-import { CAB_SUBS, CATEGORIES } from '@/entities/subscription/model/cabinet-demo';
-import { useProjects } from '@/shared/contexts/projects-context';
-import type { CabinetSubscription } from '@/entities/subscription/model/cabinet-types';
 import { curSymbol, monthLong } from '@/shared/constants/cabinet';
-import { Currency } from '@subzero/shared';
-import { useExchangeRates, useToRub } from '@/shared/contexts/exchange-rates-context';
 import { YearJump } from './YearJump';
 
 interface Cell {
@@ -20,6 +32,17 @@ interface Cell {
   m: number;
   y: number;
   dim: boolean;
+}
+
+interface DayHit {
+  key: string;
+  sub: SubscriptionDto;
+  amountRub: number;
+  /** Сумма в исходной валюте — для рендера справа от названия. */
+  amount: string;
+  currencyId: Currency;
+  /** true для прошлых списаний из billing_history. */
+  isHistorical: boolean;
 }
 
 const navArrow = {
@@ -39,47 +62,118 @@ const navArrow = {
   lineHeight: 1,
 } as const;
 
-const isLive = (s: CabinetSubscription) => s.status !== 'archive' && s.status !== 'paused';
+function dayKey(y: number, m: number, d: number): string {
+  return `${y}-${m}-${d}`;
+}
+
+function startOfDay(d: Date): Date {
+  const x = new Date(d);
+  x.setHours(0, 0, 0, 0);
+  return x;
+}
+
+function endOfDay(d: Date): Date {
+  const x = new Date(d);
+  x.setHours(23, 59, 59, 999);
+  return x;
+}
 
 export function CalendarPage() {
   const { t, lang } = useLang();
   const isMobile = useIsMobile();
   const { currency, project } = useCabinet();
   const { projects } = useProjects();
-  const toRub = useToRub();
+  const { items: allSubs, loading: subsLoading } = useSubscriptions();
+  const { bySku: categoryBySku } = useCategories();
   const { rates } = useExchangeRates();
-  const CAB_CUR_TO_ENUM: Record<string, number> = {
-    RUB: Currency.RUB,
-    USD: Currency.USD,
-    EUR: Currency.EUR,
-    BYN: Currency.BYN,
-  };
-  const targetRate = rates[CAB_CUR_TO_ENUM[currency] ?? Currency.RUB] ?? 1;
-  const today = useMemo(() => new Date(), []);
+  const today = useMemo(() => startOfDay(new Date()), []);
   const [view, setView] = useState({ y: today.getFullYear(), m: today.getMonth() });
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
 
-  const items = useMemo(
-    () => (project === 'all' ? CAB_SUBS : CAB_SUBS.filter((s) => s.project === project)),
-    [project],
+  // Подписки в текущем проекте
+  const subs = useMemo(() => {
+    if (project === 'all') return allSubs;
+    return allSubs.filter((s) => s.projectSku === project);
+  }, [allSubs, project]);
+
+  // Окно фетча billing-history: первый день месяца → последний день месяца
+  // (с захватом «прошлых» подложных дней из соседнего месяца не нужно — для них
+  // ячейки dim и не кликабельны).
+  const monthStart = useMemo(() => startOfDay(new Date(view.y, view.m, 1)), [view]);
+  const monthEnd = useMemo(() => endOfDay(new Date(view.y, view.m + 1, 0)), [view]);
+
+  // Подгружаем историю только если в окне есть прошлое.
+  const fetchTo = monthEnd < today ? monthEnd : today;
+  const shouldFetchHistory = monthStart < today;
+  const projectFilter = project === 'all' ? undefined : project;
+  const history = useBillingHistoryRange(
+    shouldFetchHistory ? monthStart : null,
+    shouldFetchHistory ? fetchTo : null,
+    projectFilter,
   );
 
+  const subBySku = useMemo(() => {
+    const map = new Map<string, SubscriptionDto>();
+    for (const s of subs) map.set(s.sku, s);
+    return map;
+  }, [subs]);
+
+  /** Билдер списка списаний на ячейку: прошлое — из истории, будущее — из подписок. */
   const occurrencesFor = useCallback(
-    (y: number, m: number, d: number): CabinetSubscription[] => {
-      const cellDate = new Date(y, m, d);
-      return items.filter((s) => {
-        if (s.cycle === 'monthly') {
-          if (s.nextDay !== d) return false;
-        } else if (s.cycle === 'yearly') {
-          if (s.nextDay !== d || s.nextMonth - 1 !== m) return false;
-        } else {
-          return false;
+    (y: number, m: number, d: number): DayHit[] => {
+      const date = new Date(y, m, d);
+      const isPast = date < today;
+      const isToday = date.getTime() === today.getTime();
+      const now = new Date();
+      const out: DayHit[] = [];
+
+      if (isPast || isToday) {
+        // прошлое + сегодня: ищем в billing_history
+        for (const e of history.items) {
+          const b = new Date(e.billedAt);
+          if (
+            b.getFullYear() === y &&
+            b.getMonth() === m &&
+            b.getDate() === d
+          ) {
+            const sub = subBySku.get(e.subscriptionSku);
+            if (!sub) continue;
+            const amountRub = convertToRub(Number(e.amount), e.currencyId, rates);
+            out.push({
+              key: `h-${e.sku}`,
+              sub,
+              amountRub,
+              amount: e.amount,
+              currencyId: e.currencyId,
+              isHistorical: true,
+            });
+          }
         }
-        if (!isLive(s) && cellDate > today) return false;
-        return true;
-      });
+      }
+      if (!isPast) {
+        // сегодня и будущее: occurrences из подписок (если на сегодня уже есть запись
+        // в history — добавилась выше; иначе фолбэк на ожидаемое списание)
+        const from = startOfDay(date);
+        const to = endOfDay(date);
+        const skusAlreadyInHistory = new Set(out.map((h) => h.sub.sku));
+        for (const s of subs) {
+          if (!isLive(s)) continue;
+          if (isToday && skusAlreadyInHistory.has(s.sku)) continue;
+          const occ = occurrencesInRange(s, from, to);
+          if (occ.length === 0) continue;
+          out.push({
+            key: `o-${s.sku}-${y}-${m}-${d}`,
+            sub: s,
+            amountRub: chargeRub(s, rates, now),
+            amount: s.amount,
+            currencyId: s.currencyId,
+            isHistorical: false,
+          });
+        }
+      }
+      return out;
     },
-    [items, today],
+    [subs, subBySku, history.items, rates, today],
   );
 
   const cells = useMemo<Cell[]>(() => {
@@ -105,7 +199,7 @@ export function CalendarPage() {
   }, [view]);
 
   const monthOccurrences = useMemo(() => {
-    const out: { cell: Cell; its: CabinetSubscription[] }[] = [];
+    const out: { cell: Cell; its: DayHit[] }[] = [];
     cells.forEach((c) => {
       if (c.dim) return;
       const its = occurrencesFor(c.y, c.m, c.d);
@@ -115,7 +209,7 @@ export function CalendarPage() {
   }, [cells, occurrencesFor]);
 
   const monthTotal = monthOccurrences.reduce(
-    (s, mo) => s + mo.its.reduce((a, x) => a + toRub(x.price, x.cur), 0),
+    (s, mo) => s + mo.its.reduce((a, x) => a + x.amountRub, 0),
     0,
   );
   const monthCount = monthOccurrences.reduce((s, mo) => s + mo.its.length, 0);
@@ -135,6 +229,7 @@ export function CalendarPage() {
       ? ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
       : ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
 
+  const targetRate = rates[curToEnum(currency) ?? Currency.RUB] ?? 1;
   const fmtTotal = (rub: number) =>
     `${Math.round(rub / targetRate).toLocaleString('ru-RU')} ${curSymbol(currency)}`;
 
@@ -149,6 +244,8 @@ export function CalendarPage() {
         return { y: sy, m: sm, d: sd, its, isPast };
       })()
     : null;
+
+  const headerLoading = subsLoading || history.loading;
 
   return (
     <div
@@ -225,7 +322,7 @@ export function CalendarPage() {
               marginTop: 2,
             }}
           >
-            {fmtTotal(monthTotal)}
+            {headerLoading ? '—' : fmtTotal(monthTotal)}
           </div>
         </div>
       </div>
@@ -477,7 +574,7 @@ export function CalendarPage() {
             const cellDate = new Date(cell.y, cell.m, cell.d);
             const isTodayCell = cellDate.toDateString() === today.toDateString();
             const isPast = cellDate < today && !isTodayCell;
-            const key = `${cell.y}-${cell.m}-${cell.d}`;
+            const key = dayKey(cell.y, cell.m, cell.d);
             const isSelected = selectedKey === key;
             const has = its.length > 0;
             const maxPills = isMobile ? 1 : 5;
@@ -563,39 +660,55 @@ export function CalendarPage() {
                       maxWidth: '100%',
                     }}
                   >
-                    {its.slice(0, maxPills).map((s, idx) => (
-                      <span
-                        key={`${s.id}-${idx}`}
-                        title={s.name}
-                        style={{
-                          width: pillSize,
-                          height: pillSize,
-                          borderRadius: 999,
-                          background: s.color ?? SUB0.muted,
-                          color: '#fff',
-                          fontSize: isMobile ? 8 : 10,
-                          fontWeight: 800,
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          border: `2px solid ${
-                            isSelected
-                              ? SUB0.ink
-                              : isTodayCell
-                                ? '#fff8f3'
-                                : cell.dim
-                                  ? SUB0.bg
-                                  : SUB0.panel
-                          }`,
-                          marginLeft: idx === 0 ? 0 : -7,
-                          flexShrink: 0,
-                          opacity: isPast && !isLive(s) ? 0.55 : 1,
-                          filter: isPast ? 'saturate(0.85)' : 'none',
-                        }}
-                      >
-                        {s.char || '·'}
-                      </span>
-                    ))}
+                    {its.slice(0, maxPills).map((hit, idx) => {
+                      const borderColor = isSelected
+                        ? SUB0.ink
+                        : isTodayCell
+                          ? '#fff8f3'
+                          : cell.dim
+                            ? SUB0.bg
+                            : SUB0.panel;
+                      const hasIcon = Boolean(hit.sub.icon);
+                      const innerPad = Math.max(2, Math.round(pillSize * 0.18));
+                      const innerSize = pillSize - innerPad * 2;
+                      return (
+                        <span
+                          key={`${hit.key}-${idx}`}
+                          title={hit.sub.name}
+                          style={{
+                            width: pillSize,
+                            height: pillSize,
+                            borderRadius: 999,
+                            background: hasIcon ? '#fff' : hit.sub.color ?? SUB0.muted,
+                            color: '#fff',
+                            fontSize: isMobile ? 8 : 10,
+                            fontWeight: 800,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            border: `2px solid ${borderColor}`,
+                            marginLeft: idx === 0 ? 0 : -7,
+                            flexShrink: 0,
+                            opacity: isPast ? 0.85 : 1,
+                            filter: isPast ? 'saturate(0.85)' : 'none',
+                            overflow: 'hidden',
+                          }}
+                        >
+                          {hasIcon ? (
+                            <Image
+                              src={hit.sub.icon as string}
+                              alt={hit.sub.name}
+                              width={innerSize}
+                              height={innerSize}
+                              unoptimized
+                              style={{ objectFit: 'contain', display: 'block' }}
+                            />
+                          ) : (
+                            subChar(hit.sub)
+                          )}
+                        </span>
+                      );
+                    })}
                     {its.length > maxPills && (
                       <span
                         style={{
@@ -669,12 +782,13 @@ export function CalendarPage() {
                 gap: 8,
               }}
             >
-              {selected.its.map((s) => {
-                const meta = CATEGORIES.find((c) => c.id === s.cat);
-                const proj = projects.find((p) => p.sku === s.project);
+              {selected.its.map((hit) => {
+                const meta = categoryBySku(hit.sub.categorySku);
+                const proj = projects.find((p) => p.sku === hit.sub.projectSku);
                 return (
-                  <div
-                    key={s.id}
+                  <Link
+                    key={hit.key}
+                    href={`/account/subscriptions/${hit.sub.sku}`}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -683,9 +797,16 @@ export function CalendarPage() {
                       background: SUB0.panel,
                       border: `1px solid ${SUB0.line}`,
                       borderRadius: 8,
+                      textDecoration: 'none',
+                      color: SUB0.ink,
                     }}
                   >
-                    <LogoPill char={s.char} color={s.color ?? SUB0.muted} icon={s.icon} size={32} />
+                    <LogoPill
+                      char={subChar(hit.sub)}
+                      color={hit.sub.color ?? SUB0.muted}
+                      icon={hit.sub.icon}
+                      size={32}
+                    />
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div
                         style={{
@@ -696,7 +817,7 @@ export function CalendarPage() {
                           textOverflow: 'ellipsis',
                         }}
                       >
-                        {s.name}
+                        {hit.sub.name}
                       </div>
                       <div
                         style={{
@@ -716,7 +837,7 @@ export function CalendarPage() {
                             background: meta?.color ?? SUB0.muted,
                           }}
                         />
-                        {meta ? t(meta.name, meta.nameEn) : ''}
+                        {meta ? (lang === 'en' ? meta.nameEn : meta.nameRu) : t('Другое', 'Other')}
                         <span style={{ opacity: 0.5 }}>·</span>
                         <span>{proj ? proj.name : ''}</span>
                       </div>
@@ -732,7 +853,7 @@ export function CalendarPage() {
                         gap: 4,
                       }}
                     >
-                      <span>{Number(s.price).toLocaleString('ru-RU')}</span>
+                      <span>{Number(hit.amount).toLocaleString('ru-RU')}</span>
                       <span
                         style={{
                           fontFamily: mono,
@@ -741,10 +862,10 @@ export function CalendarPage() {
                           fontWeight: 600,
                         }}
                       >
-                        {s.cur}
+                        {currencyCode(hit.currencyId)}
                       </span>
                     </div>
-                  </div>
+                  </Link>
                 );
               })}
             </div>
@@ -800,12 +921,22 @@ export function CalendarPage() {
               filter: 'saturate(0.85)',
             }}
           />
-          {t(
-            'Списания на паузе/в архиве — только в прошлом',
-            'Paused / archived — past only',
-          )}
+          {t('Прошлые списания затемнены', 'Past charges dimmed')}
         </span>
       </div>
     </div>
   );
+}
+
+function currencyCode(c: Currency): string {
+  switch (c) {
+    case Currency.USD:
+      return 'USD';
+    case Currency.EUR:
+      return 'EUR';
+    case Currency.BYN:
+      return 'BYN';
+    default:
+      return 'RUB';
+  }
 }
