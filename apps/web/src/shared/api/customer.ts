@@ -7,6 +7,8 @@ export interface CustomerProfile {
   localeId: number;
   currencyId: number;
   planId: number;
+  notificationsEnabled: boolean;
+  notificationLeadDays: number[];
   version: number;
 }
 
@@ -32,6 +34,19 @@ export interface PreferencesInput {
 /** Region & format card: locale / timezone / currency in one request. */
 export function savePreferences(input: PreferencesInput): Promise<CustomerProfile> {
   return api<CustomerProfile>('/customers/me/preferences', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+}
+
+export interface NotificationsInput {
+  enabled: boolean;
+  leadDays: number[];
+  version: number;
+}
+
+export function saveNotifications(input: NotificationsInput): Promise<CustomerProfile> {
+  return api<CustomerProfile>('/customers/me/notifications', {
     method: 'POST',
     body: JSON.stringify(input),
   });

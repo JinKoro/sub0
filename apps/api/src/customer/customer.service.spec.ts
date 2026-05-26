@@ -18,6 +18,8 @@ function makeRow(over: Partial<CustomerRow> = {}): CustomerRow {
     currencyId: 1,
     planId: 1,
     passwordHash: null,
+    notificationsEnabled: true,
+    notificationLeadDays: [3],
     version: 3,
     ...over,
   };
@@ -53,6 +55,8 @@ describe('CustomerService.getMe', () => {
       localeId: 1,
       currencyId: 1,
       planId: 1,
+      notificationsEnabled: true,
+      notificationLeadDays: [3],
       version: 3,
     });
   });

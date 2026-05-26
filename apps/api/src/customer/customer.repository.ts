@@ -23,6 +23,8 @@ export class DrizzleCustomerProfileRepository implements CustomerRepository {
         currencyId: customer.currencyId,
         planId: customer.planId,
         passwordHash: customer.passwordHash,
+        notificationsEnabled: customer.notificationsEnabled,
+        notificationLeadDays: customer.notificationLeadDays,
         version: customer.version,
       })
       .from(customer)
@@ -37,6 +39,8 @@ export class DrizzleCustomerProfileRepository implements CustomerRepository {
     if (patch.timezone !== undefined) set.timezone = patch.timezone;
     if (patch.localeId !== undefined) set.localeId = patch.localeId;
     if (patch.currencyId !== undefined) set.currencyId = patch.currencyId;
+    if (patch.notificationsEnabled !== undefined) set.notificationsEnabled = patch.notificationsEnabled;
+    if (patch.notificationLeadDays !== undefined) set.notificationLeadDays = patch.notificationLeadDays;
 
     const res = await this.db
       .update(customer)

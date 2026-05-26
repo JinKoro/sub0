@@ -25,6 +25,8 @@ function toProfile(c: CustomerRow): CustomerProfile {
     localeId: c.localeId,
     currencyId: c.currencyId,
     planId: c.planId,
+    notificationsEnabled: c.notificationsEnabled,
+    notificationLeadDays: c.notificationLeadDays,
     version: c.version,
   };
 }

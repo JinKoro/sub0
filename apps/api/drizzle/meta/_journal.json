@@ -155,6 +155,13 @@
       "when": 1779731858642,
       "tag": "0021_create_exchange_rate",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1779819575116,
+      "tag": "0022_add_notification_prefs_and_outbox_dedup",
+      "breakpoints": true
     }
   ]
 }
