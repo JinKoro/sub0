@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers';
 import { Header } from '@/widgets/header/ui/Header';
 import { CabinetProvider } from '@/shared/contexts/cabinet-context';
+import { ExchangeRatesProvider } from '@/shared/contexts/exchange-rates-context';
 import { ProfileProvider } from '@/shared/contexts/profile-context';
 import { ProfileSync } from '@/shared/contexts/profile-sync';
 import { ProjectsProvider } from '@/shared/contexts/projects-context';
@@ -12,9 +13,11 @@ export default async function CabinetLayout({ children }: { children: React.Reac
     <ProfileProvider>
       <CabinetProvider initialCurrency={currency}>
         <ProjectsProvider>
-          <ProfileSync />
-          <Header mode="cabinet" />
-          <main>{children}</main>
+          <ExchangeRatesProvider>
+            <ProfileSync />
+            <Header mode="cabinet" />
+            <main>{children}</main>
+          </ExchangeRatesProvider>
         </ProjectsProvider>
       </CabinetProvider>
     </ProfileProvider>

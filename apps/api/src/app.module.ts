@@ -8,6 +8,7 @@ import { ServiceModule } from './service/service.module';
 import { validateEnv } from './config/env.schema';
 import { CustomerModule } from './customer/customer.module';
 import { DbModule } from './db/db.module';
+import { ExchangeRateModule } from './exchange-rate/exchange-rate.module';
 import { HealthModule } from './health/health.module';
 import { MailModule } from './mail/mail.module';
 import { ProjectModule } from './project/project.module';
@@ -26,6 +27,7 @@ import { SubscriptionModule } from './subscription/subscription.module';
     CategoryModule,
     ServiceModule,
     SubscriptionModule,
+    ExchangeRateModule,
   ],
 })
 export class AppModule {}

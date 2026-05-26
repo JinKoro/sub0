@@ -9,7 +9,8 @@ import { Card } from '@/shared/components/ui/Card';
 import { Pill } from '@/shared/components/ui/Pill';
 import { CATEGORIES } from '@/entities/subscription/model/cabinet-demo';
 import type { CabinetSubscription } from '@/entities/subscription/model/cabinet-types';
-import { toRub, monthShort } from '@/shared/constants/cabinet';
+import { monthShort } from '@/shared/constants/cabinet';
+import { useToRub } from '@/shared/contexts/exchange-rates-context';
 import { useFormatRub } from '../lib/format';
 
 const PAGE_SIZE = 5;
@@ -23,6 +24,7 @@ export function UpcomingChargesCard({ subs }: Props) {
   const { t, lang } = useLang();
   const isMobile = useIsMobile();
   const fmt = useFormatRub();
+  const toRub = useToRub();
   const [page, setPage] = useState(0);
 
   const upcoming = subs

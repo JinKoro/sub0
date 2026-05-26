@@ -7,8 +7,17 @@ import { Card } from '@/shared/components/ui/Card';
 import { CardHeader } from '@/shared/components/ui/CardHeader';
 import { Pill } from '@/shared/components/ui/Pill';
 import type { CabinetSubscription } from '@/entities/subscription/model/cabinet-types';
-import { toRub, monthShort, monthLong, curSymbol, fromRub } from '@/shared/constants/cabinet';
+import { Currency } from '@subzero/shared';
+import { monthShort, monthLong, curSymbol } from '@/shared/constants/cabinet';
 import { useCabinet } from '@/shared/contexts/cabinet-context';
+import { useExchangeRates, useToRub } from '@/shared/contexts/exchange-rates-context';
+
+const CAB_CUR_TO_ENUM: Record<string, number> = {
+  RUB: Currency.RUB,
+  USD: Currency.USD,
+  EUR: Currency.EUR,
+  BYN: Currency.BYN,
+};
 
 interface Cell {
   day: number;
@@ -24,6 +33,9 @@ interface Props {
 export function MiniCalendar({ subs }: Props) {
   const { t, lang } = useLang();
   const { currency } = useCabinet();
+  const { rates } = useExchangeRates();
+  const toRub = useToRub();
+  const targetRate = rates[CAB_CUR_TO_ENUM[currency] ?? Currency.RUB] ?? 1;
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
 
   const today = new Date();
@@ -52,7 +64,7 @@ export function MiniCalendar({ subs }: Props) {
   );
 
   const fmtLocale = (rub: number) =>
-    `${Math.round(fromRub(rub, currency)).toLocaleString('ru-RU')} ${curSymbol(currency)}`;
+    `${Math.round(rub / targetRate).toLocaleString('ru-RU')} ${curSymbol(currency)}`;
 
   const dayLabels =
     lang === 'en'

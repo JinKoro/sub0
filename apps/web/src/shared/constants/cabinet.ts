@@ -1,26 +1,11 @@
 import type { CabinetCurrency } from '@/entities/subscription/model/cabinet-types';
 
-export const CURRENCY_RATES: Record<CabinetCurrency, number> = {
-  RUB: 1,
-  USD: 92,
-  EUR: 100,
-  BYN: 28,
-};
-
 export const CURRENCY_OPTIONS: { id: CabinetCurrency; label: string; labelEn: string; sym: string }[] = [
   { id: 'RUB', label: 'Рос. рубль', labelEn: 'Russian ruble', sym: '₽' },
   { id: 'USD', label: 'Доллар США', labelEn: 'US dollar', sym: '$' },
   { id: 'EUR', label: 'Евро', labelEn: 'Euro', sym: '€' },
   { id: 'BYN', label: 'Бел. рубль', labelEn: 'Belarusian ruble', sym: 'BYN' },
 ];
-
-export function toRub(price: number, cur: CabinetCurrency): number {
-  return price * (CURRENCY_RATES[cur] ?? 1);
-}
-
-export function fromRub(rub: number, cur: CabinetCurrency): number {
-  return rub / (CURRENCY_RATES[cur] ?? 1);
-}
 
 export function curSymbol(cur: CabinetCurrency): string {
   if (cur === 'USD') return '$';

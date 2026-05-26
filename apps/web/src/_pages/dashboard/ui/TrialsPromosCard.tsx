@@ -6,7 +6,8 @@ import { LogoPill } from '@/shared/components/ui/LogoPill';
 import { Card } from '@/shared/components/ui/Card';
 import { CardHeader } from '@/shared/components/ui/CardHeader';
 import type { CabinetSubscription } from '@/entities/subscription/model/cabinet-types';
-import { toRub, monthLong } from '@/shared/constants/cabinet';
+import { monthLong } from '@/shared/constants/cabinet';
+import { useToRub } from '@/shared/contexts/exchange-rates-context';
 import { useFormatRub } from '../lib/format';
 
 interface Props {
@@ -20,6 +21,7 @@ interface Item extends CabinetSubscription {
 export function TrialsPromosCard({ subs }: Props) {
   const { t, lang } = useLang();
   const fmt = useFormatRub();
+  const toRub = useToRub();
 
   const trials: Item[] = subs.filter((s) => s.trial).map((s) => ({ ...s, kind: 'trial' as const }));
   const promos: Item[] = subs

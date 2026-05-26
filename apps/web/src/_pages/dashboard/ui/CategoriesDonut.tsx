@@ -8,7 +8,7 @@ import { CardHeader } from '@/shared/components/ui/CardHeader';
 import { Pill } from '@/shared/components/ui/Pill';
 import { CATEGORIES } from '@/entities/subscription/model/cabinet-demo';
 import type { CabinetSubscription } from '@/entities/subscription/model/cabinet-types';
-import { toRub } from '@/shared/constants/cabinet';
+import { useToRub } from '@/shared/contexts/exchange-rates-context';
 import { useFormatRub } from '../lib/format';
 
 interface Props {
@@ -19,6 +19,7 @@ export function CategoriesDonut({ subs }: Props) {
   const { t } = useLang();
   const isMobile = useIsMobile();
   const fmt = useFormatRub();
+  const toRub = useToRub();
 
   const byCat: Record<string, number> = {};
   subs.forEach((s) => {

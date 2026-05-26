@@ -148,6 +148,13 @@
       "when": 1779711993052,
       "tag": "0020_add_subscription_color",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1779731858642,
+      "tag": "0021_create_exchange_rate",
+      "breakpoints": true
     }
   ]
 }
