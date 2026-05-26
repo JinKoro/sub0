@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 
 import { AuthModule } from './auth/auth.module';
+import { BillingHistoryModule } from './billing-history/billing-history.module';
 import { CategoryModule } from './category/category.module';
 import { ServiceModule } from './service/service.module';
 import { validateEnv } from './config/env.schema';
@@ -27,6 +28,7 @@ import { SubscriptionModule } from './subscription/subscription.module';
     CategoryModule,
     ServiceModule,
     SubscriptionModule,
+    BillingHistoryModule,
     ExchangeRateModule,
   ],
 })
