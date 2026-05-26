@@ -7,6 +7,8 @@ export interface CustomerRow {
   currencyId: number;
   planId: number;
   passwordHash: string | null;
+  notificationsEnabled: boolean;
+  notificationLeadDays: number[];
   version: number;
 }
 
@@ -18,6 +20,8 @@ export interface CustomerProfile {
   localeId: number;
   currencyId: number;
   planId: number;
+  notificationsEnabled: boolean;
+  notificationLeadDays: number[];
   version: number;
 }
 
@@ -27,6 +31,8 @@ export interface ProfilePatch {
   timezone?: string;
   localeId?: number;
   currencyId?: number;
+  notificationsEnabled?: boolean;
+  notificationLeadDays?: number[];
 }
 
 export interface CustomerRepository {

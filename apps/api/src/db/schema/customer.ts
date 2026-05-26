@@ -1,6 +1,15 @@
 import { Currency, CustomerState, Locale, Plan } from '@subzero/shared';
 import { sql } from 'drizzle-orm';
-import { integer, pgTable, text, timestamp, uniqueIndex, uuid, varchar } from 'drizzle-orm/pg-core';
+import {
+  boolean,
+  integer,
+  pgTable,
+  text,
+  timestamp,
+  uniqueIndex,
+  uuid,
+  varchar,
+} from 'drizzle-orm/pg-core';
 
 export const customer = pgTable(
   'customer',
@@ -19,6 +28,13 @@ export const customer = pgTable(
     // Факт явного согласия на маркетинговые рассылки (152-ФЗ / ФЗ-38).
     // NULL = согласие не давалось либо отозвано.
     marketingConsentAt: timestamp('marketing_consent_at', { withTimezone: true }),
+    // MVP email-нотификации: общий тоггл + дни до списания (массив, чтобы
+    // безболезненно мигрировать к v1.1 матрице per-event days_before).
+    notificationsEnabled: boolean('notifications_enabled').notNull().default(true),
+    notificationLeadDays: integer('notification_lead_days')
+      .array()
+      .notNull()
+      .default(sql`'{3}'::int[]`),
     deletedAt: timestamp('deleted_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true })

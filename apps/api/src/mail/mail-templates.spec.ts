@@ -48,4 +48,63 @@ describe('renderMail', () => {
   it('throws on an unknown template', () => {
     expect(() => renderMail('nope', Locale.RU, { verifyPath: '/x' }, BASE)).toThrow();
   });
+
+  it('upcoming-charge RU: subject содержит сервис и формат даты', () => {
+    const m = renderMail(
+      'upcoming-charge',
+      Locale.RU,
+      {
+        subscriptionPath: '/account/subscriptions/sub-abc',
+        serviceName: 'Netflix',
+        amount: '799.00',
+        currency: '₽',
+        billingDate: '2026-06-15',
+        daysBefore: 3,
+        projectName: 'Personal',
+      },
+      BASE,
+    );
+    expect(m.subject).toMatch(/Sub0/);
+    expect(m.subject).toContain('Netflix');
+    expect(m.html).toContain('15 июня 2026');
+    expect(m.html).toContain('799.00');
+    expect(m.html).toContain(`${BASE}/account/subscriptions/sub-abc`);
+  });
+
+  it('upcoming-charge daysBefore=0: тема "сегодня"', () => {
+    const m = renderMail(
+      'upcoming-charge',
+      Locale.RU,
+      {
+        subscriptionPath: '/account/subscriptions/sub-x',
+        serviceName: 'Spotify',
+        amount: '299.00',
+        currency: '₽',
+        billingDate: '2026-06-15',
+        daysBefore: 0,
+        projectName: 'Personal',
+      },
+      BASE,
+    );
+    expect(m.subject).toMatch(/сегодня/i);
+  });
+
+  it('upcoming-charge EN: формат даты', () => {
+    const m = renderMail(
+      'upcoming-charge',
+      Locale.EN,
+      {
+        subscriptionPath: '/account/subscriptions/sub-y',
+        serviceName: 'GitHub',
+        amount: '10.00',
+        currency: 'USD',
+        billingDate: '2026-06-15',
+        daysBefore: 1,
+        projectName: 'Work',
+      },
+      BASE,
+    );
+    expect(m.html).toContain('June 15, 2026');
+    expect(m.subject).toMatch(/1 day/);
+  });
 });

@@ -4,6 +4,7 @@ import type { Request, Response } from 'express';
 import { CustomerService } from './customer.service';
 import type { CustomerProfile } from './customer.types';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { NotificationsDto } from './dto/notifications.dto';
 import { PreferencesDto } from './dto/preferences.dto';
 import { ProfileDto } from './dto/profile.dto';
 import type { AuthUser } from '../auth/jwt.strategy';
@@ -52,6 +53,19 @@ export class CustomerController {
   @HttpCode(204)
   async changePassword(@Req() req: Request, @Body() dto: ChangePasswordDto): Promise<void> {
     await this.customers.changePassword(uid(req), dto.currentPassword, dto.newPassword);
+  }
+
+  // Settings → Notifications → MVP-блок email-напоминаний (тоггл + lead days).
+  @Post('me/notifications')
+  @HttpCode(200)
+  saveNotifications(
+    @Req() req: Request,
+    @Body() dto: NotificationsDto,
+  ): Promise<CustomerProfile> {
+    return this.customers.saveProfile(uid(req), dto.version, {
+      notificationsEnabled: dto.enabled,
+      notificationLeadDays: dto.leadDays,
+    });
   }
 
   @Delete('me/subscriptions')
