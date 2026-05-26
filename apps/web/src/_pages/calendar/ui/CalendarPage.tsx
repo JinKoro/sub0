@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { useCallback, useMemo, useState } from 'react';
 import { Currency } from '@subzero/shared';
@@ -659,39 +660,55 @@ export function CalendarPage() {
                       maxWidth: '100%',
                     }}
                   >
-                    {its.slice(0, maxPills).map((hit, idx) => (
-                      <span
-                        key={`${hit.key}-${idx}`}
-                        title={hit.sub.name}
-                        style={{
-                          width: pillSize,
-                          height: pillSize,
-                          borderRadius: 999,
-                          background: hit.sub.color ?? SUB0.muted,
-                          color: '#fff',
-                          fontSize: isMobile ? 8 : 10,
-                          fontWeight: 800,
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          border: `2px solid ${
-                            isSelected
-                              ? SUB0.ink
-                              : isTodayCell
-                                ? '#fff8f3'
-                                : cell.dim
-                                  ? SUB0.bg
-                                  : SUB0.panel
-                          }`,
-                          marginLeft: idx === 0 ? 0 : -7,
-                          flexShrink: 0,
-                          opacity: isPast ? 0.85 : 1,
-                          filter: isPast ? 'saturate(0.85)' : 'none',
-                        }}
-                      >
-                        {hit.sub.icon ? '·' : subChar(hit.sub)}
-                      </span>
-                    ))}
+                    {its.slice(0, maxPills).map((hit, idx) => {
+                      const borderColor = isSelected
+                        ? SUB0.ink
+                        : isTodayCell
+                          ? '#fff8f3'
+                          : cell.dim
+                            ? SUB0.bg
+                            : SUB0.panel;
+                      const hasIcon = Boolean(hit.sub.icon);
+                      const innerPad = Math.max(2, Math.round(pillSize * 0.18));
+                      const innerSize = pillSize - innerPad * 2;
+                      return (
+                        <span
+                          key={`${hit.key}-${idx}`}
+                          title={hit.sub.name}
+                          style={{
+                            width: pillSize,
+                            height: pillSize,
+                            borderRadius: 999,
+                            background: hasIcon ? '#fff' : hit.sub.color ?? SUB0.muted,
+                            color: '#fff',
+                            fontSize: isMobile ? 8 : 10,
+                            fontWeight: 800,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            border: `2px solid ${borderColor}`,
+                            marginLeft: idx === 0 ? 0 : -7,
+                            flexShrink: 0,
+                            opacity: isPast ? 0.85 : 1,
+                            filter: isPast ? 'saturate(0.85)' : 'none',
+                            overflow: 'hidden',
+                          }}
+                        >
+                          {hasIcon ? (
+                            <Image
+                              src={hit.sub.icon as string}
+                              alt={hit.sub.name}
+                              width={innerSize}
+                              height={innerSize}
+                              unoptimized
+                              style={{ objectFit: 'contain', display: 'block' }}
+                            />
+                          ) : (
+                            subChar(hit.sub)
+                          )}
+                        </span>
+                      );
+                    })}
                     {its.length > maxPills && (
                       <span
                         style={{
