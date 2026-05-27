@@ -3,7 +3,10 @@ import { Module } from '@nestjs/common';
 import { generateSku } from '../shared/sku';
 import { DrizzleSubscriptionRepository } from './subscription.repository';
 import { DrizzleSubscriptionPromoRepository } from './subscription-promo.repository';
+import { DrizzleSubscriptionCycleRepository } from './subscription-cycle.repository';
+import { SubscriptionCycleService } from './subscription-cycle.service';
 import { SubscriptionController } from './subscription.controller';
+import { SubscriptionScheduler } from './subscription.scheduler';
 import { SubscriptionService } from './subscription.service';
 
 @Module({
@@ -11,6 +14,8 @@ import { SubscriptionService } from './subscription.service';
   providers: [
     DrizzleSubscriptionRepository,
     DrizzleSubscriptionPromoRepository,
+    DrizzleSubscriptionCycleRepository,
+    SubscriptionScheduler,
     {
       provide: SubscriptionService,
       useFactory: (
@@ -24,6 +29,16 @@ import { SubscriptionService } from './subscription.service';
           generateSku,
         }),
       inject: [DrizzleSubscriptionRepository, DrizzleSubscriptionPromoRepository],
+    },
+    {
+      provide: SubscriptionCycleService,
+      useFactory: (repo: DrizzleSubscriptionCycleRepository) =>
+        new SubscriptionCycleService({
+          repo,
+          now: () => new Date(),
+          generateBilSku: () => generateSku('bil'),
+        }),
+      inject: [DrizzleSubscriptionCycleRepository],
     },
   ],
 })
