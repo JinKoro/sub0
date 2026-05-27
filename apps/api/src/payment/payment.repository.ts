@@ -60,12 +60,20 @@ export class DrizzlePaymentRepository implements PaymentRepository {
 
   async findCustomerPlanState(customerId: string): Promise<CustomerPlanState | null> {
     const [row] = await this.db
-      .select({ planId: customer.planId, planExpiresAt: customer.planExpiresAt })
+      .select({
+        planId: customer.planId,
+        planExpiresAt: customer.planExpiresAt,
+        stateId: customer.stateId,
+      })
       .from(customer)
       .where(and(eq(customer.id, customerId), isNull(customer.deletedAt)))
       .limit(1);
     if (!row) return null;
-    return { planId: row.planId, planExpiresAt: row.planExpiresAt };
+    return {
+      planId: row.planId,
+      planExpiresAt: row.planExpiresAt,
+      stateId: row.stateId,
+    };
   }
 
   async upgrade(args: UpgradeArgs): Promise<PaymentDto> {

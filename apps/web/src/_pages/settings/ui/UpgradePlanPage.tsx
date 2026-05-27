@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import {
+  EMAIL_NOT_VERIFIED_ERROR,
   PRO_MONTHLY_PRICE_RUB,
   PRO_YEARLY_PRICE_RUB,
   PaidPlan,
@@ -13,6 +14,7 @@ import { Card } from '@/shared/components/ui/Card';
 import { useProfile } from '@/shared/contexts/profile-context';
 import { upgradePlan } from '@/shared/api/payment';
 import { getMe } from '@/shared/api/customer';
+import { ApiError } from '@/shared/api/client';
 import { SectionHead } from './parts/SectionHead';
 import { sBtnPrimary } from './parts/styles';
 
@@ -557,13 +559,27 @@ export function UpgradePlanPage({ currentPlan, onClose }: Props) {
                   // без отдельного refetch'а.
                   setProfile(await getMe());
                   onClose();
-                } catch {
-                  setError(
-                    t(
-                      'Не удалось оплатить, попробуйте ещё раз',
-                      'Payment failed, please try again',
-                    ),
-                  );
+                } catch (e) {
+                  if (
+                    e instanceof ApiError &&
+                    e.status === 403 &&
+                    (e.body as { message?: string } | null)?.message ===
+                      EMAIL_NOT_VERIFIED_ERROR
+                  ) {
+                    setError(
+                      t(
+                        'Подтвердите email перед оплатой — мы отправили ссылку при регистрации.',
+                        'Confirm your email before paying — we sent a verification link at sign-up.',
+                      ),
+                    );
+                  } else {
+                    setError(
+                      t(
+                        'Не удалось оплатить, попробуйте ещё раз',
+                        'Payment failed, please try again',
+                      ),
+                    );
+                  }
                   setSubmitting(false);
                 }
               }}

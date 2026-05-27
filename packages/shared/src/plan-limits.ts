@@ -20,3 +20,8 @@ export const FREE_TIER_PROJECT_LIMIT_ERROR = 'free_tier_project_limit_reached';
  *  promo-таблицу, и эти константы станут дефолтом. */
 export const PRO_MONTHLY_PRICE_RUB = '290.00';
 export const PRO_YEARLY_PRICE_RUB = '2900.00';
+
+/** Код ошибки, возвращаемый upgrade-endpoint'ом, если у customer'а
+ *  ещё не подтверждён email (state_id != ACTIVE). Roadmap:
+ *  «Email verification обязательна до первой оплаты». */
+export const EMAIL_NOT_VERIFIED_ERROR = 'email_not_verified';
