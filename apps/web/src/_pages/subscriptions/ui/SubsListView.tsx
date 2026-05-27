@@ -12,6 +12,8 @@ import { LogoPill } from '@/shared/components/ui/LogoPill';
 import { Select, type SelectOption } from '@/shared/components/ui/Select';
 import { CabinetCtaButton } from '@/shared/components/ui/CabinetCtaButton';
 import { listSubscriptions } from '@/entities/subscription/api/list';
+import { usePlanLimit } from '@/entities/customer/model/use-plan-limit';
+import { PlanLimitBanner } from '@/entities/customer/ui/PlanLimitBanner';
 import { listCategories, type CategoryDto } from '@/shared/api/category';
 import {
   toCabinetSubscription,
@@ -110,6 +112,7 @@ export function SubsListView({ onEdit }: Props) {
   const { project } = useCabinet();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const planLimit = usePlanLimit('subscriptions');
 
   const urlQ = searchParams.get('q') ?? '';
   const urlStatus = parseStatus(searchParams.get('status'));
@@ -288,11 +291,21 @@ export function SubsListView({ onEdit }: Props) {
           </h1>
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <CabinetCtaButton href="/account/subscriptions/new">
+          <CabinetCtaButton
+            href="/account/subscriptions/new"
+            disabled={planLimit.reached}
+            title={
+              planLimit.reached
+                ? t('Достигнут лимит Free', 'Free tier limit reached')
+                : undefined
+            }
+          >
             + {t('Новая подписка', 'New subscription')}
           </CabinetCtaButton>
         </div>
       </div>
+
+      <PlanLimitBanner limit={planLimit} />
 
       <Card padding={0} style={{ marginBottom: 14 }}>
         <div
@@ -393,7 +406,15 @@ export function SubsListView({ onEdit }: Props) {
                 : t('Ничего не найдено', 'Nothing found')}
             </div>
             {noFilters && (
-              <CabinetCtaButton href="/account/subscriptions/new">
+              <CabinetCtaButton
+                href="/account/subscriptions/new"
+                disabled={planLimit.reached}
+                title={
+                  planLimit.reached
+                    ? t('Достигнут лимит Free', 'Free tier limit reached')
+                    : undefined
+                }
+              >
                 + {t('Новая подписка', 'New subscription')}
               </CabinetCtaButton>
             )}

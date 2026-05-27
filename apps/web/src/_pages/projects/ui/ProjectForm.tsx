@@ -7,6 +7,7 @@ import { useIsMobile } from '@/shared/hooks/use-is-mobile';
 import { ApiError } from '@/shared/api/client';
 import type { ProjectDto } from '@/shared/api/project';
 import { ConfirmDialog } from '@/shared/components/ui/ConfirmDialog';
+import { FREE_TIER_PROJECT_LIMIT_ERROR } from '@subzero/shared';
 import { randomProjectHex } from '../lib/random-color';
 
 interface Props {
@@ -75,6 +76,17 @@ export function ProjectForm({ initial, onSave, onCancel, onDelete }: Props) {
           t(
             'Проект изменён в другой вкладке — обновите страницу',
             'Project changed elsewhere — reload the page',
+          ),
+        );
+      } else if (
+        e instanceof ApiError &&
+        e.status === 422 &&
+        (e.body as { message?: string } | null)?.message === FREE_TIER_PROJECT_LIMIT_ERROR
+      ) {
+        setErr(
+          t(
+            'Достигнут лимит Free (1 проект). Перейдите на Pro для безлимита.',
+            'Free tier limit reached (1 project). Upgrade to Pro for unlimited.',
           ),
         );
       } else {
@@ -273,14 +285,19 @@ export function ProjectForm({ initial, onSave, onCancel, onDelete }: Props) {
       </div>
 
       {err && (
-        <div
-          style={{
-            padding: isMobile ? '0 16px 12px' : '0 24px 14px',
-            fontSize: 13,
-            color: '#9a3b12',
-          }}
-        >
-          {err}
+        <div style={{ padding: isMobile ? '0 16px 14px' : '0 24px 16px' }}>
+          <div
+            style={{
+              padding: 12,
+              background: '#fdecea',
+              border: `1px solid ${SUB0.danger}`,
+              borderRadius: 8,
+              color: SUB0.danger,
+              fontSize: 13,
+            }}
+          >
+            {err}
+          </div>
         </div>
       )}
 

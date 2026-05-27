@@ -7,6 +7,7 @@ import { useIsMobile } from '@/shared/hooks/use-is-mobile';
 import { Card } from '@/shared/components/ui/Card';
 import { Pill } from '@/shared/components/ui/Pill';
 import { MOCK_INVOICES } from '@/shared/constants/cabinet';
+import { usePlanLimit } from '@/entities/customer/model/use-plan-limit';
 import { SectionHead } from './parts/SectionHead';
 import { sBtnPrimary, sBtnSecondary } from './parts/styles';
 import { UpgradePlanPage } from './UpgradePlanPage';
@@ -17,6 +18,8 @@ export function SettingsBilling() {
   const { t } = useLang();
   const isMobile = useIsMobile();
   const [view, setView] = useState<'main' | 'upgrade'>('main');
+  const subsLimit = usePlanLimit('subscriptions');
+  const projLimit = usePlanLimit('projects');
 
   if (view === 'upgrade') {
     return <UpgradePlanPage currentPlan="free" onClose={() => setView('main')} />;
@@ -122,8 +125,16 @@ export function SettingsBilling() {
             >
               {t('Использование', 'Usage')}
             </div>
-            <UsageBar label={t('Подписки', 'Subscriptions')} cur={4} max={5} />
-            <UsageBar label={t('Проекты', 'Projects')} cur={1} max={1} />
+            <UsageBar
+              label={t('Подписки', 'Subscriptions')}
+              cur={subsLimit.used}
+              max={subsLimit.isFree ? subsLimit.limit : null}
+            />
+            <UsageBar
+              label={t('Проекты', 'Projects')}
+              cur={projLimit.used}
+              max={projLimit.isFree ? projLimit.limit : null}
+            />
             <UsageBar
               label={t('AI-импорт в этом месяце', 'AI imports this month')}
               cur={0}
@@ -145,13 +156,15 @@ export function SettingsBilling() {
 interface UsageBarProps {
   label: string;
   cur: number;
-  max: number;
+  /** null = безлимит (PRO+). Без бара, только счётчик «N · безлимит». */
+  max: number | null;
   disabled?: boolean;
 }
 
 function UsageBar({ label, cur, max, disabled }: UsageBarProps) {
   const { t } = useLang();
-  const pct = max > 0 ? Math.min(100, (cur / max) * 100) : 0;
+  const unlimited = max === null;
+  const pct = !unlimited && max > 0 ? Math.min(100, (cur / max) * 100) : 0;
   return (
     <div>
       <div
@@ -170,7 +183,11 @@ function UsageBar({ label, cur, max, disabled }: UsageBarProps) {
             fontWeight: 600,
           }}
         >
-          {disabled ? t('недоступно', 'unavailable') : `${cur} / ${max}`}
+          {disabled
+            ? t('недоступно', 'unavailable')
+            : unlimited
+              ? `${cur} · ${t('безлимит', 'unlimited')}`
+              : `${cur} / ${max}`}
         </span>
       </div>
       <div
@@ -183,9 +200,9 @@ function UsageBar({ label, cur, max, disabled }: UsageBarProps) {
       >
         <div
           style={{
-            width: `${pct}%`,
+            width: unlimited ? '100%' : `${pct}%`,
             height: '100%',
-            background: pct > 80 ? SUB0.danger : SUB0.ink,
+            background: unlimited ? SUB0.good : pct > 80 ? SUB0.danger : SUB0.ink,
           }}
         />
       </div>

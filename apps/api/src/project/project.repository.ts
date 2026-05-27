@@ -3,6 +3,7 @@ import { ProjectState } from '@subzero/shared';
 import { and, eq, isNull, sql } from 'drizzle-orm';
 
 import { DRIZZLE, type DrizzleDB } from '../db/db.module';
+import { customer } from '../db/schema/customer';
 import { project } from '../db/schema/project';
 import { subscription } from '../db/schema/subscription';
 import type { ProjectRepository, ProjectRow, ProjectUpdate } from './project.types';
@@ -41,6 +42,15 @@ export class DrizzleProjectRepository implements ProjectRepository {
       subscriptionsCount: r.subscriptionsCount,
       version: r.version,
     }));
+  }
+
+  async findCustomerPlanId(customerId: string): Promise<number | null> {
+    const [row] = await this.db
+      .select({ planId: customer.planId })
+      .from(customer)
+      .where(and(eq(customer.id, customerId), isNull(customer.deletedAt)))
+      .limit(1);
+    return row?.planId ?? null;
   }
 
   async countActive(customerId: string): Promise<number> {

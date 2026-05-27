@@ -4,6 +4,11 @@ import {
   NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
+import {
+  FREE_TIER_PROJECT_LIMIT,
+  FREE_TIER_PROJECT_LIMIT_ERROR,
+  Plan,
+} from '@subzero/shared';
 
 import type { ProjectDto, ProjectRepository, ProjectUpdate } from './project.types';
 import { randomProjectColor } from '../shared/project-color';
@@ -21,6 +26,19 @@ export class ProjectService {
   async create(customerId: string, name: string, color?: string): Promise<ProjectDto> {
     const trimmed = name.trim();
     const safeColor = color && HEX_COLOR_RE.test(color) ? color : randomProjectColor();
+
+    // Free-тариф: лимит 1 активный проект (roadmap §«Фримиум»).
+    const planId = await this.repo.findCustomerPlanId(customerId);
+    if (planId === Plan.FREE) {
+      const used = await this.repo.countActive(customerId);
+      if (used >= FREE_TIER_PROJECT_LIMIT) {
+        throw new UnprocessableEntityException({
+          message: FREE_TIER_PROJECT_LIMIT_ERROR,
+          limit: FREE_TIER_PROJECT_LIMIT,
+        });
+      }
+    }
+
     return this.repo.create({
       customerId,
       sku: generateSku('prj'),

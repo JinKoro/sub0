@@ -28,6 +28,9 @@ export interface ProjectRepository {
   /** Count of active (not soft-deleted) projects — for the "must keep one" rule. */
   countActive(customerId: string): Promise<number>;
 
+  /** Текущий план кастомера: для проверки лимита Free перед create. */
+  findCustomerPlanId(customerId: string): Promise<number | null>;
+
   findActiveBySku(customerId: string, sku: string): Promise<ProjectRow | null>;
 
   create(args: {

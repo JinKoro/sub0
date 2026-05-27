@@ -22,6 +22,7 @@ import { DRIZZLE, type DrizzleDB } from '../db/db.module';
 import { billingHistory } from '../db/schema/billing-history';
 import { category } from '../db/schema/category';
 import { categoryCustom } from '../db/schema/category-custom';
+import { customer } from '../db/schema/customer';
 import { project } from '../db/schema/project';
 import { service } from '../db/schema/service';
 import { subscription } from '../db/schema/subscription';
@@ -174,6 +175,29 @@ export class DrizzleSubscriptionRepository implements SubscriptionRepository {
       )
       .limit(1);
     return row?.id ?? null;
+  }
+
+  async findCustomerPlanId(customerId: string): Promise<number | null> {
+    const [row] = await this.db
+      .select({ planId: customer.planId })
+      .from(customer)
+      .where(and(eq(customer.id, customerId), isNull(customer.deletedAt)))
+      .limit(1);
+    return row?.planId ?? null;
+  }
+
+  async countActiveForCustomer(customerId: string): Promise<number> {
+    const [row] = await this.db
+      .select({ n: sql<number>`count(*)::int` })
+      .from(subscription)
+      .where(
+        and(
+          eq(subscription.customerId, customerId),
+          inArray(subscription.stateId, DEFAULT_NON_ARCHIVED),
+          isNull(subscription.deletedAt),
+        ),
+      );
+    return Number(row?.n ?? 0);
   }
 
   async list(

@@ -270,3 +270,46 @@ Customer.currency_id — валюта аналитики (totals на дашбо
 `timestamptz` (UTC). Бизнес-даты типа `next_billing_date` тоже
 UTC; локальное время для UI / нотификаций считается из
 `customer.timezone` в момент рендера.
+
+### Free tier — лимиты
+
+Из roadmap §«Фримиум»: Free — ограниченный набор слотов, Paid —
+безлимит. Пока эквайеров нет, все юзеры на `Plan.FREE`
+(`customer.plan_id = 1`). `Plan.PRO` (и выше) — без лимитов.
+
+**Подписки — лимит 5.** В счёт идут все **не-архивные не-удалённые**
+подписки:
+
+- `ACTIVE`, `PAUSED`, `CANCELLED` — занимают слот;
+- `ARCHIVED` — **не** занимает (финальное состояние);
+- `deleted_at IS NOT NULL` — **не** занимает.
+
+**Проекты — лимит 1.** Считаются активные не-soft-deleted
+(`stateId = ACTIVE AND deleted_at IS NULL` — те же, что показывает
+`GET /projects`). Дополнительно на Free в шапке (`ProjectSwitcher`)
+скрыта CTA «Новый проект» — управление проектом и апсейл живут
+на `/account/projects`.
+
+**Где проверяется.** `SubscriptionService.create` и
+`ProjectService.create` — до резолва зависимостей. Бэк — источник
+истины; UI рисует баннер/disabled-CTA заранее для UX, но
+рассчитывать на клиентскую проверку нельзя.
+
+**API-контракт.** При превышении лимита соответствующий
+`POST /subscriptions` или `POST /projects` отвечает
+`422 Unprocessable Entity`:
+
+```json
+{ "message": "free_tier_limit_reached", "limit": 5 }
+{ "message": "free_tier_project_limit_reached", "limit": 1 }
+```
+
+Константы и коды ошибок — в `packages/shared/src/plan-limits.ts`:
+`FREE_TIER_SUBSCRIPTION_LIMIT` / `FREE_TIER_LIMIT_ERROR` и
+`FREE_TIER_PROJECT_LIMIT` / `FREE_TIER_PROJECT_LIMIT_ERROR`.
+
+**Что не считается лимитом.** Изменение существующих подписок
+(переход `ACTIVE → PAUSED`, смена цены, добавление промо) лимит не
+триггерит — он стоит только на `create`. Снятие через `ARCHIVED`
+освобождает слот. Update проекта тоже свободен — лимит проверяется
+только при `POST /projects`.

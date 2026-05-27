@@ -6,6 +6,7 @@ import { SUB0, mono } from '@/shared/constants/tokens';
 import { useLang } from '@/shared/contexts/lang-context';
 import { useCabinet } from '@/shared/contexts/cabinet-context';
 import { useProjects } from '@/shared/contexts/projects-context';
+import { usePlanLimit } from '@/entities/customer/model/use-plan-limit';
 import { ProjectMarker } from '@/shared/components/ui/ProjectMarker';
 
 interface Props {
@@ -18,6 +19,7 @@ export function ProjectSwitcher({ isMobile = false }: Props) {
   const { t } = useLang();
   const { project, setProject } = useCabinet();
   const { projects, loading } = useProjects();
+  const { isFree } = usePlanLimit('projects');
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement | null>(null);
 
@@ -147,44 +149,48 @@ export function ProjectSwitcher({ isMobile = false }: Props) {
             />
           ))}
           <div style={{ borderTop: `1px solid ${SUB0.line}`, margin: '6px 0' }} />
-          <Link
-            href="/account/projects/new"
-            onClick={() => setOpen(false)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 10,
-              width: '100%',
-              padding: '9px 10px',
-              borderRadius: 6,
-              background: 'transparent',
-              textAlign: 'left',
-              fontFamily: 'inherit',
-              color: SUB0.ink,
-              fontSize: 13,
-              fontWeight: 600,
-              textDecoration: 'none',
-            }}
-          >
-            <span
+          {/* На Free прячем CTA создания проекта из шапки: лимит = 1,
+              управление и апсейл живут на /account/projects. */}
+          {!isFree && (
+            <Link
+              href="/account/projects/new"
+              onClick={() => setOpen(false)}
               style={{
-                width: 22,
-                height: 22,
-                borderRadius: 6,
-                border: `1px dashed ${SUB0.muted}`,
-                display: 'inline-flex',
+                display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
-                color: SUB0.muted,
-                fontSize: 16,
-                lineHeight: 1,
-                flexShrink: 0,
+                gap: 10,
+                width: '100%',
+                padding: '9px 10px',
+                borderRadius: 6,
+                background: 'transparent',
+                textAlign: 'left',
+                fontFamily: 'inherit',
+                color: SUB0.ink,
+                fontSize: 13,
+                fontWeight: 600,
+                textDecoration: 'none',
               }}
             >
-              +
-            </span>
-            {t('Новый проект', 'New project')}
-          </Link>
+              <span
+                style={{
+                  width: 22,
+                  height: 22,
+                  borderRadius: 6,
+                  border: `1px dashed ${SUB0.muted}`,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: SUB0.muted,
+                  fontSize: 16,
+                  lineHeight: 1,
+                  flexShrink: 0,
+                }}
+              >
+                +
+              </span>
+              {t('Новый проект', 'New project')}
+            </Link>
+          )}
           <Link
             href="/account/projects"
             onClick={() => setOpen(false)}

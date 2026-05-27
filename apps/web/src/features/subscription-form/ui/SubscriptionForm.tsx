@@ -16,6 +16,7 @@ import { ApiError } from '@/shared/api/client';
 import {
   BillingPeriod,
   Currency,
+  FREE_TIER_LIMIT_ERROR,
   SubscriptionState,
   type CategoryDto,
 } from '@subzero/shared';
@@ -300,7 +301,17 @@ export function SubscriptionForm({ initial, onClose, onSaved }: Props) {
             ),
           );
         } else if (e.status === 422) {
-          setError(t('Проверьте поля формы', 'Check the form fields'));
+          const body = e.body as { message?: string } | null;
+          if (body?.message === FREE_TIER_LIMIT_ERROR) {
+            setError(
+              t(
+                'Достигнут лимит Free (5 подписок). Перейдите на Pro для безлимита.',
+                'Free tier limit reached (5 subscriptions). Upgrade to Pro for unlimited.',
+              ),
+            );
+          } else {
+            setError(t('Проверьте поля формы', 'Check the form fields'));
+          }
         } else {
           setError(t('Не удалось сохранить', 'Failed to save'));
         }
