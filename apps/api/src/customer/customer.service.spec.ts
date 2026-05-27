@@ -32,6 +32,7 @@ function makeDeps() {
     updatePassword: jest.fn().mockResolvedValue(undefined),
     softDelete: jest.fn().mockResolvedValue(undefined),
     hardDeleteArchivedBefore: jest.fn().mockResolvedValue(undefined),
+    expirePlans: jest.fn().mockResolvedValue(0),
     purgeSubscriptions: jest.fn().mockResolvedValue(undefined),
   };
   const refreshTokens: jest.Mocked<RefreshTokenRevoker> = {
@@ -178,5 +179,25 @@ describe('CustomerService.runHardDeleteRetention', () => {
     );
     expect(CustomerState.ARCHIVED).toBeGreaterThan(0);
     jest.useRealTimers();
+  });
+});
+
+describe('CustomerService.runPlanExpiry', () => {
+  it('делегирует в repo.expirePlans с текущим now', async () => {
+    jest.useFakeTimers().setSystemTime(new Date('2026-07-01T00:00:00.000Z'));
+    const { service, repo } = makeDeps();
+    repo.expirePlans.mockResolvedValue(3);
+
+    const n = await service.runPlanExpiry();
+
+    expect(repo.expirePlans).toHaveBeenCalledWith(new Date());
+    expect(n).toBe(3);
+    jest.useRealTimers();
+  });
+
+  it('возвращает 0 если никого не нужно переводить', async () => {
+    const { service, repo } = makeDeps();
+    repo.expirePlans.mockResolvedValue(0);
+    await expect(service.runPlanExpiry()).resolves.toBe(0);
   });
 });

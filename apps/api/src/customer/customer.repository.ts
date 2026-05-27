@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { CustomerState } from '@subzero/shared';
-import { and, eq, isNull, lt, sql } from 'drizzle-orm';
+import { CustomerState, Plan } from '@subzero/shared';
+import { and, eq, isNotNull, isNull, lt, lte, sql } from 'drizzle-orm';
 
 import { DRIZZLE, type DrizzleDB } from '../db/db.module';
 import { billingHistory } from '../db/schema/billing-history';
@@ -75,6 +75,28 @@ export class DrizzleCustomerProfileRepository implements CustomerRepository {
     await this.db
       .delete(customer)
       .where(and(eq(customer.stateId, CustomerState.ARCHIVED), lt(customer.deletedAt, cutoff)));
+  }
+
+  async expirePlans(now: Date): Promise<number> {
+    // Условие достаточно жёсткое (`plan_id = PRO AND plan_expires_at <= now`),
+    // чтобы после успешного UPDATE подходящих строк больше не было —
+    // повторный запуск из второй реплики ничего не сделает.
+    const res = await this.db
+      .update(customer)
+      .set({
+        planId: Plan.FREE,
+        planExpiresAt: null,
+        version: sql`${customer.version} + 1`,
+      })
+      .where(
+        and(
+          eq(customer.planId, Plan.PRO),
+          isNotNull(customer.planExpiresAt),
+          lte(customer.planExpiresAt, now),
+          isNull(customer.deletedAt),
+        ),
+      );
+    return res.rowCount ?? 0;
   }
 
   async purgeSubscriptions(customerId: string): Promise<void> {
