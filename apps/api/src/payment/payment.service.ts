@@ -1,6 +1,8 @@
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import {
   Currency,
+  CustomerState,
+  EMAIL_NOT_VERIFIED_ERROR,
   PRO_MONTHLY_PRICE_RUB,
   PRO_YEARLY_PRICE_RUB,
   PaidPlan,
@@ -58,6 +60,12 @@ export class PaymentService {
 
     const state = await this.repo.findCustomerPlanState(customerId);
     if (!state) throw new NotFoundException('customer not found');
+
+    // Roadmap: «Email verification обязательна до первой оплаты».
+    // CREATED — email ещё не подтверждён; ARCHIVED — soft-deleted.
+    if (state.stateId !== CustomerState.ACTIVE) {
+      throw new ForbiddenException({ message: EMAIL_NOT_VERIFIED_ERROR });
+    }
 
     const now = this.now();
     const isActivePro =

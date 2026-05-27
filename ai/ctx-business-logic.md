@@ -373,3 +373,10 @@ plan_expires_at <= now()`: `plan_id = FREE`, `plan_expires_at = NULL`,
 `version + 1`. После UPDATE подходящих строк больше нет, повторный
 запуск (вторая реплика) — no-op. Существующие подписки/проекты при
 downgrade не трогаются — Free-лимит стоит только на `create`.
+
+**Email-verified gate.** Roadmap: «Email verification обязательна до
+первой оплаты». `PaymentService.upgrade` отказывает (`403 Forbidden`)
+если `customer.state_id != CustomerState.ACTIVE`. Это покрывает
+`CREATED` (email не подтверждён) и `ARCHIVED` (soft-deleted). Тело
+ответа — `{ message: 'email_not_verified' }`, константа в
+`packages/shared/src/plan-limits.ts → EMAIL_NOT_VERIFIED_ERROR`.
