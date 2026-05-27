@@ -5,6 +5,9 @@ import {
   UnprocessableEntityException,
 } from '@nestjs/common';
 import {
+  FREE_TIER_LIMIT_ERROR,
+  FREE_TIER_SUBSCRIPTION_LIMIT,
+  Plan,
   SubscriptionState,
   type NewPromoDto,
   type SubscriptionCreateDto,
@@ -56,6 +59,19 @@ export class SubscriptionService {
     this.validateAmount(dto.amount);
     this.validateTrial(dto.isTrial, dto.trialEndsAt ?? null);
     const promos = (dto.promos ?? []).map((p) => this.validateAndNormalisePromo(p, dto.amount));
+
+    // Free-тариф: лимит 5 не-архивных подписок (roadmap §«Фримиум»).
+    // Проверяем до резолва зависимостей — быстрый short-circuit без записи.
+    const planId = await this.repo.findCustomerPlanId(customerId);
+    if (planId === Plan.FREE) {
+      const used = await this.repo.countActiveForCustomer(customerId);
+      if (used >= FREE_TIER_SUBSCRIPTION_LIMIT) {
+        throw new UnprocessableEntityException({
+          message: FREE_TIER_LIMIT_ERROR,
+          limit: FREE_TIER_SUBSCRIPTION_LIMIT,
+        });
+      }
+    }
 
     const projectId = await this.repo.findProjectIdBySku(customerId, dto.projectSku);
     if (!projectId) throw new NotFoundException('project not found');

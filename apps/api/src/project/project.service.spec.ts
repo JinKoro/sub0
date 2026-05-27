@@ -4,6 +4,11 @@ import {
   NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
+import {
+  FREE_TIER_PROJECT_LIMIT,
+  FREE_TIER_PROJECT_LIMIT_ERROR,
+  Plan,
+} from '@subzero/shared';
 
 import { ProjectService } from './project.service';
 import type { ProjectRepository, ProjectRow } from './project.types';
@@ -27,6 +32,7 @@ function makeDeps() {
   const repo: jest.Mocked<ProjectRepository> = {
     listActive: jest.fn(),
     countActive: jest.fn(),
+    findCustomerPlanId: jest.fn().mockResolvedValue(Plan.PRO), // дефолт — не упираемся в Free.
     findActiveBySku: jest.fn(),
     create: jest.fn(),
     update: jest.fn(),
@@ -82,6 +88,48 @@ describe('ProjectService.create', () => {
 
     expect(repo.create.mock.calls[0]![0].color).toMatch(/^#[0-9a-f]{6}$/);
     expect(repo.create.mock.calls[0]![0].color).not.toBe('not-a-hex');
+  });
+
+  describe('Free tier limit', () => {
+    it('FREE + лимит достигнут → 422 free_tier_project_limit_reached', async () => {
+      const { service, repo } = makeDeps();
+      repo.findCustomerPlanId.mockResolvedValue(Plan.FREE);
+      repo.countActive.mockResolvedValue(FREE_TIER_PROJECT_LIMIT);
+
+      let caught: unknown;
+      try {
+        await service.create(CID, 'Second');
+      } catch (err) {
+        caught = err;
+      }
+      expect(caught).toBeInstanceOf(UnprocessableEntityException);
+      const body = (caught as UnprocessableEntityException).getResponse() as {
+        message: string;
+        limit: number;
+      };
+      expect(body.message).toBe(FREE_TIER_PROJECT_LIMIT_ERROR);
+      expect(body.limit).toBe(FREE_TIER_PROJECT_LIMIT);
+      expect(repo.create).not.toHaveBeenCalled();
+    });
+
+    it('FREE + 0 проектов → создаёт', async () => {
+      const { service, repo } = makeDeps();
+      repo.findCustomerPlanId.mockResolvedValue(Plan.FREE);
+      repo.countActive.mockResolvedValue(0);
+      repo.create.mockImplementation(async (args) => makeRow({ name: args.name }));
+
+      await expect(service.create(CID, 'First')).resolves.toBeTruthy();
+      expect(repo.create).toHaveBeenCalled();
+    });
+
+    it('PRO без ограничений — даже если уже есть проекты', async () => {
+      const { service, repo } = makeDeps();
+      repo.findCustomerPlanId.mockResolvedValue(Plan.PRO);
+      repo.create.mockImplementation(async (args) => makeRow({ name: args.name }));
+
+      await expect(service.create(CID, 'Another')).resolves.toBeTruthy();
+      expect(repo.countActive).not.toHaveBeenCalled();
+    });
   });
 });
 

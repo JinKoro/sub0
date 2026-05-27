@@ -5,6 +5,8 @@ import { SUB0, mono } from '@/shared/constants/tokens';
 import { useLang } from '@/shared/contexts/lang-context';
 import { useIsMobile } from '@/shared/hooks/use-is-mobile';
 import { useProjects } from '@/shared/contexts/projects-context';
+import { usePlanLimit } from '@/entities/customer/model/use-plan-limit';
+import { PlanLimitBanner } from '@/entities/customer/ui/PlanLimitBanner';
 import { Card } from '@/shared/components/ui/Card';
 import { CabinetCtaButton } from '@/shared/components/ui/CabinetCtaButton';
 import { ProjectListRow } from './ProjectListRow';
@@ -13,6 +15,7 @@ export function ProjectsListView() {
   const { t } = useLang();
   const isMobile = useIsMobile();
   const { projects, loading } = useProjects();
+  const planLimit = usePlanLimit('projects');
 
   return (
     <div
@@ -55,12 +58,22 @@ export function ProjectsListView() {
             {t('Проекты', 'Projects')}
           </h1>
           {projects.length > 0 && (
-            <CabinetCtaButton href="/account/projects/new">
+            <CabinetCtaButton
+              href="/account/projects/new"
+              disabled={planLimit.reached}
+              title={
+                planLimit.reached
+                  ? t('Достигнут лимит Free', 'Free tier limit reached')
+                  : undefined
+              }
+            >
               + {t('Новый проект', 'New project')}
             </CabinetCtaButton>
           )}
         </div>
       </div>
+
+      <PlanLimitBanner limit={planLimit} />
 
       <Card padding={0}>
         {projects.length > 0 && (

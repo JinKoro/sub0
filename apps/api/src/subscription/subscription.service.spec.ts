@@ -4,7 +4,14 @@ import {
   NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
-import { BillingPeriod, Currency, SubscriptionState } from '@subzero/shared';
+import {
+  BillingPeriod,
+  Currency,
+  FREE_TIER_LIMIT_ERROR,
+  FREE_TIER_SUBSCRIPTION_LIMIT,
+  Plan,
+  SubscriptionState,
+} from '@subzero/shared';
 
 import { SubscriptionService } from './subscription.service';
 import type { SubscriptionRepository } from './subscription.types';
@@ -21,6 +28,8 @@ function makeRepo(): jest.Mocked<SubscriptionRepository> {
     findServiceBySku: jest.fn().mockResolvedValue(null),
     findCategoryIdBySku: jest.fn().mockResolvedValue(CAT_ID),
     findIdBySku: jest.fn().mockResolvedValue(SUB_ID),
+    findCustomerPlanId: jest.fn().mockResolvedValue(2), // PRO в дефолте — не упираемся в Free-лимит.
+    countActiveForCustomer: jest.fn().mockResolvedValue(0),
     list: jest.fn(),
     findBySku: jest.fn(),
     createWithBackfill: jest.fn(),
@@ -114,6 +123,63 @@ describe('SubscriptionService.create — validation', () => {
         promos: [{ amount: '600.00', endsAt: '2026-08-01T00:00:00Z' }],
       })),
     ).rejects.toBeInstanceOf(UnprocessableEntityException);
+  });
+});
+
+describe('SubscriptionService.create — Free tier limit', () => {
+  // Семантика лимита: считаем ACTIVE + PAUSED + CANCELLED non-deleted; ARCHIVED не считается.
+  // Подсчёт делает repo.countActiveForCustomer — сервис только дергает её и сравнивает.
+  it('FREE + лимит достигнут → 422 free_tier_limit_reached с limit', async () => {
+    const { service, repo } = makeService();
+    repo.findCustomerPlanId.mockResolvedValue(Plan.FREE);
+    repo.countActiveForCustomer.mockResolvedValue(FREE_TIER_SUBSCRIPTION_LIMIT);
+
+    let caught: unknown;
+    try {
+      await service.create(CID, basePayload());
+    } catch (err) {
+      caught = err;
+    }
+    expect(caught).toBeInstanceOf(UnprocessableEntityException);
+    const response = (caught as UnprocessableEntityException).getResponse() as {
+      message: string;
+      limit: number;
+    };
+    expect(response.message).toBe(FREE_TIER_LIMIT_ERROR);
+    expect(response.limit).toBe(FREE_TIER_SUBSCRIPTION_LIMIT);
+    expect(repo.createWithBackfill).not.toHaveBeenCalled();
+  });
+
+  it('FREE + лимит не достигнут → создаёт', async () => {
+    const { service, repo } = makeService();
+    repo.findCustomerPlanId.mockResolvedValue(Plan.FREE);
+    repo.countActiveForCustomer.mockResolvedValue(FREE_TIER_SUBSCRIPTION_LIMIT - 1);
+    repo.createWithBackfill.mockResolvedValue({
+      sku: 'sub-FAKE1', projectSku: 'prj-1', serviceSku: null, name: 'X', icon: null,
+      color: '#1347ff', categorySku: 'cat-video', categoryCustomSku: null,
+      amount: '500.00', currencyId: Currency.RUB, billingPeriodId: BillingPeriod.MONTH,
+      firstBillingDate: '', nextBillingDate: '',
+      isTrial: false, trialEndsAt: null, comment: null,
+      stateId: SubscriptionState.ACTIVE, version: 1, createdAt: '', updatedAt: '', promos: [],
+    });
+    await expect(service.create(CID, basePayload())).resolves.toBeTruthy();
+    expect(repo.createWithBackfill).toHaveBeenCalled();
+  });
+
+  it('PRO без ограничений — даже если count >= лимита', async () => {
+    const { service, repo } = makeService();
+    repo.findCustomerPlanId.mockResolvedValue(Plan.PRO);
+    // countActiveForCustomer не должен спрашиваться вообще на PRO.
+    repo.createWithBackfill.mockResolvedValue({
+      sku: 'sub-FAKE1', projectSku: 'prj-1', serviceSku: null, name: 'X', icon: null,
+      color: '#1347ff', categorySku: 'cat-video', categoryCustomSku: null,
+      amount: '500.00', currencyId: Currency.RUB, billingPeriodId: BillingPeriod.MONTH,
+      firstBillingDate: '', nextBillingDate: '',
+      isTrial: false, trialEndsAt: null, comment: null,
+      stateId: SubscriptionState.ACTIVE, version: 1, createdAt: '', updatedAt: '', promos: [],
+    });
+    await expect(service.create(CID, basePayload())).resolves.toBeTruthy();
+    expect(repo.countActiveForCustomer).not.toHaveBeenCalled();
   });
 });
 

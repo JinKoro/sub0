@@ -8,6 +8,8 @@ import { useIsMobile } from '@/shared/hooks/use-is-mobile';
 import { useCabinet } from '@/shared/contexts/cabinet-context';
 import { useSubscriptions } from '@/shared/contexts/subscriptions-context';
 import { useProjects } from '@/shared/contexts/projects-context';
+import { usePlanLimit } from '@/entities/customer/model/use-plan-limit';
+import { PlanLimitBanner } from '@/entities/customer/ui/PlanLimitBanner';
 import { CabinetCtaButton } from '@/shared/components/ui/CabinetCtaButton';
 import { Card } from '@/shared/components/ui/Card';
 import { KpiRow } from './KpiRow';
@@ -22,6 +24,7 @@ export function DashboardPage() {
   const { project } = useCabinet();
   const { items, loading, error, refresh } = useSubscriptions();
   const { projects } = useProjects();
+  const planLimit = usePlanLimit('subscriptions');
 
   const filtered = useMemo(() => {
     if (project === 'all') return items;
@@ -72,10 +75,20 @@ export function DashboardPage() {
             {t('Обзор', 'Overview')}
           </h1>
         </div>
-        <CabinetCtaButton href="/account/subscriptions/new">
+        <CabinetCtaButton
+          href="/account/subscriptions/new"
+          disabled={planLimit.reached}
+          title={
+            planLimit.reached
+              ? t('Достигнут лимит Free', 'Free tier limit reached')
+              : undefined
+          }
+        >
           + {t('Новая подписка', 'New subscription')}
         </CabinetCtaButton>
       </div>
+
+      <PlanLimitBanner limit={planLimit} />
 
       {loading && items.length === 0 ? (
         <DashboardSkeleton />

@@ -13,6 +13,10 @@ export interface SubscriptionRepository {
   ): Promise<{ id: string; name: string; icon: string | null; categoryId: string } | null>;
   findCategoryIdBySku(sku: string): Promise<string | null>;
   findIdBySku(customerId: string, sku: string): Promise<string | null>;
+  /** Текущий план кастомера: для проверки лимита Free перед create. */
+  findCustomerPlanId(customerId: string): Promise<number | null>;
+  /** Счётчик не-архивных подписок: ACTIVE + PAUSED + CANCELLED, deleted_at IS NULL. */
+  countActiveForCustomer(customerId: string): Promise<number>;
 
   list(customerId: string, q: SubscriptionListQuery): Promise<SubscriptionListResponse>;
   findBySku(customerId: string, sku: string): Promise<SubscriptionDto | null>;
