@@ -365,3 +365,11 @@ statusId: PaymentStatus.SUCCEEDED }`. Реальные провайдеры
 Цены — `PRO_MONTHLY_PRICE_RUB` / `PRO_YEARLY_PRICE_RUB` в
 `packages/shared/src/plan-limits.ts`; валюта RUB. Это источник
 истины и для бэка (mock-апгрейд), и для фронта (UpgradePlanPage).
+
+**Plan expiry cron.** Без реального автосписания (нужны эквайеры)
+PRO «не продлевается сам». `CustomerScheduler.planExpiry()` раз в час
+проходит по таблице и переводит в FREE всех с `plan_id = PRO AND
+plan_expires_at <= now()`: `plan_id = FREE`, `plan_expires_at = NULL`,
+`version + 1`. После UPDATE подходящих строк больше нет, повторный
+запуск (вторая реплика) — no-op. Существующие подписки/проекты при
+downgrade не трогаются — Free-лимит стоит только на `create`.

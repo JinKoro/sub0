@@ -48,6 +48,10 @@ export interface CustomerRepository {
   softDelete(id: string): Promise<void>;
   /** 152-ФЗ grace tail: physically drop ARCHIVED customers past the cutoff. */
   hardDeleteArchivedBefore(cutoff: Date): Promise<void>;
+  /** Plan-expiry cron: PRO кастомеры с `plan_expires_at <= now` уходят в
+   *  FREE (`plan_expires_at = NULL`, `version + 1`). Возвращает счётчик
+   *  переведённых строк для лога. */
+  expirePlans(now: Date): Promise<number>;
   /**
    * Hard-delete всех subscription/billing_history customer'а в одной
    * транзакции. Red-zone операция; soft не используем сознательно

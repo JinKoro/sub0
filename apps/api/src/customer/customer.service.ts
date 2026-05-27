@@ -92,4 +92,11 @@ export class CustomerService {
   runHardDeleteRetention(): Promise<void> {
     return this.repo.hardDeleteArchivedBefore(new Date(Date.now() - HARD_DELETE_GRACE_MS));
   }
+
+  /** Plan expiry cron: PRO кастомеры с истёкшим `plan_expires_at`
+   *  возвращаются в FREE. Без реального автосписания (нужны эквайеры)
+   *  это единственный способ цикла Free → Pro → Free. */
+  runPlanExpiry(): Promise<number> {
+    return this.repo.expirePlans(new Date());
+  }
 }
