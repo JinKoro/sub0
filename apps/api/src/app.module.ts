@@ -13,6 +13,7 @@ import { DbModule } from './db/db.module';
 import { ExchangeRateModule } from './exchange-rate/exchange-rate.module';
 import { HealthModule } from './health/health.module';
 import { MailModule } from './mail/mail.module';
+import { PaymentModule } from './payment/payment.module';
 import { ProjectModule } from './project/project.module';
 import { SubscriptionModule } from './subscription/subscription.module';
 
@@ -32,6 +33,7 @@ import { SubscriptionModule } from './subscription/subscription.module';
     BillingHistoryModule,
     ExchangeRateModule,
     BillingNotificationModule,
+    PaymentModule,
   ],
 })
 export class AppModule {}

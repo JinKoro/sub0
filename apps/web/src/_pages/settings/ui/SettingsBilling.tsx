@@ -1,13 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { Currency, PaidPlan, PaymentStatus } from '@subzero/shared';
+import type { PaymentDto, PaymentListResponse } from '@subzero/shared';
 import { SUB0, mono } from '@/shared/constants/tokens';
 import { useLang } from '@/shared/contexts/lang-context';
 import { useIsMobile } from '@/shared/hooks/use-is-mobile';
 import { Card } from '@/shared/components/ui/Card';
 import { Pill } from '@/shared/components/ui/Pill';
-import { MOCK_INVOICES } from '@/shared/constants/cabinet';
+import { fmtPrice } from '@/shared/constants/cabinet';
+import type { CabinetCurrency } from '@/entities/subscription/model/cabinet-types';
 import { usePlanLimit } from '@/entities/customer/model/use-plan-limit';
+import { listPayments } from '@/entities/payment/api/list';
 import { SectionHead } from './parts/SectionHead';
 import { sBtnPrimary, sBtnSecondary } from './parts/styles';
 import { UpgradePlanPage } from './UpgradePlanPage';
@@ -210,17 +214,63 @@ function UsageBar({ label, cur, max, disabled }: UsageBarProps) {
   );
 }
 
+function formatPaidAt(iso: string): string {
+  // dd.mm.YYYY — UI-стиль таблицы; время в шапке счёта не нужно.
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  const dd = String(d.getDate()).padStart(2, '0');
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  return `${dd}.${mm}.${d.getFullYear()}`;
+}
+
+function currencyToCabinet(currencyId: number): CabinetCurrency {
+  if (currencyId === Currency.USD) return 'USD';
+  if (currencyId === Currency.EUR) return 'EUR';
+  if (currencyId === Currency.BYN) return 'BYN';
+  return 'RUB';
+}
+
+function paidPlanLabel(
+  paidPlanId: number,
+  t: (ru: string, en: string) => string,
+): string {
+  if (paidPlanId === PaidPlan.PRO_YEARLY) return t('Pro · 1 год', 'Pro · 1 year');
+  if (paidPlanId === PaidPlan.PRO_MONTHLY) return t('Pro · 1 мес', 'Pro · 1 month');
+  return t('Pro', 'Pro');
+}
+
 function InvoiceTable() {
   const { t } = useLang();
   const isMobile = useIsMobile();
-  const allRows = MOCK_INVOICES;
-  const totalPages = Math.max(1, Math.ceil(allRows.length / INVOICES_PAGE_SIZE));
   const [pageNum, setPageNum] = useState(1);
+  const [data, setData] = useState<PaymentListResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    setLoading(true);
+    setError(null);
+    listPayments({ page: pageNum, pageSize: INVOICES_PAGE_SIZE })
+      .then((resp) => {
+        if (!alive) return;
+        setData(resp);
+      })
+      .catch(() => {
+        if (!alive) return;
+        setError(t('Не удалось загрузить', 'Failed to load'));
+      })
+      .finally(() => {
+        if (alive) setLoading(false);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [pageNum, t]);
+
+  const totalPages = Math.max(1, Math.ceil((data?.total ?? 0) / INVOICES_PAGE_SIZE));
   const safePage = Math.min(pageNum, totalPages);
-  const rows = allRows.slice(
-    (safePage - 1) * INVOICES_PAGE_SIZE,
-    safePage * INVOICES_PAGE_SIZE,
-  );
+  const rows: PaymentDto[] = data?.items ?? [];
   const cols = isMobile ? '1fr 1fr' : '120px 140px 1fr 120px 32px 120px';
 
   return (
@@ -246,60 +296,93 @@ function InvoiceTable() {
         {!isMobile && <div />}
         <div>{t('Статус', 'Status')}</div>
       </div>
-      {rows.map((r) => (
+      {loading && (
         <div
-          key={r.num}
           style={{
-            display: 'grid',
-            gridTemplateColumns: cols,
-            padding: isMobile ? '12px 16px' : '14px 24px',
+            padding: '24px',
+            textAlign: 'center',
+            color: SUB0.muted,
             fontSize: 13,
-            alignItems: 'center',
-            borderBottom: `1px solid ${SUB0.line2}`,
+            fontFamily: mono,
           }}
         >
-          {!isMobile && (
-            <div style={{ fontFamily: mono, color: SUB0.ink }}>{r.date}</div>
-          )}
-          {!isMobile && (
-            <div style={{ fontFamily: mono, color: SUB0.muted, fontSize: 12 }}>{r.num}</div>
-          )}
-          <div style={{ color: SUB0.ink, fontWeight: 600 }}>
-            {r.plan}
-            {isMobile && (
-              <div
-                style={{
-                  fontSize: 11,
-                  color: SUB0.muted,
-                  fontFamily: mono,
-                  marginTop: 2,
-                }}
-              >
-                {r.date} · {r.num}
+          {t('Загрузка…', 'Loading…')}
+        </div>
+      )}
+      {!loading && error && (
+        <div
+          style={{
+            padding: '24px',
+            textAlign: 'center',
+            color: SUB0.danger,
+            fontSize: 13,
+          }}
+        >
+          {error}
+        </div>
+      )}
+      {!loading && !error && rows.length === 0 && (
+        <div
+          style={{
+            padding: '24px',
+            textAlign: 'center',
+            color: SUB0.muted,
+            fontSize: 13,
+          }}
+        >
+          {t('Платежей пока нет', 'No payments yet')}
+        </div>
+      )}
+      {!loading && !error && rows.map((r) => {
+        const date = formatPaidAt(r.paidAt);
+        const plan = paidPlanLabel(r.paidPlanId, t);
+        const amountStr = fmtPrice(Number(r.amount), currencyToCabinet(r.currencyId));
+        return (
+          <div
+            key={r.sku}
+            style={{
+              display: 'grid',
+              gridTemplateColumns: cols,
+              padding: isMobile ? '12px 16px' : '14px 24px',
+              fontSize: 13,
+              alignItems: 'center',
+              borderBottom: `1px solid ${SUB0.line2}`,
+            }}
+          >
+            {!isMobile && (
+              <div style={{ fontFamily: mono, color: SUB0.ink }}>{date}</div>
+            )}
+            {!isMobile && (
+              <div style={{ fontFamily: mono, color: SUB0.muted, fontSize: 12 }}>{r.sku}</div>
+            )}
+            <div style={{ color: SUB0.ink, fontWeight: 600 }}>
+              {plan}
+              {isMobile && (
+                <div
+                  style={{
+                    fontSize: 11,
+                    color: SUB0.muted,
+                    fontFamily: mono,
+                    marginTop: 2,
+                  }}
+                >
+                  {date} · {r.sku}
+                </div>
+              )}
+            </div>
+            {!isMobile && (
+              <div style={{ textAlign: 'right', fontFamily: mono, fontWeight: 700 }}>
+                {amountStr}
               </div>
             )}
-          </div>
-          {!isMobile && (
-            <div style={{ textAlign: 'right', fontFamily: mono, fontWeight: 700 }}>
-              {r.amount} ₽
+            {!isMobile && <div />}
+            <div>
+              <PaymentStatusPill statusId={r.statusId} />
             </div>
-          )}
-          {!isMobile && <div />}
-          <div>
-            {r.status === 'paid' && (
-              <Pill color={SUB0.good} bg={`${SUB0.good}12`} dot>
-                {t('Оплачен', 'Paid')}
-              </Pill>
-            )}
-            {r.status === 'refund' && (
-              <Pill color={SUB0.warn} bg={`${SUB0.warn}12`} dot>
-                {t('Возврат', 'Refunded')}
-              </Pill>
-            )}
           </div>
-        </div>
-      ))}
-      {allRows.length > INVOICES_PAGE_SIZE && (
+        );
+      })}
+      {!loading && !error && (data?.total ?? 0) > INVOICES_PAGE_SIZE && (
         <div
           style={{
             display: 'flex',
@@ -312,8 +395,8 @@ function InvoiceTable() {
         >
           <div style={{ fontSize: 12, fontFamily: mono, color: SUB0.muted }}>
             {t(
-              `Показано ${(safePage - 1) * INVOICES_PAGE_SIZE + 1}–${Math.min(safePage * INVOICES_PAGE_SIZE, allRows.length)} из ${allRows.length}`,
-              `Showing ${(safePage - 1) * INVOICES_PAGE_SIZE + 1}–${Math.min(safePage * INVOICES_PAGE_SIZE, allRows.length)} of ${allRows.length}`,
+              `Показано ${(safePage - 1) * INVOICES_PAGE_SIZE + 1}–${Math.min(safePage * INVOICES_PAGE_SIZE, data?.total ?? 0)} из ${data?.total ?? 0}`,
+              `Showing ${(safePage - 1) * INVOICES_PAGE_SIZE + 1}–${Math.min(safePage * INVOICES_PAGE_SIZE, data?.total ?? 0)} of ${data?.total ?? 0}`,
             )}
           </div>
           <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
@@ -378,5 +461,36 @@ function InvoiceTable() {
         </div>
       )}
     </div>
+  );
+}
+
+function PaymentStatusPill({ statusId }: { statusId: number }) {
+  const { t } = useLang();
+  if (statusId === PaymentStatus.SUCCEEDED) {
+    return (
+      <Pill color={SUB0.good} bg={`${SUB0.good}12`} dot>
+        {t('Оплачен', 'Paid')}
+      </Pill>
+    );
+  }
+  if (statusId === PaymentStatus.REFUNDED) {
+    return (
+      <Pill color={SUB0.warn} bg={`${SUB0.warn}12`} dot>
+        {t('Возврат', 'Refunded')}
+      </Pill>
+    );
+  }
+  if (statusId === PaymentStatus.PENDING) {
+    return (
+      <Pill color={SUB0.muted} bg={`${SUB0.muted}12`} dot>
+        {t('Ожидание', 'Pending')}
+      </Pill>
+    );
+  }
+  // FAILED + unknown
+  return (
+    <Pill color={SUB0.danger} bg={`${SUB0.danger}12`} dot>
+      {t('Ошибка', 'Failed')}
+    </Pill>
   );
 }

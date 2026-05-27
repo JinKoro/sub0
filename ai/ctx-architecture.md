@@ -43,7 +43,8 @@ Postgres — единственное число.
 Внутренний `id uuid` — для FK, JOIN'ов, индексов; наружу не уходит.
 
 - Формат: `<prefix>-<8 символов base32-crockford>`. Префикс из 3
-  символов: `cus`, `prj`, `sub`, `bil`, `cat`, `cct`, `srv`.
+  символов: `cus`, `prj`, `sub`, `bil`, `cat`, `cct`, `srv`, `spm`,
+  `pay`.
 - Генерация — в коде при INSERT'е, не в БД (`gen_random_uuid()`
   только для `id`).
 - На UNIQUE-конфликт делаем повтор; вероятность коллизии при 8
@@ -148,8 +149,10 @@ upsert по `sku`. Запуск дважды не должен дублиров�
 ```
 customer ─┬─ refresh_token
           ├─ project ─┬─ subscription ─┬─ billing_history
+          │           │                 ├─ subscription_promo
           │           │                 └─ (FK на category или category_custom)
           │           └─ category_custom
+          ├─ payment
           └─ (косвенно через project) ─ category_custom
 
 category (системная) ── service

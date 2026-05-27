@@ -162,6 +162,13 @@
       "when": 1779819575116,
       "tag": "0022_add_notification_prefs_and_outbox_dedup",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1779902898004,
+      "tag": "0023_create_payment",
+      "breakpoints": true
     }
   ]
 }
