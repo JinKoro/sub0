@@ -313,3 +313,27 @@ UTC; локальное время для UI / нотификаций счита
 триггерит — он стоит только на `create`. Снятие через `ARCHIVED`
 освобождает слот. Update проекта тоже свободен — лимит проверяется
 только при `POST /projects`.
+
+### Payment — история платежей за тариф
+
+Таблица `payment` хранит факты оплат тарифа Sub0 (не подписок
+юзера — у тех своя `billing_history`). Поля: `customer_id` (CASCADE),
+`provider_id` (`PaymentProvider`), `provider_payment_id` (строка от
+эквайера), `paid_plan_id` (`PaidPlan.PRO_MONTHLY|PRO_YEARLY`),
+`amount + currency_id`, `status_id` (`PaymentStatus`), `paid_until`
+(до какой даты оплачен тариф; источник для `customer.plan_expires_at`).
+
+**Идемпотентность.** `UNIQUE (provider_id, provider_payment_id)`
+гарантирует, что повторный webhook от провайдера не создаёт дубль.
+Контракт вебхука: upsert по этой паре, статус двигается вперёд
+(`PENDING → SUCCEEDED → REFUNDED`).
+
+**Read-endpoint.** `GET /customers/me/payments?page&pageSize` отдаёт
+`{ items: [{ sku, paidAt, paidPlanId, amount, currencyId, statusId }],
+total, page, pageSize }`. Используется в Settings → Billing →
+«История платежей» (`InvoiceTable`). `sku` (`pay-XXXXXXXX`) — публичный
+номер счёта.
+
+**Vs `billing_history`.** Совпадающие имена, но разные сущности:
+`billing_history` — списания юзера за его подписки (Netflix, Spotify),
+`payment` — оплата самого Sub0. Не путать.

@@ -11,3 +11,4 @@ export * from './mail-outbox';
 export * from './login-attempt';
 export * from './subscription-promo';
 export * from './exchange-rate';
+export * from './payment';

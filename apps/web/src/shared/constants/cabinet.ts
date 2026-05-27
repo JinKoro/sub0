@@ -81,28 +81,3 @@ export const TIMEZONES: Timezone[] = [
   { id: 'Asia/Kamchatka', label: 'Asia/Kamchatka', offset: 'GMT+12' },
 ];
 
-export type InvoiceStatus = 'paid' | 'refund';
-
-export interface Invoice {
-  date: string;
-  num: string;
-  plan: string;
-  amount: number;
-  status: InvoiceStatus;
-}
-
-export const MOCK_INVOICES: Invoice[] = [
-  { date: '01.05.2026', num: 'INV-1042', plan: 'Pro · 1 мес', amount: 290, status: 'paid' },
-  { date: '12.02.2026', num: 'INV-0844', plan: 'Pro · 1 мес', amount: 290, status: 'refund' },
-  { date: '01.02.2026', num: 'INV-0812', plan: 'Pro · 1 мес', amount: 290, status: 'paid' },
-  { date: '01.01.2026', num: 'INV-0741', plan: 'Pro · 1 мес', amount: 290, status: 'paid' },
-  { date: '01.12.2025', num: 'INV-0688', plan: 'Pro · 1 мес', amount: 290, status: 'paid' },
-  { date: '01.11.2025', num: 'INV-0612', plan: 'Pro · 1 мес', amount: 290, status: 'paid' },
-  { date: '01.10.2025', num: 'INV-0559', plan: 'Pro · 1 мес', amount: 290, status: 'paid' },
-  { date: '01.09.2025', num: 'INV-0498', plan: 'Pro · 1 мес', amount: 290, status: 'paid' },
-  { date: '01.08.2025', num: 'INV-0431', plan: 'Pro · 1 мес', amount: 290, status: 'paid' },
-  { date: '01.07.2025', num: 'INV-0377', plan: 'Pro · 1 мес', amount: 290, status: 'paid' },
-  { date: '01.06.2025', num: 'INV-0321', plan: 'Pro · 1 мес', amount: 290, status: 'paid' },
-  { date: '01.05.2025', num: 'INV-0264', plan: 'Pro · 1 мес', amount: 290, status: 'paid' },
-];
-
