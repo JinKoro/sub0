@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
 
+import { generateSku } from '../shared/sku';
+import { MockPaymentProvider, PAYMENT_PROVIDER } from './payment-provider';
 import { PaymentController } from './payment.controller';
 import { DrizzlePaymentRepository } from './payment.repository';
 import { PaymentService } from './payment.service';
@@ -8,10 +10,17 @@ import { PaymentService } from './payment.service';
   controllers: [PaymentController],
   providers: [
     DrizzlePaymentRepository,
+    { provide: PAYMENT_PROVIDER, useClass: MockPaymentProvider },
     {
       provide: PaymentService,
-      useFactory: (repo: DrizzlePaymentRepository) => new PaymentService(repo),
-      inject: [DrizzlePaymentRepository],
+      useFactory: (repo: DrizzlePaymentRepository, provider: MockPaymentProvider) =>
+        new PaymentService({
+          repo,
+          provider,
+          now: () => new Date(),
+          generateSku: () => generateSku('pay'),
+        }),
+      inject: [DrizzlePaymentRepository, PAYMENT_PROVIDER],
     },
   ],
 })

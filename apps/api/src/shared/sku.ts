@@ -22,6 +22,8 @@ function randomBody(): string {
 }
 
 /** `<prefix>-<8 chars>` public id (ctx-architecture.md §2). */
-export function generateSku(prefix: 'cus' | 'prj' | 'sub' | 'bil' | 'cct' | 'spm'): string {
+export function generateSku(
+  prefix: 'cus' | 'prj' | 'sub' | 'bil' | 'cct' | 'spm' | 'pay',
+): string {
   return `${prefix}-${randomBody()}`;
 }

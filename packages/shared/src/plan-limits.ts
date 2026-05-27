@@ -11,3 +11,12 @@ export const FREE_TIER_PROJECT_LIMIT = 1;
 
 /** Код ошибки при попытке превысить лимит проектов Free. */
 export const FREE_TIER_PROJECT_LIMIT_ERROR = 'free_tier_project_limit_reached';
+
+/** Цены тарифа Pro (валюта — RUB). Совпадают с UI на /pricing и
+ *  Settings → Billing → UpgradePlanPage. Источник истины для бэка
+ *  (при mock-апгрейде) и фронта (для подписи кнопки).
+ *
+ *  Когда появится реальный провайдер — цены переедут в админку /
+ *  promo-таблицу, и эти константы станут дефолтом. */
+export const PRO_MONTHLY_PRICE_RUB = '290.00';
+export const PRO_YEARLY_PRICE_RUB = '2900.00';
