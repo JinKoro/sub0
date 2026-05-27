@@ -11,6 +11,9 @@ export interface CustomerPlanState {
   planId: number;
   /** До какой даты действует план; NULL для FREE. */
   planExpiresAt: Date | null;
+  /** state_id кастомера (CustomerState). Нужен для email-verified gate
+   *  перед оплатой — апгрейд разрешён только из ACTIVE. */
+  stateId: number;
 }
 
 export interface UpgradeArgs {

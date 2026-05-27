@@ -365,3 +365,10 @@ statusId: PaymentStatus.SUCCEEDED }`. Реальные провайдеры
 Цены — `PRO_MONTHLY_PRICE_RUB` / `PRO_YEARLY_PRICE_RUB` в
 `packages/shared/src/plan-limits.ts`; валюта RUB. Это источник
 истины и для бэка (mock-апгрейд), и для фронта (UpgradePlanPage).
+
+**Email-verified gate.** Roadmap: «Email verification обязательна до
+первой оплаты». `PaymentService.upgrade` отказывает (`403 Forbidden`)
+если `customer.state_id != CustomerState.ACTIVE`. Это покрывает
+`CREATED` (email не подтверждён) и `ARCHIVED` (soft-deleted). Тело
+ответа — `{ message: 'email_not_verified' }`, константа в
+`packages/shared/src/plan-limits.ts → EMAIL_NOT_VERIFIED_ERROR`.

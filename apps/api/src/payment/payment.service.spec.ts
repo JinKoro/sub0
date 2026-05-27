@@ -1,6 +1,8 @@
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import {
   Currency,
+  CustomerState,
+  EMAIL_NOT_VERIFIED_ERROR,
   PRO_MONTHLY_PRICE_RUB,
   PRO_YEARLY_PRICE_RUB,
   PaidPlan,
@@ -20,7 +22,7 @@ function makeDeps(now = new Date('2026-05-27T00:00:00Z')) {
     list: jest.fn().mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 5 }),
     findCustomerPlanState: jest
       .fn()
-      .mockResolvedValue({ planId: Plan.FREE, planExpiresAt: null }),
+      .mockResolvedValue({ planId: Plan.FREE, planExpiresAt: null, stateId: CustomerState.ACTIVE }),
     upgrade: jest.fn().mockResolvedValue({
       sku: 'pay-FAKE0001',
       paidAt: now.toISOString(),
@@ -102,6 +104,7 @@ describe('PaymentService.upgrade', () => {
     repo.findCustomerPlanState.mockResolvedValue({
       planId: Plan.PRO,
       planExpiresAt: new Date('2026-09-10T00:00:00Z'),
+      stateId: CustomerState.ACTIVE,
     });
     await service.upgrade(CID, PaidPlan.PRO_MONTHLY);
     const args = repo.upgrade.mock.calls[0]![0];
@@ -113,10 +116,43 @@ describe('PaymentService.upgrade', () => {
     repo.findCustomerPlanState.mockResolvedValue({
       planId: Plan.PRO,
       planExpiresAt: new Date('2026-03-01T00:00:00Z'),
+      stateId: CustomerState.ACTIVE,
     });
     await service.upgrade(CID, PaidPlan.PRO_MONTHLY);
     const args = repo.upgrade.mock.calls[0]![0];
     expect(args.paidUntil.toISOString()).toBe('2026-06-27T00:00:00.000Z');
+  });
+
+  it('403 email_not_verified если state=CREATED', async () => {
+    const { service, repo } = makeDeps();
+    repo.findCustomerPlanState.mockResolvedValue({
+      planId: Plan.FREE,
+      planExpiresAt: null,
+      stateId: CustomerState.CREATED,
+    });
+    let caught: unknown;
+    try {
+      await service.upgrade(CID, PaidPlan.PRO_MONTHLY);
+    } catch (err) {
+      caught = err;
+    }
+    expect(caught).toBeInstanceOf(ForbiddenException);
+    const body = (caught as ForbiddenException).getResponse() as { message: string };
+    expect(body.message).toBe(EMAIL_NOT_VERIFIED_ERROR);
+    expect(repo.upgrade).not.toHaveBeenCalled();
+  });
+
+  it('403 email_not_verified если state=ARCHIVED', async () => {
+    const { service, repo } = makeDeps();
+    repo.findCustomerPlanState.mockResolvedValue({
+      planId: Plan.FREE,
+      planExpiresAt: null,
+      stateId: CustomerState.ARCHIVED,
+    });
+    await expect(service.upgrade(CID, PaidPlan.PRO_MONTHLY)).rejects.toBeInstanceOf(
+      ForbiddenException,
+    );
+    expect(repo.upgrade).not.toHaveBeenCalled();
   });
 
   it('400 на чужой paidPlanId', async () => {
