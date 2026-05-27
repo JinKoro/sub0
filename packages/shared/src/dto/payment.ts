@@ -21,3 +21,9 @@ export interface PaymentListResponse {
   page: number;
   pageSize: number;
 }
+
+/** Тело запроса на mock-апгрейд тарифа.
+ *  `paidPlanId` — `PaidPlan.PRO_MONTHLY | PRO_YEARLY`. */
+export interface PaymentUpgradeRequest {
+  paidPlanId: number;
+}

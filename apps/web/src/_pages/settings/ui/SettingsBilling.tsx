@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Currency, PaidPlan, PaymentStatus } from '@subzero/shared';
+import { Currency, PaidPlan, PaymentStatus, Plan } from '@subzero/shared';
 import type { PaymentDto, PaymentListResponse } from '@subzero/shared';
 import { SUB0, mono } from '@/shared/constants/tokens';
 import { useLang } from '@/shared/contexts/lang-context';
@@ -11,6 +11,7 @@ import { Pill } from '@/shared/components/ui/Pill';
 import { fmtPrice } from '@/shared/constants/cabinet';
 import type { CabinetCurrency } from '@/entities/subscription/model/cabinet-types';
 import { usePlanLimit } from '@/entities/customer/model/use-plan-limit';
+import { useProfile } from '@/shared/contexts/profile-context';
 import { listPayments } from '@/entities/payment/api/list';
 import { SectionHead } from './parts/SectionHead';
 import { sBtnPrimary, sBtnSecondary } from './parts/styles';
@@ -21,12 +22,17 @@ const INVOICES_PAGE_SIZE = 5;
 export function SettingsBilling() {
   const { t } = useLang();
   const isMobile = useIsMobile();
+  const { profile } = useProfile();
   const [view, setView] = useState<'main' | 'upgrade'>('main');
   const subsLimit = usePlanLimit('subscriptions');
   const projLimit = usePlanLimit('projects');
 
+  const planKey: 'free' | 'pro' | 'team' =
+    profile?.planId === Plan.PRO ? 'pro' : profile?.planId === Plan.TEAM ? 'team' : 'free';
+  const planName = planKey === 'pro' ? 'Pro' : planKey === 'team' ? 'Team' : 'Free';
+
   if (view === 'upgrade') {
-    return <UpgradePlanPage currentPlan="free" onClose={() => setView('main')} />;
+    return <UpgradePlanPage currentPlan={planKey} onClose={() => setView('main')} />;
   }
 
   return (
@@ -70,8 +76,7 @@ export function SettingsBilling() {
                 lineHeight: 1.1,
               }}
             >
-              Free{' '}
-              <span style={{ color: SUB0.muted, fontWeight: 500, fontSize: 16 }}>· 0 ₽</span>
+              {planName}
             </div>
             <div
               style={{

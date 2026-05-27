@@ -1,12 +1,20 @@
 'use client';
 
 import { useState } from 'react';
+import {
+  PRO_MONTHLY_PRICE_RUB,
+  PRO_YEARLY_PRICE_RUB,
+  PaidPlan,
+} from '@subzero/shared';
 import { SUB0, mono } from '@/shared/constants/tokens';
 import { useLang } from '@/shared/contexts/lang-context';
 import { useIsMobile } from '@/shared/hooks/use-is-mobile';
 import { Card } from '@/shared/components/ui/Card';
+import { useProfile } from '@/shared/contexts/profile-context';
+import { upgradePlan } from '@/shared/api/payment';
+import { getMe } from '@/shared/api/customer';
 import { SectionHead } from './parts/SectionHead';
-import { sBtnGhost, sBtnPrimary } from './parts/styles';
+import { sBtnPrimary } from './parts/styles';
 
 interface Plan {
   id: 'free' | 'pro' | 'team';
@@ -34,8 +42,10 @@ const PLAN_DATA: Plan[] = [
   {
     id: 'pro',
     name: 'Pro',
-    priceMo: 290,
-    priceYr: 2490,
+    // Источник истины — packages/shared/src/plan-limits.ts. Бэк списывает те
+    // же суммы при mock-апгрейде, поэтому надпись на кнопке = факт списания.
+    priceMo: Number(PRO_MONTHLY_PRICE_RUB),
+    priceYr: Number(PRO_YEARLY_PRICE_RUB),
     featured: true,
     sub: { ru: 'Без лимитов и с AI-импортом', en: 'No limits, AI import' },
     feat: {
@@ -94,10 +104,22 @@ interface Props {
 export function UpgradePlanPage({ currentPlan, onClose }: Props) {
   const { t, lang } = useLang();
   const isMobile = useIsMobile();
+  const { setProfile } = useProfile();
   const [billing, setBilling] = useState<Billing>('year');
   const yearly = billing === 'year';
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const selectablePlans = PLAN_DATA.filter((p) => p.id !== currentPlan);
+  // Скидка считается из цен в shared, чтобы бейдж не разъезжался с реальной
+  // суммой списания, если константы поменяют.
+  const proMonthly = Number(PRO_MONTHLY_PRICE_RUB);
+  const proYearly = Number(PRO_YEARLY_PRICE_RUB);
+  const yearlyDiscountPct = Math.round((1 - proYearly / (proMonthly * 12)) * 100);
+
+  // Free вообще не покупается, поэтому никогда не показываем его в выборе —
+  // даже когда юзер на PRO. Текущий план тоже исключаем — апгрейд не «купи
+  // то же самое».
+  const selectablePlans = PLAN_DATA.filter((p) => p.id !== 'free' && p.id !== currentPlan);
   const defaultSelected =
     selectablePlans.find((p) => p.featured && !p.soon)?.id ??
     selectablePlans.find((p) => !p.soon)?.id ??
@@ -122,19 +144,6 @@ export function UpgradePlanPage({ currentPlan, onClose }: Props) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-        <button
-          onClick={onClose}
-          style={{
-            ...sBtnGhost,
-            padding: '6px 10px',
-            fontFamily: mono,
-            fontSize: 12,
-          }}
-        >
-          ← {t('Назад к тарифам', 'Back to plans')}
-        </button>
-      </div>
       <div>
         <h2
           style={{
@@ -186,8 +195,8 @@ export function UpgradePlanPage({ currentPlan, onClose }: Props) {
                   }}
                 >
                   {o.label}
-                  {o.id === 'year' && (
-                    <span style={{ marginLeft: 6, opacity: 0.7 }}>−28%</span>
+                  {o.id === 'year' && yearlyDiscountPct > 0 && (
+                    <span style={{ marginLeft: 6, opacity: 0.7 }}>−{yearlyDiscountPct}%</span>
                   )}
                 </button>
               );
@@ -493,7 +502,7 @@ export function UpgradePlanPage({ currentPlan, onClose }: Props) {
               <span>{t('В месяц', 'Per month')}</span>
               <span style={{ color: SUB0.ink, fontFamily: mono }}>{monthly} ₽</span>
             </div>
-            {yearly && (
+            {yearly && yearlyDiscountPct > 0 && (
               <div
                 style={{
                   display: 'flex',
@@ -503,7 +512,9 @@ export function UpgradePlanPage({ currentPlan, onClose }: Props) {
                 }}
               >
                 <span>{t('Скидка за год', 'Yearly discount')}</span>
-                <span style={{ color: SUB0.good, fontFamily: mono }}>−28%</span>
+                <span style={{ color: SUB0.good, fontFamily: mono }}>
+                  −{yearlyDiscountPct}%
+                </span>
               </div>
             )}
             <div style={{ height: 1, background: SUB0.line2, margin: '4px 0' }} />
@@ -523,18 +534,70 @@ export function UpgradePlanPage({ currentPlan, onClose }: Props) {
               </span>
             </div>
           </div>
-          <button
+          <div
             style={{
-              ...sBtnPrimary,
-              padding: '14px 18px',
-              fontSize: 15,
-              fontWeight: 700,
-              justifySelf: isMobile ? 'stretch' : 'end',
-              width: isMobile ? '100%' : 'auto',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 8,
+              alignItems: isMobile ? 'stretch' : 'end',
             }}
           >
-            {t('Оплатить', 'Pay')} {totalLabel}
-          </button>
+            <button
+              onClick={async () => {
+                // Mock-апгрейд доступен только на Pro; Team — "soon", кнопка
+                // и так не должна сюда долететь. На всякий случай — abort.
+                if (selectedPlan !== 'pro') return;
+                setSubmitting(true);
+                setError(null);
+                try {
+                  const paidPlanId = yearly ? PaidPlan.PRO_YEARLY : PaidPlan.PRO_MONTHLY;
+                  await upgradePlan(paidPlanId);
+                  // Перечитываем профиль, чтобы plan_id перешёл в PRO —
+                  // дальше Free-баннеры и disabled-CTA в кабинете пропадают
+                  // без отдельного refetch'а.
+                  setProfile(await getMe());
+                  onClose();
+                } catch {
+                  setError(
+                    t(
+                      'Не удалось оплатить, попробуйте ещё раз',
+                      'Payment failed, please try again',
+                    ),
+                  );
+                  setSubmitting(false);
+                }
+              }}
+              disabled={submitting || selectedPlan !== 'pro'}
+              style={{
+                ...sBtnPrimary,
+                padding: '14px 18px',
+                fontSize: 15,
+                fontWeight: 700,
+                width: isMobile ? '100%' : 'auto',
+                opacity: submitting ? 0.6 : 1,
+                cursor: submitting ? 'progress' : 'pointer',
+              }}
+            >
+              {submitting
+                ? t('Оплачиваем…', 'Processing…')
+                : `${t('Оплатить', 'Pay')} ${totalLabel}`}
+            </button>
+            {error && (
+              <div
+                style={{
+                  padding: '8px 12px',
+                  borderRadius: 8,
+                  background: '#fdecea',
+                  border: `1px solid ${SUB0.danger}`,
+                  color: SUB0.danger,
+                  fontSize: 12,
+                  maxWidth: isMobile ? '100%' : 260,
+                }}
+              >
+                {error}
+              </div>
+            )}
+          </div>
         </div>
       </Card>
     </div>

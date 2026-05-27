@@ -337,3 +337,31 @@ total, page, pageSize }`. Используется в Settings → Billing →
 **Vs `billing_history`.** Совпадающие имена, но разные сущности:
 `billing_history` — списания юзера за его подписки (Netflix, Spotify),
 `payment` — оплата самого Sub0. Не путать.
+
+**MockPaymentProvider (MVP).** До подписания договоров с эквайерами
+весь upgrade-flow синхронный: `provider.charge()` сразу возвращает
+`{ providerId: PaymentProvider.MOCK, providerPaymentId: uuid(),
+statusId: PaymentStatus.SUCCEEDED }`. Реальные провайдеры
+(СБП / T-Bank / Сбер / BePaid) появятся позже — заменят
+`PAYMENT_PROVIDER` в `PaymentModule`, доменный код тот же.
+
+**Endpoint апгрейда.** `POST /customers/me/upgrade` принимает
+`{ paidPlanId: PaidPlan.PRO_MONTHLY | PRO_YEARLY }`, в одной
+транзакции пишет `payment` и обновляет `customer.plan_id = Plan.PRO`,
+`customer.plan_expires_at = paid_until`, `version + 1`.
+
+**Формула `paid_until`:**
+
+- `customer.plan_id = FREE` **или** `plan_expires_at IS NULL` **или**
+  `plan_expires_at <= now()` → `paid_until = now() + period`.
+- Активный PRO (`plan_id = PRO AND plan_expires_at > now()`) →
+  `paid_until = plan_expires_at + period` — продлеваем от конца
+  оплаченного периода, чтобы юзер, купивший второй месяц
+  заранее, не терял дни.
+
+Период — 1 месяц для `PRO_MONTHLY`, 1 год для `PRO_YEARLY`. Время
+считается в UTC (`setUTCMonth` / `setUTCFullYear`).
+
+Цены — `PRO_MONTHLY_PRICE_RUB` / `PRO_YEARLY_PRICE_RUB` в
+`packages/shared/src/plan-limits.ts`; валюта RUB. Это источник
+истины и для бэка (mock-апгрейд), и для фронта (UpgradePlanPage).
