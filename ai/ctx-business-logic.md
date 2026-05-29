@@ -380,3 +380,46 @@ downgrade не трогаются — Free-лимит стоит только н
 `CREATED` (email не подтверждён) и `ARCHIVED` (soft-deleted). Тело
 ответа — `{ message: 'email_not_verified' }`, константа в
 `packages/shared/src/plan-limits.ts → EMAIL_NOT_VERIFIED_ERROR`.
+
+### Notifications — матрица событий и каналов
+
+Per-customer строки в `notification_event_preference`
+(`(customer_id, event_id)` уникален). Событий — 5
+(`NotificationEvent`): UPCOMING_CHARGE, TRIAL_END, PLAN_RENEWAL,
+MONTHLY_REPORT, RELEASES. Каналов — 3 (`NotificationChannelType`):
+EMAIL (рабочий), TELEGRAM и MAX (хранятся, не доставляются — link-flow
+и доставка через `notification_channel` — отдельная задача).
+
+**Дефолты.** Если строки в `notification_event_preference` нет, сервис
+синтезирует дефолт прямо в GET — БД не трогаем без явного PATCH'а.
+Дефолты:
+
+- UPCOMING_CHARGE → `enabled=true, channels=[EMAIL], daysBefore=[3]`.
+- TRIAL_END / PLAN_RENEWAL / MONTHLY_REPORT / RELEASES → `enabled=false,
+  channels=[], daysBefore=[]`.
+
+Воркер `BillingNotificationScheduler` использует тот же контракт: LEFT
+JOIN на preference + `COALESCE` с дефолтами. Customer без строки
+получает email за 3 дня до списания «из коробки».
+
+**Endpoints.**
+
+- `GET /customers/me/notifications` — агрегированный read.
+  Возвращает все 5 событий (реальные + дефолтные) плюс quiet hours.
+- `POST /customers/me/notifications/preferences` — body
+  `{ items: [{ eventId, enabled?, channelTypeIds?, daysBefore? }] }`.
+  Сервис мержит partial-апдейт с предыдущей строкой (или дефолтом) и
+  делает upsert по `(customer_id, event_id)`.
+- `POST /customers/me/quiet-hours` — body `{ enabled, from?, to?,
+  version }`. Колонки `customer.quiet_hours_*`; under optimistic-lock
+  по `customer.version`.
+
+**Quiet hours.** `quiet_hours_from`/`quiet_hours_to` интерпретируются в
+`customer.timezone`. Воркер при cron-тике конвертирует `now() AT TIME
+ZONE customer.timezone` в время и пропускает строку, если попадает в
+окно. Окно может пересекать полночь (`from > to`).
+
+**Контракт по старым полям.** `customer.notifications_enabled` и
+`customer.notification_lead_days` остаются в схеме до отдельной
+contract-миграции (expand → migrate code → contract). Новый воркер их
+не читает, легаси-endpoint `POST /customers/me/notifications` удалён.

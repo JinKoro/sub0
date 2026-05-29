@@ -39,19 +39,6 @@ export function savePreferences(input: PreferencesInput): Promise<CustomerProfil
   });
 }
 
-export interface NotificationsInput {
-  enabled: boolean;
-  leadDays: number[];
-  version: number;
-}
-
-export function saveNotifications(input: NotificationsInput): Promise<CustomerProfile> {
-  return api<CustomerProfile>('/customers/me/notifications', {
-    method: 'POST',
-    body: JSON.stringify(input),
-  });
-}
-
 export function changePassword(currentPassword: string, newPassword: string): Promise<void> {
   return api<void>('/customers/me/password', {
     method: 'POST',

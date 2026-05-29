@@ -169,6 +169,20 @@
       "when": 1779902898004,
       "tag": "0023_create_payment",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1779918820157,
+      "tag": "0024_create_notification_event_preference",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1779918820158,
+      "tag": "0025_add_customer_quiet_hours",
+      "breakpoints": true
     }
   ]
 }
