@@ -5,6 +5,7 @@ import {
   integer,
   pgTable,
   text,
+  time,
   timestamp,
   uniqueIndex,
   uuid,
@@ -35,6 +36,12 @@ export const customer = pgTable(
       .array()
       .notNull()
       .default(sql`'{3}'::int[]`),
+    // Quiet hours интерпретируются в `timezone` customer'а. Воркер NOT
+    // отправляет уведомление, если локальное `now()` попадает в окно.
+    // `from = to` трактуем как «всё время выключено».
+    quietHoursEnabled: boolean('quiet_hours_enabled').notNull().default(false),
+    quietHoursFrom: time('quiet_hours_from'),
+    quietHoursTo: time('quiet_hours_to'),
     deletedAt: timestamp('deleted_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true })

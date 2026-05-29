@@ -9,3 +9,5 @@ export * from './verification-token-type';
 export * from './payment-provider';
 export * from './payment-status';
 export * from './paid-plan';
+export * from './notification-channel-type';
+export * from './notification-event';

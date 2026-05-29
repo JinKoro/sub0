@@ -1,5 +1,10 @@
 import type { INestApplication } from '@nestjs/common';
-import { BillingPeriod, Currency } from '@subzero/shared';
+import {
+  BillingPeriod,
+  Currency,
+  NotificationChannelType,
+  NotificationEvent,
+} from '@subzero/shared';
 import request from 'supertest';
 
 import { BillingNotificationService } from './billing-notification.service';
@@ -42,19 +47,11 @@ describe('Billing notifications e2e', () => {
   async function createSubInDays({
     email,
     daysAhead,
-    leadDays,
-    enabled = true,
   }: {
     email: string;
     daysAhead: number;
-    leadDays?: number[];
-    enabled?: boolean;
   }): Promise<{ cookies: string; subSku: string }> {
     await seedCustomer({ email, password: 'Passw0rd1' });
-    await testPool().query(
-      `UPDATE customer SET notifications_enabled = $2, notification_lead_days = $3 WHERE email = $1`,
-      [email, enabled, leadDays ?? [3]],
-    );
     const cookies = await login(http, email, 'Passw0rd1');
     await http.post(`${PFX}/projects`).set('Cookie', cookies).send({ name: 'Personal' });
     const projects = await http.get(`${PFX}/projects`).set('Cookie', cookies);
@@ -93,26 +90,43 @@ describe('Billing notifications e2e', () => {
     return rows[0].n;
   }
 
-  it('cron создаёт письмо за 3 дня до списания и не дублирует при повторе', async () => {
-    await createSubInDays({ email: 'a@e.com', daysAhead: 3, leadDays: [3] });
+  it('cron шлёт письмо по дефолту (3 дня до списания) и не дублирует при повторе', async () => {
+    // Без явных preferences customer должен получать дефолтное письмо
+    // за 3 дня — это покрывает кейс «юзер ничего не настраивал».
+    await createSubInDays({ email: 'a@e.com', daysAhead: 3 });
 
     const res1 = await svc.runDailyTick();
     expect(res1.candidates).toBe(1);
     expect(await outboxCountFor('a@e.com')).toBe(1);
 
-    // Идемпотентность: повторный запуск тот же ключ → ON CONFLICT DO NOTHING.
+    // Идемпотентность: повторный запуск → ON CONFLICT DO NOTHING.
     await svc.runDailyTick();
     expect(await outboxCountFor('a@e.com')).toBe(1);
   });
 
-  it('подписка не попадает если daysUntil ∉ lead_days', async () => {
-    await createSubInDays({ email: 'b@e.com', daysAhead: 5, leadDays: [3] });
+  it('подписка не попадает если daysUntil ∉ дефолтных lead_days', async () => {
+    await createSubInDays({ email: 'b@e.com', daysAhead: 5 });
     await svc.runDailyTick();
     expect(await outboxCountFor('b@e.com')).toBe(0);
   });
 
-  it('notifications_enabled=false → ничего не отправляется', async () => {
-    await createSubInDays({ email: 'c@e.com', daysAhead: 3, leadDays: [3], enabled: false });
+  it('preference UPCOMING_CHARGE.enabled=false → ничего не отправляется', async () => {
+    const { cookies } = await createSubInDays({ email: 'c@e.com', daysAhead: 3 });
+    const r = await http
+      .post(`${PFX}/customers/me/notifications/preferences`)
+      .set('Cookie', cookies)
+      .send({
+        items: [
+          {
+            eventId: NotificationEvent.UPCOMING_CHARGE,
+            enabled: false,
+            channelTypeIds: [NotificationChannelType.EMAIL],
+            daysBefore: [3],
+          },
+        ],
+      });
+    expect(r.status).toBe(200);
+
     await svc.runDailyTick();
     expect(await outboxCountFor('c@e.com')).toBe(0);
   });
@@ -121,9 +135,7 @@ describe('Billing notifications e2e', () => {
     const { cookies, subSku } = await createSubInDays({
       email: 'd@e.com',
       daysAhead: 3,
-      leadDays: [3],
     });
-    // Кладём подписку на паузу
     const sub = await http.get(`${PFX}/subscriptions/${subSku}`).set('Cookie', cookies);
     await http
       .post(`${PFX}/subscriptions/${subSku}`)
@@ -134,38 +146,69 @@ describe('Billing notifications e2e', () => {
     expect(await outboxCountFor('d@e.com')).toBe(0);
   });
 
-  it('endpoint POST /customers/me/notifications сохраняет настройки', async () => {
-    await seedCustomer({ email: 'e@e.com', password: 'Passw0rd1' });
-    const cookies = await login(http, 'e@e.com', 'Passw0rd1');
-    const me0 = await http.get(`${PFX}/customers/me`).set('Cookie', cookies);
-    expect(me0.body.notificationsEnabled).toBe(true);
-    expect(me0.body.notificationLeadDays).toEqual([3]);
-
-    const r = await http
-      .post(`${PFX}/customers/me/notifications`)
+  it('preference daysBefore=[1] → шлём за 1 день, не за 3', async () => {
+    const { cookies } = await createSubInDays({ email: 'g@e.com', daysAhead: 3 });
+    await http
+      .post(`${PFX}/customers/me/notifications/preferences`)
       .set('Cookie', cookies)
-      .send({ enabled: false, leadDays: [1, 0], version: me0.body.version });
-    expect(r.status).toBe(200);
-    expect(r.body.notificationsEnabled).toBe(false);
-    expect(new Set(r.body.notificationLeadDays)).toEqual(new Set([1, 0]));
+      .send({
+        items: [
+          {
+            eventId: NotificationEvent.UPCOMING_CHARGE,
+            daysBefore: [1],
+          },
+        ],
+      });
 
-    // Stale version → 409
-    const stale = await http
-      .post(`${PFX}/customers/me/notifications`)
-      .set('Cookie', cookies)
-      .send({ enabled: true, leadDays: [3], version: me0.body.version });
-    expect(stale.status).toBe(409);
+    await svc.runDailyTick();
+    // daysUntil=3, preference=[1] → не попадаем.
+    expect(await outboxCountFor('g@e.com')).toBe(0);
   });
 
-  it('endpoint валидирует lead_days: только {0, 1, 3}', async () => {
-    await seedCustomer({ email: 'f@e.com', password: 'Passw0rd1' });
-    const cookies = await login(http, 'f@e.com', 'Passw0rd1');
+  it('GET /customers/me/notifications отдаёт дефолты до первого PATCH', async () => {
+    await seedCustomer({ email: 'h@e.com', password: 'Passw0rd1' });
+    const cookies = await login(http, 'h@e.com', 'Passw0rd1');
+
+    const r = await http.get(`${PFX}/customers/me/notifications`).set('Cookie', cookies);
+    expect(r.status).toBe(200);
+    const upcoming = r.body.preferences.find(
+      (p: { eventId: number }) => p.eventId === NotificationEvent.UPCOMING_CHARGE,
+    );
+    expect(upcoming).toEqual({
+      eventId: NotificationEvent.UPCOMING_CHARGE,
+      enabled: true,
+      channelTypeIds: [NotificationChannelType.EMAIL],
+      daysBefore: [3],
+    });
+    // Все 5 событий присутствуют (дефолты для не-UPCOMING_CHARGE — disabled).
+    expect(r.body.preferences).toHaveLength(5);
+    expect(r.body.quietHours).toEqual({ enabled: false, from: null, to: null });
+  });
+
+  it('POST /customers/me/quiet-hours: 400 без from/to при enabled=true', async () => {
+    await seedCustomer({ email: 'i@e.com', password: 'Passw0rd1' });
+    const cookies = await login(http, 'i@e.com', 'Passw0rd1');
     const me = await http.get(`${PFX}/customers/me`).set('Cookie', cookies);
 
     const bad = await http
-      .post(`${PFX}/customers/me/notifications`)
+      .post(`${PFX}/customers/me/quiet-hours`)
       .set('Cookie', cookies)
-      .send({ enabled: true, leadDays: [7], version: me.body.version });
+      .send({ enabled: true, version: me.body.version });
     expect(bad.status).toBe(400);
+  });
+
+  it('POST /customers/me/quiet-hours сохраняет окно', async () => {
+    await seedCustomer({ email: 'j@e.com', password: 'Passw0rd1' });
+    const cookies = await login(http, 'j@e.com', 'Passw0rd1');
+    const me = await http.get(`${PFX}/customers/me`).set('Cookie', cookies);
+
+    const r = await http
+      .post(`${PFX}/customers/me/quiet-hours`)
+      .set('Cookie', cookies)
+      .send({ enabled: true, from: '22:00', to: '09:00', version: me.body.version });
+    expect(r.status).toBe(200);
+    expect(r.body.enabled).toBe(true);
+    expect(r.body.from).toBe('22:00');
+    expect(r.body.to).toBe('09:00');
   });
 });
