@@ -1,6 +1,20 @@
-import { Body, Controller, Get, HttpCode, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  Param,
+  ParseIntPipe,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import type { Request } from 'express';
-import type { NotificationSettingsDto, QuietHoursDto } from '@subzero/shared';
+import type {
+  ConnectChannelResponse,
+  NotificationSettingsDto,
+  QuietHoursDto,
+} from '@subzero/shared';
 
 import type { AuthUser } from '../auth/jwt.strategy';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -31,6 +45,25 @@ export class NotificationsController {
     @Body() dto: UpdatePreferencesDto,
   ): Promise<NotificationSettingsDto> {
     return this.notifications.updatePreferences(uid(req), { items: dto.items });
+  }
+
+  // :type — числовой id канала из NotificationChannelType (1/2/3).
+  @Post('notifications/channels/:type/connect')
+  @HttpCode(200)
+  connectChannel(
+    @Req() req: Request,
+    @Param('type', ParseIntPipe) type: number,
+  ): Promise<ConnectChannelResponse> {
+    return this.notifications.connectChannel(uid(req), type);
+  }
+
+  @Post('notifications/channels/:type/disconnect')
+  @HttpCode(204)
+  async disconnectChannel(
+    @Req() req: Request,
+    @Param('type', ParseIntPipe) type: number,
+  ): Promise<void> {
+    await this.notifications.disconnectChannel(uid(req), type);
   }
 
   @Post('quiet-hours')

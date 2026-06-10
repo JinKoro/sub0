@@ -387,8 +387,28 @@ Per-customer строки в `notification_event_preference`
 (`(customer_id, event_id)` уникален). Событий — 5
 (`NotificationEvent`): UPCOMING_CHARGE, TRIAL_END, PLAN_RENEWAL,
 MONTHLY_REPORT, RELEASES. Каналов — 3 (`NotificationChannelType`):
-EMAIL (рабочий), TELEGRAM и MAX (хранятся, не доставляются — link-flow
-и доставка через `notification_channel` — отдельная задача).
+EMAIL (рабочий), TELEGRAM, MAX.
+
+**Таблица `notification_channel`** (`(customer_id, type_id)` уникален) —
+сами каналы доставки. Канал «активен» (воркер шлёт) только при
+`enabled = true AND verified_at IS NOT NULL` (partial-индекс
+`notification_channel_active_idx`). Поля: `address` (email / @handle /
+chat-id), `verified_at`, `enabled`, `connect_nonce` +
+`connect_nonce_expires_at` (одноразовый nonce connect-link для TG/MAX).
+
+**EMAIL-канал** заводится автоматически и сразу `verified` (email
+подтверждён до первой оплаты): backfill миграцией `0026` всем
+ACTIVE-customer + в `completeRegistration` (та же tx, что ставит
+ACTIVE). Адрес = `customer.email`. Отключить EMAIL нельзя (базовый
+канал = логин). `seedCustomer` в тестах повторяет тот же seed.
+
+**TELEGRAM / MAX** подключаются через connect-flow: `connect` создаёт
+канал `enabled=true, verified_at=NULL`, генерит nonce и deep-link.
+Реальная верификация (bot-webhook) и доставка (`tg_outbox`) —
+отдельная задача; до неё воркер такие каналы пропускает. Deep-link
+базы — из env (`TELEGRAM_BOT_USERNAME` дефолт `sub0_bot`;
+`MAX_BOT_URL_BASE` опционален — без него deep-link для MAX не
+отдаётся, и UI держит MAX в состоянии «скоро»).
 
 **Дефолты.** Если строки в `notification_event_preference` нет, сервис
 синтезирует дефолт прямо в GET — БД не трогаем без явного PATCH'а.
@@ -398,18 +418,28 @@ EMAIL (рабочий), TELEGRAM и MAX (хранятся, не доставля
 - TRIAL_END / PLAN_RENEWAL / MONTHLY_REPORT / RELEASES → `enabled=false,
   channels=[], daysBefore=[]`.
 
-Воркер `BillingNotificationScheduler` использует тот же контракт: LEFT
-JOIN на preference + `COALESCE` с дефолтами. Customer без строки
-получает email за 3 дня до списания «из коробки».
+Воркер `BillingNotificationScheduler`: LEFT JOIN на preference +
+`COALESCE` с дефолтами (customer без строки preference получает email
+«из коробки») **И** INNER JOIN на активный EMAIL-`notification_channel`
+(`enabled AND verified_at NOT NULL`) — адрес письма берётся из канала,
+не из `customer.email`. Backfill `0026` гарантирует канал у всех
+ACTIVE-customer.
 
 **Endpoints.**
 
 - `GET /customers/me/notifications` — агрегированный read.
-  Возвращает все 5 событий (реальные + дефолтные) плюс quiet hours.
+  Возвращает `channels` (все каналы customer'а), все 5 событий
+  (реальные + дефолтные) и quiet hours.
 - `POST /customers/me/notifications/preferences` — body
   `{ items: [{ eventId, enabled?, channelTypeIds?, daysBefore? }] }`.
   Сервис мержит partial-апдейт с предыдущей строкой (или дефолтом) и
   делает upsert по `(customer_id, event_id)`.
+- `POST /customers/me/notifications/channels/:type/connect` — `:type` =
+  числовой `NotificationChannelType`. EMAIL: идемпотентно гарантирует
+  verified-канал. TG/MAX: создаёт pending-канал + отдаёт `{ channel,
+  deepLink?, expiresAt }`.
+- `POST /customers/me/notifications/channels/:type/disconnect` — 204;
+  удаляет канал. EMAIL → 400 (нельзя отключить).
 - `POST /customers/me/quiet-hours` — body `{ enabled, from?, to?,
   version }`. Колонки `customer.quiet_hours_*`; under optimistic-lock
   по `customer.version`.

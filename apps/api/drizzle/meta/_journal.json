@@ -183,6 +183,13 @@
       "when": 1779918820158,
       "tag": "0025_add_customer_quiet_hours",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1780076053481,
+      "tag": "0026_create_notification_channel",
+      "breakpoints": true
     }
   ]
 }

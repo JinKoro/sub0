@@ -1,4 +1,5 @@
 import type {
+  ConnectChannelResponse,
   NotificationSettingsDto,
   QuietHoursDto,
   UpdatePreferencesRequest,
@@ -27,7 +28,23 @@ export function updateQuietHours(body: UpdateQuietHoursRequest): Promise<QuietHo
   });
 }
 
+/** Подключить канал. EMAIL — идемпотентно (verified). TELEGRAM / MAX —
+ *  ответ содержит deep-link с одноразовым nonce. */
+export function connectChannel(typeId: number): Promise<ConnectChannelResponse> {
+  return api<ConnectChannelResponse>(
+    `/customers/me/notifications/channels/${typeId}/connect`,
+    { method: 'POST' },
+  );
+}
+
+export function disconnectChannel(typeId: number): Promise<void> {
+  return api<void>(`/customers/me/notifications/channels/${typeId}/disconnect`, {
+    method: 'POST',
+  });
+}
+
 export type {
+  ConnectChannelResponse,
   NotificationSettingsDto,
   QuietHoursDto,
   UpdatePreferencesRequest,

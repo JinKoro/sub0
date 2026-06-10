@@ -34,6 +34,11 @@ export const envSchema = z
     SMTP_PASS: z.string().optional(),
     EMAIL_FROM: z.string().default('Sub0 <noreply@sub0.local>'),
     MAIL_RETENTION_DAYS: z.coerce.number().int().positive().default(30),
+
+    // Notifications (#45): connect deep-link базы для TG/MAX. Бот — будущая
+    // задача; MAX-base опционален (без него deep-link для MAX не отдаём).
+    TELEGRAM_BOT_USERNAME: z.string().default('sub0_bot'),
+    MAX_BOT_URL_BASE: z.string().url().optional(),
   })
   // keep unrelated process.env entries (SMTP_*, PATH, …) so ConfigService still sees them
   .passthrough();

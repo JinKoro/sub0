@@ -13,3 +13,4 @@ export * from './subscription-promo';
 export * from './exchange-rate';
 export * from './payment';
 export * from './notification-event-preference';
+export * from './notification-channel';

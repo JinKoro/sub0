@@ -1,4 +1,4 @@
-import { CustomerState, Plan } from '@subzero/shared';
+import { CustomerState, NotificationChannelType, Plan } from '@subzero/shared';
 
 import { Argon2PasswordHasher } from '../auth/password-hasher';
 import { testPool } from './db';
@@ -26,7 +26,18 @@ export async function seedCustomer(opts: {
       opts.planId ?? Plan.PRO,
     ],
   );
-  return rows[0].id;
+  const id = rows[0].id;
+  // Mirror prod: ACTIVE-customer'у заводится verified EMAIL-канал (backfill +
+  // completeRegistration). Воркер шлёт письма только при наличии такого канала.
+  if ((opts.stateId ?? CustomerState.ACTIVE) === CustomerState.ACTIVE) {
+    await testPool().query(
+      `INSERT INTO notification_channel (customer_id, type_id, address, verified_at)
+       VALUES ($1, $2, $3, now())
+       ON CONFLICT (customer_id, type_id) DO NOTHING`,
+      [id, NotificationChannelType.EMAIL, email(opts.email)],
+    );
+  }
+  return id;
 }
 
 function email(e: string): string {

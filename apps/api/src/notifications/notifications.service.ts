@@ -1,3 +1,5 @@
+import { randomBytes } from 'node:crypto';
+
 import {
   BadRequestException,
   ConflictException,
@@ -6,6 +8,7 @@ import {
 import {
   NotificationChannelType,
   NotificationEvent,
+  type ConnectChannelResponse,
   type NotificationPreferenceDto,
   type NotificationSettingsDto,
   type QuietHoursDto,
@@ -14,6 +17,17 @@ import {
 } from '@subzero/shared';
 
 import type { NotificationsRepository } from './notifications.types';
+
+/** Конфиг connect-flow для TG/MAX. Deep-link базы — из env, не хардкод
+ *  (бот появится отдельной задачей). MAX-base опционален: пока не задан,
+ *  канал создаётся, но deep-link не отдаём. */
+export interface ChannelLinkConfig {
+  telegramBotUsername: string;
+  maxBotUrlBase: string | null;
+}
+
+/** Время жизни connect-nonce. */
+const CONNECT_NONCE_TTL_MS = 15 * 60 * 1000;
 
 /** Дефолты, которые отдаём при первом GET, если строки в БД ещё нет.
  *  В БД не пишем до явного PATCH — это экономит мусорные записи на
@@ -63,7 +77,10 @@ const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
 const MAX_DAYS_BEFORE = 30;
 
 export class NotificationsService {
-  constructor(private readonly repo: NotificationsRepository) {}
+  constructor(
+    private readonly repo: NotificationsRepository,
+    private readonly linkConfig: ChannelLinkConfig,
+  ) {}
 
   async getSettings(customerId: string): Promise<NotificationSettingsDto> {
     const stored = await this.repo.listPreferences(customerId);
@@ -74,13 +91,83 @@ export class NotificationsService {
       (id) => byEvent.get(id) ?? DEFAULT_PREFERENCE[id],
     ).filter((p): p is NotificationPreferenceDto => p !== undefined);
 
+    const channels = await this.repo.listChannels(customerId);
+
     const quietHoursRow = await this.repo.readQuietHours(customerId);
     if (!quietHoursRow) throw new NotFoundException('customer not found');
 
     return {
+      channels,
       preferences,
       quietHours: quietHoursRow.data,
     };
+  }
+
+  /** Подключение канала.
+   *  - EMAIL: идемпотентно гарантирует verified-канал на `customer.email`.
+   *  - TELEGRAM / MAX: создаёт enabled, но НЕ verified канал, генерит
+   *    одноразовый nonce и deep-link. Реальную верификацию (bot-webhook)
+   *    выставит отдельная задача — пока воркер такие каналы пропускает. */
+  async connectChannel(customerId: string, typeId: number): Promise<ConnectChannelResponse> {
+    if (!VALID_CHANNEL_IDS.has(typeId)) {
+      throw new BadRequestException(`unknown channel type: ${typeId}`);
+    }
+
+    if (typeId === NotificationChannelType.EMAIL) {
+      const email = await this.repo.getCustomerEmail(customerId);
+      if (!email) throw new NotFoundException('customer not found');
+      const channel = await this.repo.upsertChannel(customerId, {
+        typeId,
+        address: email,
+        enabled: true,
+        verifiedAt: new Date(),
+        connectNonce: null,
+        connectNonceExpiresAt: null,
+      });
+      return { channel };
+    }
+
+    const nonce = randomBytes(32).toString('base64url');
+    const expiresAt = new Date(Date.now() + CONNECT_NONCE_TTL_MS);
+    const channel = await this.repo.upsertChannel(customerId, {
+      typeId,
+      // Адрес (chat-id / @handle) узнаем только при verify через bot.
+      address: '',
+      enabled: true,
+      verifiedAt: null,
+      connectNonce: nonce,
+      connectNonceExpiresAt: expiresAt,
+    });
+    const deepLink = this.buildDeepLink(typeId, nonce);
+    return {
+      channel,
+      ...(deepLink ? { deepLink } : {}),
+      expiresAt: expiresAt.toISOString(),
+    };
+  }
+
+  /** Отключение канала. EMAIL отключить нельзя — это базовый канал
+   *  (= логин-email). TG/MAX удаляются (идемпотентно). */
+  async disconnectChannel(customerId: string, typeId: number): Promise<void> {
+    if (!VALID_CHANNEL_IDS.has(typeId)) {
+      throw new BadRequestException(`unknown channel type: ${typeId}`);
+    }
+    if (typeId === NotificationChannelType.EMAIL) {
+      throw new BadRequestException('email channel cannot be disconnected');
+    }
+    await this.repo.deleteChannel(customerId, typeId);
+  }
+
+  private buildDeepLink(typeId: number, nonce: string): string | undefined {
+    if (typeId === NotificationChannelType.TELEGRAM) {
+      return `https://t.me/${this.linkConfig.telegramBotUsername}?start=${nonce}`;
+    }
+    if (typeId === NotificationChannelType.MAX && this.linkConfig.maxBotUrlBase) {
+      const base = this.linkConfig.maxBotUrlBase;
+      const sep = base.includes('?') ? '&' : '?';
+      return `${base}${sep}start=${nonce}`;
+    }
+    return undefined;
   }
 
   async updatePreferences(

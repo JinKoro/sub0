@@ -1,4 +1,5 @@
 import type {
+  NotificationChannelDto,
   NotificationPreferenceDto,
   NotificationSettingsDto,
   QuietHoursDto,
@@ -20,10 +21,29 @@ export interface QuietHoursUpsert {
   version: number;
 }
 
+/** Полный upsert строки `notification_channel` по `(customer_id, type_id)`. */
+export interface ChannelUpsert {
+  typeId: number;
+  /** Для pending TG/MAX — пустая строка (адрес выставит bot при verify). */
+  address: string;
+  enabled: boolean;
+  verifiedAt: Date | null;
+  connectNonce: string | null;
+  connectNonceExpiresAt: Date | null;
+}
+
 export interface NotificationsRepository {
   /** Все строки preferences customer'а. Если строки нет — сервис подставит
-   *  дефолт сам, БД не трогаем без явного PATCH. */
+   *  дефолт сам, БД не трогаем без явного апдейта. */
   listPreferences(customerId: string): Promise<NotificationPreferenceDto[]>;
+  /** Все каналы customer'а. */
+  listChannels(customerId: string): Promise<NotificationChannelDto[]>;
+  /** Email customer'а (для ensure EMAIL-канала). */
+  getCustomerEmail(customerId: string): Promise<string | null>;
+  /** Upsert канала по `(customer_id, type_id)`. Возвращает итоговую строку. */
+  upsertChannel(customerId: string, args: ChannelUpsert): Promise<NotificationChannelDto>;
+  /** Удаляет канал. `false`, если строки не было. */
+  deleteChannel(customerId: string, typeId: number): Promise<boolean>;
   /** Текущие quiet hours customer'а + версия для optimistic-lock. */
   readQuietHours(customerId: string): Promise<{ data: QuietHoursDto; version: number } | null>;
   /** Upsert по `(customer_id, event_id)`. Бэкэнд решает, какие поля
@@ -43,4 +63,9 @@ export interface NotificationsRepository {
   updateQuietHours(customerId: string, args: QuietHoursUpsert): Promise<boolean>;
 }
 
-export type { NotificationPreferenceDto, NotificationSettingsDto, QuietHoursDto };
+export type {
+  NotificationChannelDto,
+  NotificationPreferenceDto,
+  NotificationSettingsDto,
+  QuietHoursDto,
+};
