@@ -10,6 +10,7 @@ import { and, eq, isNull, sql } from 'drizzle-orm';
 import { DRIZZLE, type DrizzleDB } from '../db/db.module';
 import { customer } from '../db/schema/customer';
 import { mailOutbox } from '../db/schema/mail-outbox';
+import { notificationChannel } from '../db/schema/notification-channel';
 import { notificationEventPreference } from '../db/schema/notification-event-preference';
 import { project } from '../db/schema/project';
 import { service } from '../db/schema/service';
@@ -30,6 +31,9 @@ export class DrizzleBillingNotificationRepository implements BillingNotification
     //    чтобы customer без явной записи всё равно получал письма
     //    (дефолт: enabled=true, channels=[EMAIL], daysBefore=[3]).
     //  - EMAIL обязательно в channel_type_ids: TG/MAX пока пропускаем.
+    //  - INNER JOIN на активный EMAIL-канал (enabled AND verified_at NOT
+    //    NULL) — единственный «активный» канал в MVP. Адрес письма берём
+    //    из канала. Backfill (#45) завёл EMAIL-канал всем active-customer.
     //  - quiet_hours: если now() в локальной TZ юзера попадает в окно
     //    [from..to] — пропускаем (next tick подберёт).
     const todayIso = today.toISOString().slice(0, 10);
@@ -52,7 +56,7 @@ export class DrizzleBillingNotificationRepository implements BillingNotification
     const rows = await this.db
       .select({
         customerId: customer.id,
-        toEmail: customer.email,
+        toEmail: notificationChannel.address,
         localeId: customer.localeId,
         customerName: customer.name,
         subscriptionSku: subscription.sku,
@@ -80,6 +84,15 @@ export class DrizzleBillingNotificationRepository implements BillingNotification
         and(
           eq(notificationEventPreference.customerId, customer.id),
           eq(notificationEventPreference.eventId, NotificationEvent.UPCOMING_CHARGE),
+        ),
+      )
+      .innerJoin(
+        notificationChannel,
+        and(
+          eq(notificationChannel.customerId, customer.id),
+          eq(notificationChannel.typeId, NotificationChannelType.EMAIL),
+          eq(notificationChannel.enabled, true),
+          sql`${notificationChannel.verifiedAt} IS NOT NULL`,
         ),
       )
       .where(

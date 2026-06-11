@@ -1,18 +1,105 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { and, eq, isNull, sql } from 'drizzle-orm';
-import type { NotificationPreferenceDto, QuietHoursDto } from '@subzero/shared';
+import type {
+  NotificationChannelDto,
+  NotificationPreferenceDto,
+  QuietHoursDto,
+} from '@subzero/shared';
 
 import { DRIZZLE, type DrizzleDB } from '../db/db.module';
 import { customer } from '../db/schema/customer';
+import { notificationChannel } from '../db/schema/notification-channel';
 import { notificationEventPreference } from '../db/schema/notification-event-preference';
 import type {
+  ChannelUpsert,
   NotificationsRepository,
   QuietHoursUpsert,
 } from './notifications.types';
 
+function toChannelDto(row: {
+  typeId: number;
+  address: string;
+  enabled: boolean;
+  verifiedAt: Date | null;
+}): NotificationChannelDto {
+  return {
+    typeId: row.typeId,
+    // Pending TG/MAX хранят '' — отдаём клиенту как null.
+    address: row.address === '' ? null : row.address,
+    enabled: row.enabled,
+    verified: row.verifiedAt !== null,
+  };
+}
+
 @Injectable()
 export class DrizzleNotificationsRepository implements NotificationsRepository {
   constructor(@Inject(DRIZZLE) private readonly db: DrizzleDB) {}
+
+  async listChannels(customerId: string): Promise<NotificationChannelDto[]> {
+    const rows = await this.db
+      .select({
+        typeId: notificationChannel.typeId,
+        address: notificationChannel.address,
+        enabled: notificationChannel.enabled,
+        verifiedAt: notificationChannel.verifiedAt,
+      })
+      .from(notificationChannel)
+      .where(eq(notificationChannel.customerId, customerId));
+    return rows.map(toChannelDto);
+  }
+
+  async getCustomerEmail(customerId: string): Promise<string | null> {
+    const [row] = await this.db
+      .select({ email: customer.email })
+      .from(customer)
+      .where(and(eq(customer.id, customerId), isNull(customer.deletedAt)))
+      .limit(1);
+    return row?.email ?? null;
+  }
+
+  async upsertChannel(customerId: string, args: ChannelUpsert): Promise<NotificationChannelDto> {
+    const [row] = await this.db
+      .insert(notificationChannel)
+      .values({
+        customerId,
+        typeId: args.typeId,
+        address: args.address,
+        enabled: args.enabled,
+        verifiedAt: args.verifiedAt,
+        connectNonce: args.connectNonce,
+        connectNonceExpiresAt: args.connectNonceExpiresAt,
+      })
+      .onConflictDoUpdate({
+        target: [notificationChannel.customerId, notificationChannel.typeId],
+        set: {
+          address: sql`excluded.address`,
+          enabled: sql`excluded.enabled`,
+          verifiedAt: sql`excluded.verified_at`,
+          connectNonce: sql`excluded.connect_nonce`,
+          connectNonceExpiresAt: sql`excluded.connect_nonce_expires_at`,
+          version: sql`${notificationChannel.version} + 1`,
+        },
+      })
+      .returning({
+        typeId: notificationChannel.typeId,
+        address: notificationChannel.address,
+        enabled: notificationChannel.enabled,
+        verifiedAt: notificationChannel.verifiedAt,
+      });
+    return toChannelDto(row);
+  }
+
+  async deleteChannel(customerId: string, typeId: number): Promise<boolean> {
+    const res = await this.db
+      .delete(notificationChannel)
+      .where(
+        and(
+          eq(notificationChannel.customerId, customerId),
+          eq(notificationChannel.typeId, typeId),
+        ),
+      );
+    return (res.rowCount ?? 0) > 0;
+  }
 
   async listPreferences(customerId: string): Promise<NotificationPreferenceDto[]> {
     const rows = await this.db

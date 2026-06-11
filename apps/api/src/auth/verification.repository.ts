@@ -1,10 +1,11 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { CustomerState, VerificationTokenType } from '@subzero/shared';
-import { and, desc, eq, isNotNull, isNull } from 'drizzle-orm';
+import { CustomerState, NotificationChannelType, VerificationTokenType } from '@subzero/shared';
+import { and, desc, eq, isNotNull, isNull, sql } from 'drizzle-orm';
 
 import { DRIZZLE, type DrizzleDB } from '../db/db.module';
 import { customer } from '../db/schema/customer';
 import { mailOutbox } from '../db/schema/mail-outbox';
+import { notificationChannel } from '../db/schema/notification-channel';
 import { refreshToken } from '../db/schema/refresh-token';
 import { verificationToken } from '../db/schema/verification-token';
 import type {
@@ -51,6 +52,20 @@ export class DrizzleVerificationRepository implements VerificationRepository {
         .update(verificationToken)
         .set({ usedAt: new Date() })
         .where(eq(verificationToken.id, args.tokenId));
+      // #45: заводим verified EMAIL-канал — email подтверждён этой ссылкой.
+      // Адрес берём подзапросом из customer (он же логин). ON CONFLICT —
+      // идемпотентность при повторном переходе по ссылке.
+      await tx
+        .insert(notificationChannel)
+        .values({
+          customerId: args.customerId,
+          typeId: NotificationChannelType.EMAIL,
+          address: sql`(SELECT ${customer.email} FROM ${customer} WHERE ${customer.id} = ${args.customerId})`,
+          verifiedAt: new Date(),
+        })
+        .onConflictDoNothing({
+          target: [notificationChannel.customerId, notificationChannel.typeId],
+        });
     });
   }
 

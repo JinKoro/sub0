@@ -1,6 +1,6 @@
 {
-  "id": "7f3e2a1b-9c8d-4e6f-b2a1-5d4c3b2a1098",
-  "prevId": "340b25d9-b852-485d-8f97-769bd520f9dd",
+  "id": "48c1163d-1da7-47b6-abcd-49edb993daf6",
+  "prevId": "7f3e2a1b-9c8d-4e6f-b2a1-5d4c3b2a1098",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -2168,6 +2168,142 @@
         "notification_event_preference_customer_id_customer_id_fk": {
           "name": "notification_event_preference_customer_id_customer_id_fk",
           "tableFrom": "notification_event_preference",
+          "tableTo": "customer",
+          "columnsFrom": [
+            "customer_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.notification_channel": {
+      "name": "notification_channel",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "customer_id": {
+          "name": "customer_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "type_id": {
+          "name": "type_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "address": {
+          "name": "address",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "verified_at": {
+          "name": "verified_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "enabled": {
+          "name": "enabled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "connect_nonce": {
+          "name": "connect_nonce",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "connect_nonce_expires_at": {
+          "name": "connect_nonce_expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        }
+      },
+      "indexes": {
+        "notification_channel_customer_type_key": {
+          "name": "notification_channel_customer_type_key",
+          "columns": [
+            {
+              "expression": "customer_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "type_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "notification_channel_active_idx": {
+          "name": "notification_channel_active_idx",
+          "columns": [
+            {
+              "expression": "customer_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "where": "\"notification_channel\".\"enabled\" = true AND \"notification_channel\".\"verified_at\" IS NOT NULL",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "notification_channel_customer_id_customer_id_fk": {
+          "name": "notification_channel_customer_id_customer_id_fk",
+          "tableFrom": "notification_channel",
           "tableTo": "customer",
           "columnsFrom": [
             "customer_id"

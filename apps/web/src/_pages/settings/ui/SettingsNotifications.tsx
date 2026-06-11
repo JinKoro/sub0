@@ -13,6 +13,8 @@ import { useLang } from '@/shared/contexts/lang-context';
 import { useIsMobile } from '@/shared/hooks/use-is-mobile';
 import { useProfile } from '@/shared/contexts/profile-context';
 import {
+  connectChannel,
+  disconnectChannel,
   getNotificationSettings,
   updatePreferences,
   updateQuietHours,
@@ -161,6 +163,35 @@ export function SettingsNotifications() {
     }
   }
 
+  async function connectCh(typeId: number): Promise<void> {
+    setSaving(true);
+    setError(null);
+    try {
+      const res = await connectChannel(typeId);
+      // TG/MAX: открываем deep-link с одноразовым nonce. Верификация
+      // (bot-webhook) — отдельная задача; до неё канал остаётся pending.
+      if (res.deepLink) window.open(res.deepLink, '_blank', 'noopener,noreferrer');
+      setSettings(await getNotificationSettings());
+    } catch (e) {
+      setError(t('Не удалось подключить', 'Failed to connect') + ': ' + (e as Error).message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function disconnectCh(typeId: number): Promise<void> {
+    setSaving(true);
+    setError(null);
+    try {
+      await disconnectChannel(typeId);
+      setSettings(await getNotificationSettings());
+    } catch (e) {
+      setError(t('Не удалось отключить', 'Failed to disconnect') + ': ' + (e as Error).message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
   if (loading) {
     return (
       <div style={{ padding: 24, color: SUB0.muted, fontSize: 14, fontFamily: mono }}>
@@ -177,102 +208,146 @@ export function SettingsNotifications() {
     );
   }
 
-  const channelDefs = [
+  const channelByType = new Map(settings.channels.map((c) => [c.typeId, c]));
+  const channelDefs: Array<{
+    type: number;
+    label: string;
+    ic: string;
+    sub: string;
+    // base — базовый EMAIL (нельзя отключить); linkable — connect через
+    // deep-link (Telegram); soon — бот/ссылки пока нет (MAX).
+    mode: 'base' | 'linkable' | 'soon';
+  }> = [
     {
       type: NotificationChannelType.EMAIL,
       label: 'Email',
       ic: '✉',
       sub: t('На электронную почту', 'By email'),
-      ready: true,
+      mode: 'base',
     },
     {
       type: NotificationChannelType.TELEGRAM,
       label: 'Telegram',
       ic: 'T',
       sub: t('В чат-бот @sub0_bot', 'Via @sub0_bot'),
-      ready: false,
+      mode: 'linkable',
     },
     {
       type: NotificationChannelType.MAX,
       label: 'MAX',
       ic: 'M',
       sub: '',
-      ready: false,
+      mode: 'soon',
     },
   ];
+
+  const btnStyle = (variant: 'primary' | 'ghost' | 'disabled') => ({
+    padding: '6px 12px',
+    borderRadius: 8,
+    border: `1px solid ${variant === 'primary' ? SUB0.ink : SUB0.line}`,
+    background: variant === 'primary' ? SUB0.ink : SUB0.panel,
+    color: variant === 'primary' ? SUB0.bg : variant === 'disabled' ? SUB0.muted : SUB0.ink,
+    fontFamily: 'inherit',
+    fontSize: 13,
+    fontWeight: 600,
+    cursor: variant === 'disabled' || saving ? 'not-allowed' : 'pointer',
+  });
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14, opacity: saving ? 0.75 : 1 }}>
       <SectionHead title={t('Каналы доставки', 'Delivery channels')} />
       <Card padding={0}>
-        {channelDefs.map((cd) => (
-          <div
-            key={cd.type}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: isMobile ? 12 : 16,
-              padding: isMobile ? '14px 16px' : '16px 24px',
-              borderBottom: `1px solid ${SUB0.line2}`,
-              flexWrap: 'wrap',
-              opacity: cd.ready ? 1 : 0.55,
-            }}
-          >
-            <span
+        {channelDefs.map((cd) => {
+          const ch = channelByType.get(cd.type);
+          const verified = ch?.verified ?? false;
+          const pending = !!ch && ch.enabled && !ch.verified;
+          // EMAIL виден как подключённый (verified seeded-каналом).
+          const active = verified;
+          const addressText =
+            cd.type === NotificationChannelType.EMAIL
+              ? (ch?.address ?? profile?.email ?? cd.sub)
+              : verified
+                ? (ch?.address ?? cd.sub)
+                : pending
+                  ? t('Ожидает подтверждения в боте', 'Awaiting confirmation in bot')
+                  : cd.sub;
+          return (
+            <div
+              key={cd.type}
               style={{
-                width: 38,
-                height: 38,
-                borderRadius: 10,
-                background: cd.ready ? SUB0.ink : SUB0.soft,
-                color: cd.ready ? SUB0.bg : SUB0.muted,
-                display: 'inline-flex',
+                display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
-                fontWeight: 700,
-                fontSize: 16,
-                fontFamily: mono,
+                gap: isMobile ? 12 : 16,
+                padding: isMobile ? '14px 16px' : '16px 24px',
+                borderBottom: `1px solid ${SUB0.line2}`,
+                flexWrap: 'wrap',
+                opacity: cd.mode === 'soon' ? 0.55 : 1,
               }}
             >
-              {cd.ic}
-            </span>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                <span style={{ fontSize: 14, fontWeight: 700 }}>{cd.label}</span>
-                {!cd.ready && (
-                  <Pill color={SUB0.muted} bg={SUB0.soft}>
-                    {t('скоро', 'soon')}
-                  </Pill>
-                )}
-                {cd.ready && profile && (
-                  <Pill color={SUB0.good} bg={`${SUB0.good}12`} dot>
-                    {t('Подключен', 'Connected')}
-                  </Pill>
-                )}
-              </div>
-              <div style={{ fontSize: 12, color: SUB0.muted, marginTop: 3 }}>
-                {cd.ready && profile ? profile.email : cd.sub}
-              </div>
-            </div>
-            {!cd.ready && (
-              <button
-                disabled
+              <span
                 style={{
-                  padding: '6px 12px',
-                  borderRadius: 8,
-                  border: `1px solid ${SUB0.line}`,
-                  background: SUB0.panel,
-                  color: SUB0.muted,
-                  fontFamily: 'inherit',
-                  fontSize: 13,
-                  fontWeight: 600,
-                  cursor: 'not-allowed',
+                  width: 38,
+                  height: 38,
+                  borderRadius: 10,
+                  background: active ? SUB0.ink : SUB0.soft,
+                  color: active ? SUB0.bg : SUB0.muted,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontWeight: 700,
+                  fontSize: 16,
+                  fontFamily: mono,
                 }}
               >
-                {t('Подключить', 'Connect')}
-              </button>
-            )}
-          </div>
-        ))}
+                {cd.ic}
+              </span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: 14, fontWeight: 700 }}>{cd.label}</span>
+                  {cd.mode === 'soon' && (
+                    <Pill color={SUB0.muted} bg={SUB0.soft}>
+                      {t('скоро', 'soon')}
+                    </Pill>
+                  )}
+                  {verified && (
+                    <Pill color={SUB0.good} bg={`${SUB0.good}12`} dot>
+                      {t('Подключен', 'Connected')}
+                    </Pill>
+                  )}
+                  {pending && (
+                    <Pill color={SUB0.muted} bg={SUB0.soft} dot>
+                      {t('Ожидает', 'Pending')}
+                    </Pill>
+                  )}
+                </div>
+                <div style={{ fontSize: 12, color: SUB0.muted, marginTop: 3 }}>{addressText}</div>
+              </div>
+              {cd.mode === 'soon' && (
+                <button disabled style={btnStyle('disabled')}>
+                  {t('Подключить', 'Connect')}
+                </button>
+              )}
+              {cd.mode === 'linkable' &&
+                (verified || pending ? (
+                  <button
+                    disabled={saving}
+                    onClick={() => disconnectCh(cd.type)}
+                    style={btnStyle('ghost')}
+                  >
+                    {t('Отключить', 'Disconnect')}
+                  </button>
+                ) : (
+                  <button
+                    disabled={saving}
+                    onClick={() => connectCh(cd.type)}
+                    style={btnStyle('primary')}
+                  >
+                    {t('Подключить', 'Connect')}
+                  </button>
+                ))}
+            </div>
+          );
+        })}
       </Card>
 
       {error && (

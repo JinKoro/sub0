@@ -16,6 +16,17 @@ const CID = 'c0000000-0000-0000-0000-000000000001';
 function makeRepo(): jest.Mocked<NotificationsRepository> {
   return {
     listPreferences: jest.fn().mockResolvedValue([]),
+    listChannels: jest.fn().mockResolvedValue([]),
+    getCustomerEmail: jest.fn().mockResolvedValue('user@sub0.local'),
+    upsertChannel: jest.fn().mockImplementation((_cid, args) =>
+      Promise.resolve({
+        typeId: args.typeId,
+        address: args.address === '' ? null : args.address,
+        enabled: args.enabled,
+        verified: args.verifiedAt !== null,
+      }),
+    ),
+    deleteChannel: jest.fn().mockResolvedValue(true),
     readQuietHours: jest.fn().mockResolvedValue({
       data: { enabled: false, from: null, to: null },
       version: 1,
@@ -25,9 +36,11 @@ function makeRepo(): jest.Mocked<NotificationsRepository> {
   };
 }
 
+const LINK_CONFIG = { telegramBotUsername: 'sub0_bot', maxBotUrlBase: null };
+
 function makeService() {
   const repo = makeRepo();
-  return { service: new NotificationsService(repo), repo };
+  return { service: new NotificationsService(repo, LINK_CONFIG), repo };
 }
 
 describe('NotificationsService.getSettings', () => {
@@ -212,5 +225,102 @@ describe('NotificationsService.updateQuietHours', () => {
       to: '09:00',
       version: 1,
     });
+  });
+});
+
+describe('NotificationsService.getSettings channels', () => {
+  it('возвращает каналы из репозитория', async () => {
+    const { service, repo } = makeService();
+    repo.listChannels.mockResolvedValue([
+      { typeId: NotificationChannelType.EMAIL, address: 'u@sub0.local', enabled: true, verified: true },
+    ]);
+    const settings = await service.getSettings(CID);
+    expect(settings.channels).toEqual([
+      { typeId: NotificationChannelType.EMAIL, address: 'u@sub0.local', enabled: true, verified: true },
+    ]);
+  });
+});
+
+describe('NotificationsService.connectChannel', () => {
+  it('400 на неизвестный тип канала', async () => {
+    const { service } = makeService();
+    await expect(service.connectChannel(CID, 999)).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('EMAIL — идемпотентный verified-канал на customer.email, без deep-link', async () => {
+    const { service, repo } = makeService();
+    const res = await service.connectChannel(CID, NotificationChannelType.EMAIL);
+    expect(repo.upsertChannel).toHaveBeenCalledWith(
+      CID,
+      expect.objectContaining({
+        typeId: NotificationChannelType.EMAIL,
+        address: 'user@sub0.local',
+        enabled: true,
+      }),
+    );
+    expect(repo.upsertChannel.mock.calls[0][1].verifiedAt).toBeInstanceOf(Date);
+    expect(res.channel.verified).toBe(true);
+    expect(res.deepLink).toBeUndefined();
+  });
+
+  it('404 для EMAIL, если customer не найден', async () => {
+    const { service, repo } = makeService();
+    repo.getCustomerEmail.mockResolvedValue(null);
+    await expect(
+      service.connectChannel(CID, NotificationChannelType.EMAIL),
+    ).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('TELEGRAM — НЕ verified канал, nonce + deep-link с t.me', async () => {
+    const { service, repo } = makeService();
+    const res = await service.connectChannel(CID, NotificationChannelType.TELEGRAM);
+    const args = repo.upsertChannel.mock.calls[0][1];
+    expect(args.typeId).toBe(NotificationChannelType.TELEGRAM);
+    expect(args.address).toBe('');
+    expect(args.verifiedAt).toBeNull();
+    expect(args.connectNonce).toEqual(expect.any(String));
+    expect(args.connectNonceExpiresAt).toBeInstanceOf(Date);
+    expect(res.channel.verified).toBe(false);
+    expect(res.deepLink).toContain('https://t.me/sub0_bot?start=');
+    expect(res.deepLink).toContain(args.connectNonce);
+    expect(res.expiresAt).toEqual(expect.any(String));
+  });
+
+  it('MAX — без сконфигуренного base deep-link не отдаётся, канал создаётся', async () => {
+    const { service, repo } = makeService();
+    const res = await service.connectChannel(CID, NotificationChannelType.MAX);
+    expect(repo.upsertChannel).toHaveBeenCalled();
+    expect(res.deepLink).toBeUndefined();
+    expect(res.expiresAt).toEqual(expect.any(String));
+  });
+
+  it('MAX — с base из конфига строит deep-link', async () => {
+    const repo = makeRepo();
+    const service = new NotificationsService(repo, {
+      telegramBotUsername: 'sub0_bot',
+      maxBotUrlBase: 'https://max.example/bot',
+    });
+    const res = await service.connectChannel(CID, NotificationChannelType.MAX);
+    expect(res.deepLink).toContain('https://max.example/bot?start=');
+  });
+});
+
+describe('NotificationsService.disconnectChannel', () => {
+  it('400 на неизвестный тип', async () => {
+    const { service } = makeService();
+    await expect(service.disconnectChannel(CID, 999)).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('400 — EMAIL отключить нельзя', async () => {
+    const { service } = makeService();
+    await expect(
+      service.disconnectChannel(CID, NotificationChannelType.EMAIL),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('TELEGRAM — удаляет канал', async () => {
+    const { service, repo } = makeService();
+    await service.disconnectChannel(CID, NotificationChannelType.TELEGRAM);
+    expect(repo.deleteChannel).toHaveBeenCalledWith(CID, NotificationChannelType.TELEGRAM);
   });
 });
