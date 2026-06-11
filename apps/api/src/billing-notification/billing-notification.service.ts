@@ -1,3 +1,5 @@
+import { NotificationChannelType } from '@subzero/shared';
+
 import type { BillingNotificationRepository } from './billing-notification.types';
 
 export interface BillingNotificationServiceDeps {
@@ -14,11 +16,17 @@ export class BillingNotificationService {
     this.now = deps.now;
   }
 
-  /** Один прогон: находит candidates на сегодня и идемпотентно ставит в outbox. */
+  /** Один прогон: находит candidates на сегодня и идемпотентно ставит в
+   *  per-channel outbox (mail_outbox / telegram_outbox). */
   async runDailyTick(): Promise<{ enqueued: number; candidates: number }> {
     const today = startOfUtcDay(this.now());
     const candidates = await this.repo.findUpcomingChargeCandidates(today);
-    const enqueued = await this.repo.enqueueIdempotent(candidates);
+    const email = candidates.filter((c) => c.channelTypeId === NotificationChannelType.EMAIL);
+    const telegram = candidates.filter(
+      (c) => c.channelTypeId === NotificationChannelType.TELEGRAM,
+    );
+    const enqueued =
+      (await this.repo.enqueueEmail(email)) + (await this.repo.enqueueTelegram(telegram));
     return { enqueued, candidates: candidates.length };
   }
 }

@@ -1,8 +1,13 @@
-/** Один candidate uniqueness-ключ для outbox-вставки. Соответствует
- *  идемпотентности cron'а: повторный запуск не создаёт дубль. */
+/** Один candidate для outbox-вставки. Соответствует идемпотентности cron'а:
+ *  повторный запуск не создаёт дубль (unique dedup_key). Кандидат привязан
+ *  к конкретному verified-каналу — фан-аут на несколько каналов даёт
+ *  несколько строк с одним dedupKey, но разными `channelTypeId`. */
 export interface UpcomingChargeOutboxRow {
   customerId: string;
-  toEmail: string;
+  /** Тип канала доставки (NotificationChannelType): EMAIL / TELEGRAM. */
+  channelTypeId: number;
+  /** Адрес канала: email для EMAIL, chat_id для TELEGRAM. */
+  address: string;
   localeId: number;
   subscriptionSku: string;
   serviceName: string;
@@ -16,10 +21,14 @@ export interface UpcomingChargeOutboxRow {
 }
 
 export interface BillingNotificationRepository {
-  /** Возвращает {row, key} для всех ACTIVE-кастомеров + их ACTIVE-подписок,
-   *  у которых daysUntil(nextBillingDate, today) ∈ notification_lead_days. */
+  /** Все ACTIVE-кастомеры + их ACTIVE-подписки, у которых
+   *  daysUntil(nextBillingDate, today) ∈ lead_days, по каждому verified +
+   *  enabled каналу из preference (EMAIL / TELEGRAM; MAX пока не доставляем). */
   findUpcomingChargeCandidates(today: Date): Promise<UpcomingChargeOutboxRow[]>;
 
-  /** INSERT ... ON CONFLICT (dedup_key) DO NOTHING. Возвращает кол-во вставленных. */
-  enqueueIdempotent(rows: UpcomingChargeOutboxRow[]): Promise<number>;
+  /** INSERT в mail_outbox ... ON CONFLICT (dedup_key) DO NOTHING. */
+  enqueueEmail(rows: UpcomingChargeOutboxRow[]): Promise<number>;
+
+  /** INSERT в telegram_outbox ... ON CONFLICT (dedup_key) DO NOTHING. */
+  enqueueTelegram(rows: UpcomingChargeOutboxRow[]): Promise<number>;
 }

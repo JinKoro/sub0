@@ -49,7 +49,7 @@ export function testPool(): Pool {
 
 export async function truncateAll(): Promise<void> {
   await testPool().query(
-    'TRUNCATE customer, project, verification_token, refresh_token, mail_outbox RESTART IDENTITY CASCADE',
+    'TRUNCATE customer, project, verification_token, refresh_token, mail_outbox, telegram_outbox RESTART IDENTITY CASCADE',
   );
 }
 

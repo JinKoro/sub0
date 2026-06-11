@@ -14,3 +14,4 @@ export * from './exchange-rate';
 export * from './payment';
 export * from './notification-event-preference';
 export * from './notification-channel';
+export * from './telegram-outbox';

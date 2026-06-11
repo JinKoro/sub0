@@ -15,6 +15,7 @@ import { notificationEventPreference } from '../db/schema/notification-event-pre
 import { project } from '../db/schema/project';
 import { service } from '../db/schema/service';
 import { subscription } from '../db/schema/subscription';
+import { telegramOutbox } from '../db/schema/telegram-outbox';
 import { CURRENCY_LABEL } from './currency-label';
 import type {
   BillingNotificationRepository,
@@ -30,10 +31,10 @@ export class DrizzleBillingNotificationRepository implements BillingNotification
     //  - LEFT JOIN preferences для UPCOMING_CHARGE; COALESCE с дефолтами,
     //    чтобы customer без явной записи всё равно получал письма
     //    (дефолт: enabled=true, channels=[EMAIL], daysBefore=[3]).
-    //  - EMAIL обязательно в channel_type_ids: TG/MAX пока пропускаем.
-    //  - INNER JOIN на активный EMAIL-канал (enabled AND verified_at NOT
-    //    NULL) — единственный «активный» канал в MVP. Адрес письма берём
-    //    из канала. Backfill (#45) завёл EMAIL-канал всем active-customer.
+    //  - INNER JOIN на каждый активный канал (enabled AND verified_at NOT
+    //    NULL), который входит в channel_type_ids preference и доставляем
+    //    (EMAIL / TELEGRAM; MAX пока пропускаем). Фан-аут: у кого включены
+    //    оба канала — две строки. Адрес берём из канала (email / chat_id).
     //  - quiet_hours: если now() в локальной TZ юзера попадает в окно
     //    [from..to] — пропускаем (next tick подберёт).
     const todayIso = today.toISOString().slice(0, 10);
@@ -56,7 +57,8 @@ export class DrizzleBillingNotificationRepository implements BillingNotification
     const rows = await this.db
       .select({
         customerId: customer.id,
-        toEmail: notificationChannel.address,
+        channelTypeId: notificationChannel.typeId,
+        address: notificationChannel.address,
         localeId: customer.localeId,
         customerName: customer.name,
         subscriptionSku: subscription.sku,
@@ -90,9 +92,12 @@ export class DrizzleBillingNotificationRepository implements BillingNotification
         notificationChannel,
         and(
           eq(notificationChannel.customerId, customer.id),
-          eq(notificationChannel.typeId, NotificationChannelType.EMAIL),
           eq(notificationChannel.enabled, true),
           sql`${notificationChannel.verifiedAt} IS NOT NULL`,
+          // канал входит в выбор пользователя (дефолт — [EMAIL]) ...
+          sql`${notificationChannel.typeId} = ANY(COALESCE(${notificationEventPreference.channelTypeIds}, ARRAY[${NotificationChannelType.EMAIL}]::int[]))`,
+          // ... и мы умеем в него доставлять (MAX пока нет).
+          sql`${notificationChannel.typeId} IN (${NotificationChannelType.EMAIL}, ${NotificationChannelType.TELEGRAM})`,
         ),
       )
       .where(
@@ -100,7 +105,6 @@ export class DrizzleBillingNotificationRepository implements BillingNotification
           eq(customer.stateId, CustomerState.ACTIVE),
           isNull(customer.deletedAt),
           sql`COALESCE(${notificationEventPreference.enabled}, true) = true`,
-          sql`${NotificationChannelType.EMAIL} = ANY(COALESCE(${notificationEventPreference.channelTypeIds}, ARRAY[${NotificationChannelType.EMAIL}]::int[]))`,
           sql`(date(${subscription.nextBillingDate}) - date(${todayIso})) = ANY(COALESCE(${notificationEventPreference.daysBefore}, ARRAY[3]::int[]))`,
           sql`NOT ${quietHoursBlocked}`,
         ),
@@ -110,7 +114,8 @@ export class DrizzleBillingNotificationRepository implements BillingNotification
       const billingDate = new Date(r.nextBillingDate).toISOString().slice(0, 10);
       return {
         customerId: r.customerId,
-        toEmail: r.toEmail,
+        channelTypeId: r.channelTypeId,
+        address: r.address,
         localeId: r.localeId,
         customerName: r.customerName,
         subscriptionSku: r.subscriptionSku,
@@ -125,23 +130,14 @@ export class DrizzleBillingNotificationRepository implements BillingNotification
     });
   }
 
-  async enqueueIdempotent(rows: UpcomingChargeOutboxRow[]): Promise<number> {
+  async enqueueEmail(rows: UpcomingChargeOutboxRow[]): Promise<number> {
     if (rows.length === 0) return 0;
     const values = rows.map((r) => ({
       customerId: r.customerId,
       template: 'upcoming-charge',
       localeId: r.localeId,
-      toEmail: r.toEmail,
-      context: {
-        subscriptionPath: `/account/subscriptions/${r.subscriptionSku}`,
-        serviceName: r.serviceName,
-        amount: r.amount,
-        currency: r.currency,
-        billingDate: r.billingDate,
-        daysBefore: r.daysBefore,
-        projectName: r.projectName,
-        name: r.customerName ?? undefined,
-      },
+      toEmail: r.address,
+      context: this.context(r),
       dedupKey: r.dedupKey,
     }));
     const res = await this.db
@@ -149,5 +145,36 @@ export class DrizzleBillingNotificationRepository implements BillingNotification
       .values(values)
       .onConflictDoNothing({ target: mailOutbox.dedupKey });
     return res.rowCount ?? values.length;
+  }
+
+  async enqueueTelegram(rows: UpcomingChargeOutboxRow[]): Promise<number> {
+    if (rows.length === 0) return 0;
+    const values = rows.map((r) => ({
+      customerId: r.customerId,
+      template: 'upcoming-charge',
+      localeId: r.localeId,
+      chatId: r.address,
+      context: this.context(r),
+      dedupKey: r.dedupKey,
+    }));
+    const res = await this.db
+      .insert(telegramOutbox)
+      .values(values)
+      .onConflictDoNothing({ target: telegramOutbox.dedupKey });
+    return res.rowCount ?? values.length;
+  }
+
+  /** Общий jsonb-контекст для обоих каналов (рендер берёт нужные поля). */
+  private context(r: UpcomingChargeOutboxRow) {
+    return {
+      subscriptionPath: `/account/subscriptions/${r.subscriptionSku}`,
+      serviceName: r.serviceName,
+      amount: r.amount,
+      currency: r.currency,
+      billingDate: r.billingDate,
+      daysBefore: r.daysBefore,
+      projectName: r.projectName,
+      name: r.customerName ?? undefined,
+    };
   }
 }
