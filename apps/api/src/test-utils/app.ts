@@ -35,6 +35,9 @@ export async function createTestApp(): Promise<TestApp> {
     JWT_REFRESH_TTL_SEC: '7776000',
     COOKIE_SECURE: 'false',
     APP_BASE_URL: 'http://localhost:3000',
+    // Telegram webhook (#110): фикс. секрет для int-теста. Bot-токен не
+    // задаём — TelegramClient уйдёт в no-op, реальных HTTP-вызовов нет.
+    TELEGRAM_WEBHOOK_SECRET: 'test-webhook-secret',
   });
 
   // Lazy import so env is set before ConfigModule validates it.

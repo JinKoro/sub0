@@ -39,6 +39,13 @@ export const envSchema = z
     // задача; MAX-base опционален (без него deep-link для MAX не отдаём).
     TELEGRAM_BOT_USERNAME: z.string().default('sub0_bot'),
     MAX_BOT_URL_BASE: z.string().url().optional(),
+
+    // Telegram bot webhook (#110): bot-токен для Bot API (sendMessage при
+    // verify) и secret для проверки `X-Telegram-Bot-Api-Secret-Token`.
+    // Оба optional: в dev/test бота нет — без токена client no-op, без
+    // secret webhook отвергает все запросы (fail-closed).
+    TELEGRAM_BOT_TOKEN: z.string().optional(),
+    TELEGRAM_WEBHOOK_SECRET: z.string().optional(),
   })
   // keep unrelated process.env entries (SMTP_*, PATH, …) so ConfigService still sees them
   .passthrough();

@@ -172,6 +172,12 @@ forbidUnknownValues, transform })` + DTO с `class-validator`.
   через deep-link с одноразовым `nonce`. В тексте сообщений — название
   подписки + сумма; **не** включать `last4` карты, payment-метаданные,
   email юзера.
+  - Webhook бота: `POST /api/v1/integrations/telegram/webhook` —
+    публичный (без JwtAuthGuard), гейтится заголовком
+    `X-Telegram-Bot-Api-Secret-Token` (timing-safe сверка с
+    `TELEGRAM_WEBHOOK_SECRET`, fail-closed: без секрета отвергаем всё).
+    Verify `/start <nonce>` идемпотентен; истёкший/неизвестный nonce —
+    нейтральный ответ, 200 (чтобы Telegram не ретраил бизнес-ветки).
 - **Web Push (v1.1):** VAPID-ключи в env. Subscriptions хранятся
   per-device, при logout удаляются.
 
