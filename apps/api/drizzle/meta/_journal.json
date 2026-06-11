@@ -1,195 +1,202 @@
 {
-  "version": "7",
-  "dialect": "postgresql",
-  "entries": [
-    {
-      "idx": 0,
-      "version": "7",
-      "when": 1777899865318,
-      "tag": "0000_create_customer",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1777899996909,
-      "tag": "0001_create_oauth_account",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1777900063090,
-      "tag": "0002_create_refresh_token",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1777900076489,
-      "tag": "0003_create_project",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1777900096401,
-      "tag": "0004_create_category",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1777900114551,
-      "tag": "0005_create_category_custom",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "7",
-      "when": 1777900129087,
-      "tag": "0006_create_service",
-      "breakpoints": true
-    },
-    {
-      "idx": 7,
-      "version": "7",
-      "when": 1777900198289,
-      "tag": "0007_create_subscription",
-      "breakpoints": true
-    },
-    {
-      "idx": 8,
-      "version": "7",
-      "when": 1777900215055,
-      "tag": "0008_create_billing_history",
-      "breakpoints": true
-    },
-    {
-      "idx": 9,
-      "version": "7",
-      "when": 1777903224638,
-      "tag": "0009_seed_categories",
-      "breakpoints": true
-    },
-    {
-      "idx": 10,
-      "version": "7",
-      "when": 1778171716100,
-      "tag": "0010_seed_services",
-      "breakpoints": true
-    },
-    {
-      "idx": 11,
-      "version": "7",
-      "when": 1779000000000,
-      "tag": "0011_drop_oauth_account",
-      "breakpoints": true
-    },
-    {
-      "idx": 12,
-      "version": "7",
-      "when": 1778975745335,
-      "tag": "0012_add_customer_marketing_consent_at",
-      "breakpoints": true
-    },
-    {
-      "idx": 13,
-      "version": "7",
-      "when": 1779011794416,
-      "tag": "0013_create_verification_token",
-      "breakpoints": true
-    },
-    {
-      "idx": 14,
-      "version": "7",
-      "when": 1779012006396,
-      "tag": "0014_create_mail_outbox",
-      "breakpoints": true
-    },
-    {
-      "idx": 15,
-      "version": "7",
-      "when": 1779196518827,
-      "tag": "0015_create_login_attempt",
-      "breakpoints": true
-    },
-    {
-      "idx": 16,
-      "version": "7",
-      "when": 1779304770596,
-      "tag": "0016_shrink_customer_name",
-      "breakpoints": true
-    },
-    {
-      "idx": 17,
-      "version": "7",
-      "when": 1779452252758,
-      "tag": "0017_create_subscription_promo",
-      "breakpoints": true
-    },
-    {
-      "idx": 18,
-      "version": "7",
-      "when": 1779452252759,
-      "tag": "0018_add_subscription_trial_ends_at",
-      "breakpoints": true
-    },
-    {
-      "idx": 19,
-      "version": "7",
-      "when": 1779452574482,
-      "tag": "0019_backfill_subscription_promo",
-      "breakpoints": true
-    },
-    {
-      "idx": 20,
-      "version": "7",
-      "when": 1779711993052,
-      "tag": "0020_add_subscription_color",
-      "breakpoints": true
-    },
-    {
-      "idx": 21,
-      "version": "7",
-      "when": 1779731858642,
-      "tag": "0021_create_exchange_rate",
-      "breakpoints": true
-    },
-    {
-      "idx": 22,
-      "version": "7",
-      "when": 1779819575116,
-      "tag": "0022_add_notification_prefs_and_outbox_dedup",
-      "breakpoints": true
-    },
-    {
-      "idx": 23,
-      "version": "7",
-      "when": 1779902898004,
-      "tag": "0023_create_payment",
-      "breakpoints": true
-    },
-    {
-      "idx": 24,
-      "version": "7",
-      "when": 1779918820157,
-      "tag": "0024_create_notification_event_preference",
-      "breakpoints": true
-    },
-    {
-      "idx": 25,
-      "version": "7",
-      "when": 1779918820158,
-      "tag": "0025_add_customer_quiet_hours",
-      "breakpoints": true
-    },
-    {
-      "idx": 26,
-      "version": "7",
-      "when": 1780076053481,
-      "tag": "0026_create_notification_channel",
-      "breakpoints": true
-    }
-  ]
+	"version": "7",
+	"dialect": "postgresql",
+	"entries": [
+		{
+			"idx": 0,
+			"version": "7",
+			"when": 1777899865318,
+			"tag": "0000_create_customer",
+			"breakpoints": true
+		},
+		{
+			"idx": 1,
+			"version": "7",
+			"when": 1777899996909,
+			"tag": "0001_create_oauth_account",
+			"breakpoints": true
+		},
+		{
+			"idx": 2,
+			"version": "7",
+			"when": 1777900063090,
+			"tag": "0002_create_refresh_token",
+			"breakpoints": true
+		},
+		{
+			"idx": 3,
+			"version": "7",
+			"when": 1777900076489,
+			"tag": "0003_create_project",
+			"breakpoints": true
+		},
+		{
+			"idx": 4,
+			"version": "7",
+			"when": 1777900096401,
+			"tag": "0004_create_category",
+			"breakpoints": true
+		},
+		{
+			"idx": 5,
+			"version": "7",
+			"when": 1777900114551,
+			"tag": "0005_create_category_custom",
+			"breakpoints": true
+		},
+		{
+			"idx": 6,
+			"version": "7",
+			"when": 1777900129087,
+			"tag": "0006_create_service",
+			"breakpoints": true
+		},
+		{
+			"idx": 7,
+			"version": "7",
+			"when": 1777900198289,
+			"tag": "0007_create_subscription",
+			"breakpoints": true
+		},
+		{
+			"idx": 8,
+			"version": "7",
+			"when": 1777900215055,
+			"tag": "0008_create_billing_history",
+			"breakpoints": true
+		},
+		{
+			"idx": 9,
+			"version": "7",
+			"when": 1777903224638,
+			"tag": "0009_seed_categories",
+			"breakpoints": true
+		},
+		{
+			"idx": 10,
+			"version": "7",
+			"when": 1778171716100,
+			"tag": "0010_seed_services",
+			"breakpoints": true
+		},
+		{
+			"idx": 11,
+			"version": "7",
+			"when": 1779000000000,
+			"tag": "0011_drop_oauth_account",
+			"breakpoints": true
+		},
+		{
+			"idx": 12,
+			"version": "7",
+			"when": 1778975745335,
+			"tag": "0012_add_customer_marketing_consent_at",
+			"breakpoints": true
+		},
+		{
+			"idx": 13,
+			"version": "7",
+			"when": 1779011794416,
+			"tag": "0013_create_verification_token",
+			"breakpoints": true
+		},
+		{
+			"idx": 14,
+			"version": "7",
+			"when": 1779012006396,
+			"tag": "0014_create_mail_outbox",
+			"breakpoints": true
+		},
+		{
+			"idx": 15,
+			"version": "7",
+			"when": 1779196518827,
+			"tag": "0015_create_login_attempt",
+			"breakpoints": true
+		},
+		{
+			"idx": 16,
+			"version": "7",
+			"when": 1779304770596,
+			"tag": "0016_shrink_customer_name",
+			"breakpoints": true
+		},
+		{
+			"idx": 17,
+			"version": "7",
+			"when": 1779452252758,
+			"tag": "0017_create_subscription_promo",
+			"breakpoints": true
+		},
+		{
+			"idx": 18,
+			"version": "7",
+			"when": 1779452252759,
+			"tag": "0018_add_subscription_trial_ends_at",
+			"breakpoints": true
+		},
+		{
+			"idx": 19,
+			"version": "7",
+			"when": 1779452574482,
+			"tag": "0019_backfill_subscription_promo",
+			"breakpoints": true
+		},
+		{
+			"idx": 20,
+			"version": "7",
+			"when": 1779711993052,
+			"tag": "0020_add_subscription_color",
+			"breakpoints": true
+		},
+		{
+			"idx": 21,
+			"version": "7",
+			"when": 1779731858642,
+			"tag": "0021_create_exchange_rate",
+			"breakpoints": true
+		},
+		{
+			"idx": 22,
+			"version": "7",
+			"when": 1779819575116,
+			"tag": "0022_add_notification_prefs_and_outbox_dedup",
+			"breakpoints": true
+		},
+		{
+			"idx": 23,
+			"version": "7",
+			"when": 1779902898004,
+			"tag": "0023_create_payment",
+			"breakpoints": true
+		},
+		{
+			"idx": 24,
+			"version": "7",
+			"when": 1779918820157,
+			"tag": "0024_create_notification_event_preference",
+			"breakpoints": true
+		},
+		{
+			"idx": 25,
+			"version": "7",
+			"when": 1779918820158,
+			"tag": "0025_add_customer_quiet_hours",
+			"breakpoints": true
+		},
+		{
+			"idx": 26,
+			"version": "7",
+			"when": 1780076053481,
+			"tag": "0026_create_notification_channel",
+			"breakpoints": true
+		},
+		{
+			"idx": 27,
+			"version": "7",
+			"when": 1781180364911,
+			"tag": "0027_create_telegram_outbox",
+			"breakpoints": true
+		}
+	]
 }

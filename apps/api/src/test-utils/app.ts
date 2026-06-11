@@ -14,9 +14,15 @@ export interface SentMail {
   text: string;
 }
 
+export interface SentTelegram {
+  chatId: string;
+  text: string;
+}
+
 export interface TestApp {
   app: INestApplication;
   sent: SentMail[];
+  sentTelegram: SentTelegram[];
 }
 
 /** Boots the real AppModule against sub0_test with a fake SMTP transport. */
@@ -44,6 +50,8 @@ export async function createTestApp(): Promise<TestApp> {
   const { AppModule } = await import('../app.module');
   const { MAIL_TRANSPORT } = await import('../mail/mail.service');
   const { MailScheduler } = await import('../mail/mail.scheduler');
+  const { TelegramScheduler } = await import('../telegram/telegram.scheduler');
+  const { TELEGRAM_SENDER } = await import('../telegram/telegram.tokens');
 
   const sent: SentMail[] = [];
   const fakeTransport = {
@@ -53,11 +61,24 @@ export async function createTestApp(): Promise<TestApp> {
     },
   } as unknown as Transporter;
 
+  // Fake Telegram sender — захватывает отправленные сообщения вместо Bot API.
+  const sentTelegram: SentTelegram[] = [];
+  const fakeTelegramSender = {
+    sendMessage: (chatId: string, text: string) => {
+      sentTelegram.push({ chatId, text });
+      return Promise.resolve();
+    },
+  };
+
   const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
     .overrideProvider(MAIL_TRANSPORT)
     .useValue(fakeTransport)
-    // Disable the @Interval/@Cron scheduler — tests drive the worker manually.
+    .overrideProvider(TELEGRAM_SENDER)
+    .useValue(fakeTelegramSender)
+    // Disable the @Interval/@Cron schedulers — tests drive the workers manually.
     .overrideProvider(MailScheduler)
+    .useValue({ tick: () => Promise.resolve(), retention: () => Promise.resolve() })
+    .overrideProvider(TelegramScheduler)
     .useValue({ tick: () => Promise.resolve(), retention: () => Promise.resolve() })
     .compile();
 
@@ -74,5 +95,5 @@ export async function createTestApp(): Promise<TestApp> {
     }),
   );
   await app.init();
-  return { app, sent };
+  return { app, sent, sentTelegram };
 }

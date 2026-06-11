@@ -17,6 +17,10 @@ export class TelegramClient implements TelegramSender {
 
   constructor(private readonly botToken: string | undefined) {}
 
+  /** Бросает на network-ошибке и не-2xx ответе Bot API — это сигнал
+   *  outbox-воркеру пометить строку failed и ретrailить. Вызовы, где
+   *  доставка не критична (подтверждение verify в #110), оборачивают
+   *  вызов в try/catch сами. */
   async sendMessage(chatId: string, text: string): Promise<void> {
     if (!this.botToken) {
       this.logger.warn('TELEGRAM_BOT_TOKEN not set — skipping sendMessage');
@@ -28,9 +32,7 @@ export class TelegramClient implements TelegramSender {
       body: JSON.stringify({ chat_id: chatId, text }),
     });
     if (!res.ok) {
-      // Best-effort: подтверждающее сообщение не критично для verify.
-      // Доставка нотификаций (#111) добавит retry/outbox.
-      this.logger.error(`sendMessage failed: ${res.status} ${await res.text()}`);
+      throw new Error(`telegram sendMessage failed: ${res.status} ${await res.text()}`);
     }
   }
 }

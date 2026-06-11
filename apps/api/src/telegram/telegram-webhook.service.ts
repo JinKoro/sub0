@@ -38,6 +38,12 @@ export class TelegramWebhookService {
     const message = result
       ? connectedMessage(result.localeId)
       : expiredMessage();
-    await this.sender.sendMessage(String(chatId), message);
+    // Подтверждение best-effort: канал уже верифицирован в БД, провал
+    // отправки не должен ронять webhook (Telegram иначе будет ретраить).
+    try {
+      await this.sender.sendMessage(String(chatId), message);
+    } catch {
+      /* проглатываем — verify уже зафиксирован */
+    }
   }
 }

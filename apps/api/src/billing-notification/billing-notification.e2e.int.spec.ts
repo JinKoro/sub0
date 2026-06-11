@@ -9,8 +9,9 @@ import request from 'supertest';
 
 import { BillingNotificationService } from './billing-notification.service';
 import { closeTestPool, createTestDb, dropTestDb, testPool, truncateAll } from '../test-utils/db';
-import { createTestApp } from '../test-utils/app';
+import { createTestApp, type SentTelegram } from '../test-utils/app';
 import { seedCustomer } from '../test-utils/seed';
+import { TelegramOutboxWorker } from '../telegram/telegram-outbox.worker';
 
 const PFX = '/api/v1';
 
@@ -25,6 +26,8 @@ describe('Billing notifications e2e', () => {
   let app: INestApplication;
   let http: ReturnType<typeof request>;
   let svc: BillingNotificationService;
+  let tgWorker: TelegramOutboxWorker;
+  let sentTelegram: SentTelegram[];
 
   beforeAll(async () => {
     await createTestDb();
@@ -32,6 +35,8 @@ describe('Billing notifications e2e', () => {
     app = t.app;
     http = request(app.getHttpServer());
     svc = app.get(BillingNotificationService);
+    tgWorker = app.get(TelegramOutboxWorker);
+    sentTelegram = t.sentTelegram;
   });
 
   afterAll(async () => {
@@ -42,6 +47,7 @@ describe('Billing notifications e2e', () => {
 
   beforeEach(async () => {
     await truncateAll();
+    sentTelegram.length = 0;
   });
 
   async function createSubInDays({
@@ -90,6 +96,43 @@ describe('Billing notifications e2e', () => {
     return rows[0].n;
   }
 
+  async function tgOutboxCountFor(chatId: string): Promise<number> {
+    const { rows } = await testPool().query<{ n: number }>(
+      `SELECT COUNT(*)::int AS n FROM telegram_outbox
+       WHERE chat_id = $1 AND template = 'upcoming-charge'`,
+      [chatId],
+    );
+    return rows[0].n;
+  }
+
+  async function customerIdByEmail(email: string): Promise<string> {
+    const { rows } = await testPool().query<{ id: string }>(
+      'SELECT id FROM customer WHERE email = $1',
+      [email],
+    );
+    return rows[0].id;
+  }
+
+  /** Заводит verified TG-канал напрямую (как делает webhook #110 после
+   *  /start), чтобы выборка кандидатов его подхватила. */
+  async function verifyTelegram(customerId: string, chatId: string): Promise<void> {
+    await testPool().query(
+      `INSERT INTO notification_channel (customer_id, type_id, address, verified_at)
+       VALUES ($1, $2, $3, now())
+       ON CONFLICT (customer_id, type_id)
+       DO UPDATE SET address = excluded.address, verified_at = now()`,
+      [customerId, NotificationChannelType.TELEGRAM, chatId],
+    );
+  }
+
+  async function setUpcomingChannels(cookies: string, channelTypeIds: number[]): Promise<void> {
+    const r = await http
+      .post(`${PFX}/customers/me/notifications/preferences`)
+      .set('Cookie', cookies)
+      .send({ items: [{ eventId: NotificationEvent.UPCOMING_CHARGE, channelTypeIds }] });
+    expect(r.status).toBe(200);
+  }
+
   it('cron шлёт письмо по дефолту (3 дня до списания) и не дублирует при повторе', async () => {
     // Без явных preferences customer должен получать дефолтное письмо
     // за 3 дня — это покрывает кейс «юзер ничего не настраивал».
@@ -102,6 +145,57 @@ describe('Billing notifications e2e', () => {
     // Идемпотентность: повторный запуск → ON CONFLICT DO NOTHING.
     await svc.runDailyTick();
     expect(await outboxCountFor('a@e.com')).toBe(1);
+  });
+
+  it('TELEGRAM в channel_type_ids + verified TG → строка в telegram_outbox, доставка воркером', async () => {
+    const { cookies } = await createSubInDays({ email: 'tg1@e.com', daysAhead: 3 });
+    const id = await customerIdByEmail('tg1@e.com');
+    await verifyTelegram(id, '555001');
+    // Только TG (без EMAIL) — проверяем, что фан-аут идёт по выбору юзера.
+    await setUpcomingChannels(cookies, [NotificationChannelType.TELEGRAM]);
+
+    const res = await svc.runDailyTick();
+    expect(res.candidates).toBe(1);
+    expect(await tgOutboxCountFor('555001')).toBe(1);
+    expect(await outboxCountFor('tg1@e.com')).toBe(0);
+
+    // Воркер доставляет сообщение через (fake) Bot API.
+    await tgWorker.tick();
+    expect(sentTelegram).toHaveLength(1);
+    expect(sentTelegram[0]).toMatchObject({ chatId: '555001' });
+    expect(sentTelegram[0].text).toContain('Sub tg1@e.com');
+
+    // Идемпотентность: повторный tick планировщика не плодит дубль.
+    await svc.runDailyTick();
+    expect(await tgOutboxCountFor('555001')).toBe(1);
+  });
+
+  it('оба канала (EMAIL+TELEGRAM) → фан-аут в оба outbox', async () => {
+    const { cookies } = await createSubInDays({ email: 'tg2@e.com', daysAhead: 3 });
+    const id = await customerIdByEmail('tg2@e.com');
+    await verifyTelegram(id, '555002');
+    await setUpcomingChannels(cookies, [
+      NotificationChannelType.EMAIL,
+      NotificationChannelType.TELEGRAM,
+    ]);
+
+    const res = await svc.runDailyTick();
+    expect(res.candidates).toBe(2); // один и тот же event на два канала
+    expect(await outboxCountFor('tg2@e.com')).toBe(1);
+    expect(await tgOutboxCountFor('555002')).toBe(1);
+  });
+
+  it('TELEGRAM выбран, но канал НЕ verified → в TG не шлём', async () => {
+    const { cookies } = await createSubInDays({ email: 'tg3@e.com', daysAhead: 3 });
+    // verified TG не заводим — только connect (unverified) сделал бы то же.
+    await setUpcomingChannels(cookies, [NotificationChannelType.TELEGRAM]);
+
+    await svc.runDailyTick();
+    expect(await tgOutboxCountFor('any')).toBe(0);
+    const { rows } = await testPool().query<{ n: number }>(
+      `SELECT COUNT(*)::int AS n FROM telegram_outbox`,
+    );
+    expect(rows[0].n).toBe(0);
   });
 
   it('подписка не попадает если daysUntil ∉ дефолтных lead_days', async () => {
